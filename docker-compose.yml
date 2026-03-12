@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # ==============================
+  # SQL Server Database
+  # ==============================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: dms-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Your_Super_Strong_Password_123!" # Required
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - sqlserver-backups:/var/opt/mssql/backups
+    networks:
+      - dms-network
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "SA", "-P", "Your_Super_Strong_Password_123!", "-Q", "SELECT 1", "-No"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  # ==============================
+  # ASP.NET Core Backend API
+  # ==============================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dms-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Connection mapping to the 'sqlserver' container domain name
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=DmsDb;User Id=SA;Password=Your_Super_Strong_Password_123!;TrustServerCertificate=True;
+      - Jwt__Key=superSecretKey123!456@789#VeryLongSecret
+      - Jwt__Issuer=DMS_Backend
+      - Jwt__Audience=DMS_Frontend
+      # ==============================
+      # SMTP Email Configuration
+      # Fill these in with your real SMTP server details (e.g., Gmail, SendGrid, Mailtrap)
+      # Uncomment the lines below to activate real email sending
+      # ==============================
+      # - Smtp__Host=smtp.gmail.com
+      # - Smtp__Port=587
+      # - Smtp__User=your.email@gmail.com
+      # - Smtp__Pass=your-gmail-app-password
+      # - Smtp__From=your.email@gmail.com
+    depends_on:
+      sqlserver:
+        condition: service_healthy # Wait for SQL to spin up before backend boots
+    networks:
+      - dms-network
+
+  # ==============================
+  # React + Vite Frontend
+  # ==============================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dms-frontend
+    ports:
+      - "5173:5173"
+      - "80:80"
+    depends_on:
+      - backend # Wait for backend build
+    networks:
+      - dms-network
+
+volumes:
+  sqlserver-data:
+  sqlserver-backups:
+
+networks:
+  dms-network:
+    driver: bridge
