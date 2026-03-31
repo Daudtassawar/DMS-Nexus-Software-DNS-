@@ -1,89 +1,98 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import authService from '../services/authService';
-import { Shield, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
 import AppButton from '../components/AppButton';
 
 export default function VerifyEmail() {
     const [searchParams] = useSearchParams();
-    const [status, setStatus] = useState('verifying'); // verifying, success, error
-    const [message, setMessage] = useState('Initializing identity validation sequence...');
-    const navigate = useNavigate();
+    const [status, setStatus] = useState('loading'); // loading, success, error
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
-        const token = searchParams.get('token');
-        const email = searchParams.get('email');
+        const verify = async () => {
+            const token = searchParams.get('token');
+            const email = searchParams.get('email');
 
-        if (!token || !email) {
-            setStatus('error');
-            setMessage('Validation credentials missing or corrupted.');
-            return;
-        }
-
-        authService.verifyEmail(token, email)
-            .then(() => {
-                setStatus('success');
-                setMessage('Identity verified. Access tokens synchronized.');
-            })
-            .catch(err => {
+            if (!token || !email) {
                 setStatus('error');
-                setMessage(err.response?.data?.message || 'Verification link expired or invalid.');
-            });
+                setMessage('Invalid verification link. Missing parameters.');
+                return;
+            }
+
+            try {
+                const response = await authService.verifyEmail(token, email);
+                setStatus('success');
+                setMessage(response.message || 'Email verified successfully!');
+            } catch (err) {
+                setStatus('error');
+                setMessage(err.response?.data?.message || 'Verification failed. Token may be expired.');
+            }
+        };
+
+        verify();
     }, [searchParams]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0f172a] relative overflow-hidden font-sans">
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
-
-            <div className="w-full max-w-[480px] p-4 relative z-10 animate-fade-in">
-                <div className="bg-white/5 backdrop-blur-2xl p-12 rounded-[3rem] border border-white/10 shadow-[0_32px_80px_rgba(0,0,0,0.5)] text-center">
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] font-sans p-6">
+            <div className="w-full max-w-[440px]">
+                <div className="bg-[var(--bg-card)] p-8 md:p-12 rounded-lg border border-[var(--border)] shadow-xl text-center">
                     
-                    <div className="mb-10">
-                        <div className="w-20 h-20 bg-primary/20 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6">
-                           <Shield size={40}/>
+                    <div className="mb-10 flex flex-col items-center">
+                        <div className="w-20 h-20 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mb-6 border border-[var(--primary)]/20 shadow-inner">
+                            <ShieldCheck className="text-[var(--primary)]" size={40} />
                         </div>
-                        <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic">Integrity <span className="text-primary not-italic">Scan</span></h1>
+                        <h1 className="text-2xl font-bold text-[var(--text-main)] uppercase tracking-tight">Identity Verification</h1>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.3em] mt-2">DMS Secure Protocol</p>
                     </div>
 
                     <div className="space-y-8">
-                        {status === 'verifying' && (
-                            <div className="flex flex-col items-center gap-6">
-                                <Loader2 size={48} className="text-primary animate-spin" />
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic animate-pulse">{message}</p>
+                        {status === 'loading' && (
+                            <div className="py-8 flex flex-col items-center">
+                                <Loader2 className="animate-spin text-[var(--primary)] mb-4" size={48} strokeWidth={1} />
+                                <p className="text-sm font-bold text-[var(--text-main)] uppercase tracking-wider">Synchronizing Authentication...</p>
                             </div>
                         )}
 
                         {status === 'success' && (
-                            <div className="flex flex-col items-center gap-6 animate-slide-in">
-                                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center border border-emerald-500/30">
-                                    <CheckCircle size={32}/>
+                            <div className="py-2 space-y-6">
+                                <div className="flex flex-col items-center text-emerald-500">
+                                    <CheckCircle2 size={64} strokeWidth={1.5} />
+                                    <h2 className="text-lg font-bold uppercase tracking-wide mt-4">Verification Complete</h2>
                                 </div>
-                                <div>
-                                    <p className="text-emerald-400 font-black uppercase tracking-widest text-xs italic">{message}</p>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-2">Redirecting to terminal access...</p>
+                                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-md">
+                                    <p className="text-xs font-bold text-emerald-800 uppercase leading-relaxed">{message}</p>
                                 </div>
-                                <AppButton onClick={() => navigate('/login')} className="w-full py-4 !bg-emerald-600 uppercase tracking-widest flex justify-center group">
-                                    Initialize Login <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={16}/>
+                                <AppButton className="w-full justify-center py-4 rounded-md shadow-lg" as={Link} to="/login">
+                                    Access Domain <ArrowRight className="ml-2" size={18} />
                                 </AppButton>
                             </div>
                         )}
 
                         {status === 'error' && (
-                            <div className="flex flex-col items-center gap-6 animate-slide-in">
-                                <div className="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center border border-rose-500/30">
-                                    <XCircle size={32}/>
+                            <div className="py-2 space-y-6">
+                                <div className="flex flex-col items-center text-red-500">
+                                    <XCircle size={64} strokeWidth={1.5} />
+                                    <h2 className="text-lg font-bold uppercase tracking-wide mt-4">Authentication Denied</h2>
                                 </div>
-                                <p className="text-rose-400 font-black uppercase tracking-widest text-xs italic">{message}</p>
-                                <div className="grid grid-cols-1 gap-4 w-full">
-                                    <AppButton onClick={() => navigate('/login')} className="w-full py-4 uppercase tracking-widest flex justify-center bg-white/5 hover:bg-white/10 text-white">
-                                        Return to Base
+                                <div className="p-4 bg-red-50 border border-red-100 rounded-md">
+                                    <p className="text-xs font-bold text-red-800 uppercase leading-relaxed">{message}</p>
+                                </div>
+                                <div className="flex flex-col gap-3">
+                                    <AppButton className="w-full justify-center py-4 rounded-md" as={Link} to="/login" variant="secondary">
+                                        Return to Login
                                     </AppButton>
-                                    <p className="text-[9px] text-slate-500 font-bold uppercase">If issues persist, contact system admin.</p>
+                                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest text-center">Contact SysAdmin if internal error persists</p>
                                 </div>
                             </div>
                         )}
                     </div>
+                </div>
+
+                <div className="mt-8 flex justify-center items-center gap-6 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-40">
+                    <span className="flex items-center gap-2"><Mail size={12}/> Support</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--border)]"></div>
+                    <span>DMS Logistics v2.0</span>
                 </div>
             </div>
         </div>

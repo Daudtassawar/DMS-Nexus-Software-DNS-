@@ -23,6 +23,11 @@ namespace DMS.Infrastructure.Data
         public DbSet<StockTransaction> StockTransactions { get; set; } = null!;
         public DbSet<Payment> Payments { get; set; } = null!;
         public DbSet<UserActivityLog> UserActivityLogs { get; set; } = null!;
+        
+        // Company Ledger Module
+        public DbSet<Company> Companies { get; set; } = null!;
+        public DbSet<CompanyLedger> CompanyLedgers { get; set; } = null!;
+        public DbSet<CustomerLedger> CustomerLedgers { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         
         public DbSet<DailyActivity> DailyActivities { get; set; } = null!;
@@ -31,6 +36,10 @@ namespace DMS.Infrastructure.Data
         // RBAC custom tables
         public DbSet<Permission> Permissions { get; set; } = null!;
         public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+
+        // Route & Vehicle
+        public DbSet<DMS.Domain.Entities.Route> Routes { get; set; } = null!;
+        public DbSet<Vehicle> Vehicles { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -72,6 +81,30 @@ namespace DMS.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(u => u.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CompanyLedger>()
+                .HasOne(cl => cl.Company)
+                .WithMany(c => c.Ledgers)
+                .HasForeignKey(cl => cl.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CompanyLedger>()
+                .HasOne(cl => cl.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(cl => cl.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<CustomerLedger>()
+                .HasOne(cl => cl.Customer)
+                .WithMany(c => c.Ledgers)
+                .HasForeignKey(cl => cl.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CustomerLedger>()
+                .HasOne(cl => cl.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(cl => cl.CreatedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<DailyActivity>().HasKey(a => a.ActivityId);
             modelBuilder.Entity<DailyExpense>().HasKey(e => e.ExpenseId);

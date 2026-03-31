@@ -17,7 +17,11 @@ namespace DMS.Domain.Entities
         
         public int? SalesmanId { get; set; }
         public Salesman? Salesman { get; set; }
+        
+        public int? RouteId { get; set; }
+        public Route? Route { get; set; }
 
         public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+        public ICollection<CustomerLedger> Ledgers { get; set; } = new List<CustomerLedger>();
     }
 }

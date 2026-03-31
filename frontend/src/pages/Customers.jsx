@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import customerService from '../services/customerService';
 import CustomerModal from '../components/CustomerModal';
 import CustomerDetail from '../components/CustomerDetail';
@@ -7,11 +8,12 @@ import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
-import { Search, Plus, User, DollarSign, AlertTriangle, CheckCircle, MoreHorizontal, History, Edit, Trash2, MapPin, Zap, UserCircle, ShieldAlert } from 'lucide-react';
+import { Search, Plus, User, DollarSign, AlertTriangle, CheckCircle, MoreHorizontal, History, Edit, Trash2, MapPin, Zap, UserCircle, ShieldAlert, FileText, Phone } from 'lucide-react';
 
 const rs = (v) => `Rs. ${(parseFloat(v) || 0).toLocaleString()}`;
 
 export default function Customers() {
+    const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -47,12 +49,12 @@ export default function Customers() {
     };
 
     const handleDelete = async (c) => {
-        if (!window.confirm(`Permanently terminate customer node "${c.customerName}"?\nThis Protocol is IRREVERSIBLE.`)) return;
+        if (!window.confirm(`Are you sure you want to delete customer "${c.customerName}"? This action is permanent.`)) return;
         setDeleting(c.customerId);
         try {
             await customerService.delete(c.customerId);
             fetchCustomers();
-        } catch { alert('De-authorization failed: Linked financial records detected.'); }
+        } catch { alert('Cannot delete customer with existing financial history.'); }
         finally { setDeleting(null); }
     };
 
@@ -63,159 +65,158 @@ export default function Customers() {
     const clearAccounts = customers.filter(c => c.balance === 0).length;
 
     return (
-        <div className="space-y-10 max-w-[1700px] mx-auto animate-fade-in pb-20">
-            {/* Header / Config Bar */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10 bg-[var(--bg-card)] p-10 rounded-[3.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden group">
-                <div className="relative z-10">
-                   <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:rotate-12 transition-transform duration-500"><UserCircle size={22}/></div>
-                        <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] italic">CRM Infrastructure</span>
-                   </div>
-                    <h1 className="text-5xl font-black tracking-tighter uppercase italic text-[var(--text-main)]">
-                       Client <span className="text-primary not-italic">Network</span>
+        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                        <User className="text-blue-600" size={24}/> Customer Management
                     </h1>
-                    <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mt-3 italic">Manage client relations, credit exposure, and logistics nodes.</p>
+                    <p className="text-sm text-slate-500 mt-1">Manage customer profiles, contact information, credit limits, and delivery locations.</p>
                 </div>
                 
-                <div className="flex flex-wrap gap-5 relative z-10">
-                    <AppButton onClick={() => setModal('add')} className="!px-10 !py-4 !rounded-2xl shadow-lg shadow-primary/20">
-                        <Plus className="w-5 h-5 mr-3"/> <span className="uppercase tracking-[0.15em] font-black text-[10px]">Enlist Entity</span>
+                <div className="flex flex-wrap gap-3">
+                    <AppButton onClick={() => setModal('add')} className="rounded-md">
+                        <Plus size={18} className="mr-2"/> New Customer
                     </AppButton>
                 </div>
-                <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/5 rounded-bl-[20rem] -mr-40 -mt-40 blur-[100px] pointer-events-none"></div>
             </div>
 
-            {/* Tactical Metrics Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-blue-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <AppCard className="border-t-4 border-t-blue-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Active personnel</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-[var(--text-main)] tabular-nums">{totalCustomers}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Customers</p>
+                            <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{totalCustomers}</h4>
                         </div>
-                        <div className="p-3.5 bg-blue-500/10 text-blue-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <User size={24}/>
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded">
+                            <User size={18}/>
                         </div>
                     </div>
                 </AppCard>
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-rose-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+                <AppCard className="border-t-4 border-t-red-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Net Exposure</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-rose-600 tabular-nums">{rs(totalOutstanding)}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Receivables</p>
+                            <h4 className="text-2xl font-bold text-red-600 tabular-nums">{rs(totalOutstanding)}</h4>
                         </div>
-                        <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <DollarSign size={24}/>
+                        <div className="p-2 bg-red-50 text-red-600 rounded">
+                            <DollarSign size={18}/>
                         </div>
                     </div>
                 </AppCard>
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-amber-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+                <AppCard className="border-t-4 border-t-amber-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Over-limit status</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-amber-500 tabular-nums">{overLimit}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Over Credit Limit</p>
+                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{overLimit}</h4>
                         </div>
-                        <div className="p-3.5 bg-amber-500/10 text-amber-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <AlertTriangle size={24}/>
+                        <div className="p-2 bg-amber-50 text-amber-600 rounded">
+                            <AlertTriangle size={18}/>
                         </div>
                     </div>
                 </AppCard>
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-emerald-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+                <AppCard className="border-t-4 border-t-emerald-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Clear accounts</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-emerald-500 tabular-nums">{clearAccounts}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Zero Balance</p>
+                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">{clearAccounts}</h4>
                         </div>
-                        <div className="p-3.5 bg-emerald-500/10 text-emerald-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <CheckCircle size={24}/>
+                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded">
+                            <CheckCircle size={18}/>
                         </div>
                     </div>
                 </AppCard>
             </div>
 
-            {/* Central Terminal */}
-            <AppCard p0 className="overflow-hidden shadow-2xl border-t-8 border-t-primary group">
-                <div className="p-8 bg-[var(--secondary)]/10 border-b border-[var(--border)]">
-                    <div className="max-w-2xl">
+            {/* Filter Section */}
+            <AppCard p0 className="overflow-hidden shadow-sm">
+                <div className="p-4 bg-[var(--secondary)]/10 border-b border-[var(--border)]">
+                    <div className="max-w-xl">
                         <AppInput 
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Interrogate client matrix: name, ID, zone..."
+                            placeholder="Search by name, ID, or zone..."
                             icon={Search}
-                            className="!rounded-2xl"
                         />
                     </div>
                 </div>
 
-                <div className="p-4">
+                <div className="p-2">
                   <AppTable 
-                      headers={['Customer Profile', 'Logistic / Hub Hub', 'Credit Sanctions', 'Net Exposure', 'Actions']}
+                      headers={['Customer Name', 'Contact & Location', 'Credit Info', 'Balance', 'Actions']}
                       data={customers}
                       loading={loading}
                       renderRow={(c) => {
                           const isOverLimit = c.creditLimit > 0 && c.balance > c.creditLimit;
                           return (
                             <>
-                                <td className="px-8 py-7">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-primary/20 group-hover:rotate-12 transition-transform border-4 border-white/20">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
                                             {c.customerName[0].toUpperCase()}
                                         </div>
                                         <div>
-                                            <p className="font-black text-base italic uppercase tracking-tighter text-[var(--text-main)] mb-1 leading-none">{c.customerName}</p>
-                                            <AppBadge variant="secondary" size="sm" className="px-2 border-none shadow-sm leading-none italic font-black text-[9px] !rounded-md">AUTH-VAL: {c.customerId}</AppBadge>
+                                            <p className="font-bold text-sm text-slate-900 leading-tight">{c.customerName}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-1">ID: {c.customerId}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-8 py-7">
-                                    <div className="space-y-2.5">
-                                        <div className="flex items-center gap-2">
-                                          <Zap size={10} className="text-primary"/>
-                                          <p className="text-xs font-black text-[var(--text-main)] italic tabular-nums leading-none tracking-tight">{c.phone || 'NO_SIGNAL'}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <MapPin size={10} className="text-primary"/>
-                                            <AppBadge variant="secondary" size="sm" className="px-4 py-1 border-none shadow-sm leading-none italic font-black text-[9px] uppercase tracking-widest">{c.area || 'GENERAL_NODE'}</AppBadge>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-8 py-7">
-                                    <div className="space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--text-muted)] italic leading-none">SANCTION: {rs(c.creditLimit)}</p>
-                                        {isOverLimit && <AppBadge variant="danger" size="md" dot className="border-none py-1.5 px-4 shadow-lg shadow-rose-500/10 italic font-black uppercase tracking-widest">CRITICAL EXPOSURE</AppBadge>}
-                                    </div>
-                                </td>
-                                <td className="px-8 py-7">
+                                <td className="px-6 py-4">
                                     <div className="space-y-1.5">
-                                        <p className={`text-2xl font-black tracking-tighter italic tabular-nums leading-none ${c.balance > 0 ? 'text-rose-600' : 'text-emerald-500'}`}>
-                                            {rs(c.balance)}
-                                        </p>
-                                        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] italic">Delta Exposure</p>
+                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                                          <Phone size={12} className="text-slate-400"/>
+                                          <span>{c.phone || 'No Phone'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <MapPin size={12} className="text-slate-400"/>
+                                            <span className="text-xs text-slate-500 font-medium">{c.area || 'General Area'}</span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td className="px-8 py-7">
-                                    <div className="flex items-center gap-3 justify-end">
+                                <td className="px-6 py-4">
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credit Limit: {rs(c.creditLimit)}</p>
+                                        {isOverLimit && <AppBadge variant="danger" size="xs" className="rounded px-2">OVER LIMIT</AppBadge>}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <h4 className={`text-base font-bold tabular-nums ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                        {rs(c.balance)}
+                                    </h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Outstanding Balance</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2 justify-end">
+                                        <button 
+                                            onClick={() => navigate(`/customer-ledger/${c.customerId}`)}
+                                            className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-all shadow-sm"
+                                            title="Statement of Account"
+                                        >
+                                            <FileText size={16}/>
+                                        </button>
                                         <button 
                                             onClick={() => setDetailId(c.customerId)}
-                                            className="p-3 rounded-2xl bg-emerald-500/5 text-emerald-500 border border-emerald-500/10 hover:bg-emerald-600 hover:text-white transition-all interactive shadow-sm"
-                                            title="Activity Protocol"
+                                            className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-all shadow-sm"
+                                            title="Order History"
                                         >
-                                            <History size={18}/>
+                                            <History size={16}/>
                                         </button>
                                         <button 
                                             onClick={() => { setEditTarget(c); setModal('edit'); }}
-                                            className="p-3 rounded-2xl bg-blue-500/5 text-blue-500 border border-blue-500/10 hover:bg-blue-600 hover:text-white transition-all interactive shadow-sm"
-                                            title="Override Parameters"
+                                            className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-all shadow-sm"
+                                            title="Edit Profile"
                                         >
-                                            <Edit size={18}/>
+                                            <Edit size={16}/>
                                         </button>
                                         <button 
                                             onClick={() => handleDelete(c)}
                                             disabled={deleting === c.customerId}
-                                            className="p-3 rounded-2xl bg-rose-500/5 text-rose-500 border border-rose-500/10 hover:bg-rose-600 hover:text-white transition-all interactive shadow-sm"
-                                            title="De-authorize Protocol"
+                                            className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm"
+                                            title="Remove Customer"
                                         >
-                                            {deleting === c.customerId ? <MoreHorizontal className="animate-pulse" size={18}/> : <Trash2 size={18}/>}
+                                            {deleting === c.customerId ? <MoreHorizontal size={16} className="animate-pulse"/> : <Trash2 size={16}/>}
                                         </button>
                                     </div>
                                 </td>

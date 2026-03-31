@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Printer, CheckCircle, Clock, AlertCircle, XCircle, FileText, Edit, User, Calendar, Truck, RotateCcw, Hash, Barcode } from 'lucide-react';
+import { ArrowLeft, Printer, CheckCircle, Clock, AlertCircle, XCircle, FileText, Edit, User, Calendar, Truck, RotateCcw, Hash, Barcode, Download } from 'lucide-react';
 import invoiceService from '../services/invoiceService';
 import AppButton from '../components/AppButton';
+import { generateProfessionalInvoicePDF } from '../utils/pdfGenerator';
+import AppBadge from '../components/AppBadge';
 
 const STATUS_CONFIG = {
-    Paid:      { color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: <CheckCircle size={14}/> },
-    Pending:   { color: 'text-amber-500',   bg: 'bg-amber-500/10',   border: 'border-amber-500/20',   icon: <Clock size={14}/> },
-    Partial:   { color: 'text-blue-500',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20',    icon: <FileText size={14}/> },
-    Overdue:   { color: 'text-rose-500',    bg: 'bg-rose-500/10',    border: 'border-rose-500/20',    icon: <AlertCircle size={14}/> },
-    Cancelled: { color: 'text-slate-500',   bg: 'bg-slate-500/10',   border: 'border-slate-500/20',   icon: <XCircle size={14}/> },
+    Paid:      { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', icon: <CheckCircle size={14}/> },
+    Unpaid:    { color: 'text-rose-600',    bg: 'bg-rose-50',    border: 'border-rose-100',    icon: <Clock size={14}/> },
+    Partial:   { color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-100',   icon: <FileText size={14}/> },
+    Overdue:   { color: 'text-red-700',     bg: 'bg-red-50',     border: 'border-red-100',     icon: <AlertCircle size={14}/> },
+    Cancelled: { color: 'text-slate-600',   bg: 'bg-slate-50',   border: 'border-slate-100',   icon: <XCircle size={14}/> },
 };
 
 export default function InvoiceDetail() {
@@ -31,141 +33,144 @@ export default function InvoiceDetail() {
         try {
             await invoiceService.patchStatus(id, status);
             setInvoice(prev => ({ ...prev, paymentStatus: status }));
-            showToast(`Statut mis à jour : ${status.toUpperCase()}`);
+            showToast(`Status updated to ${status}`);
         } catch (err) {
-            showToast('Update Failed : System Restriction');
+            const msg = err.response?.data?.message || err.response?.data?.error || 'Update failed';
+            showToast(msg);
         }
     };
 
     const handlePrint = () => { window.print(); };
 
-    if (loading) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest text-xs">Accessing Encrypted Transaction File...</div>;
-    if (!invoice) return <div className="p-20 text-center font-black text-rose-500 uppercase tracking-widest text-lg">⚠️ File Metadata Inaccessible</div>;
+    const handleDownloadPDF = () => {
+        if (invoice) {
+            generateProfessionalInvoicePDF(invoice);
+        }
+    };
 
-    const sc = STATUS_CONFIG[invoice.paymentStatus] || STATUS_CONFIG.Pending;
+    if (loading) return <div className="p-20 text-center font-bold animate-pulse text-slate-500 uppercase tracking-widest text-sm">Loading Invoice...</div>;
+    if (!invoice) return <div className="p-20 text-center font-bold text-rose-500 uppercase tracking-widest text-lg">Invoice Not Found</div>;
+
+    const currentStatus = invoice.paymentStatus === 'Pending' ? 'Unpaid' : invoice.paymentStatus;
+    const sc = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.Unpaid;
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fade-in">
+        <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 animate-fade-in">
             {/* Notifications */}
             {toast && (
-                <div className="fixed top-8 right-8 z-[1000] px-6 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-2xl font-black uppercase text-[10px] tracking-widest animate-slide-in">
+                <div className="fixed top-8 right-8 z-[1000] px-6 py-3 bg-slate-900 text-white rounded-lg shadow-xl font-bold uppercase text-[10px] tracking-widest animate-slide-in">
                     {toast}
                 </div>
             )}
 
             {/* Actions Bar */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 print:hidden">
-                <div className="space-y-1">
-                    <Link to="/invoices" className="flex items-center gap-2 text-[var(--text-muted)] font-black uppercase text-[10px] tracking-widest hover:text-primary transition-all mb-4">
-                        <ArrowLeft size={14}/> Secure Ledger
+                <div>
+                    <Link to="/invoices" className="flex items-center gap-2 text-[var(--text-muted)] font-bold uppercase text-[10px] tracking-wider hover:text-[var(--primary)] transition-all mb-3">
+                        <ArrowLeft size={14}/> Back to Invoices
                     </Link>
                     <div className="flex items-center gap-4">
-                      <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">
-                          {invoice.invoiceNumber || `TXN-${invoice.invoiceId}`}
+                      <h1 className="text-3xl font-bold text-[var(--text-main)]">
+                          {invoice.invoiceNumber || `Invoice #${invoice.invoiceId}`}
                       </h1>
-                      <div className={`px-4 py-1.5 rounded-xl text-[9px] uppercase font-black tracking-[0.2em] border shadow-sm ${sc.border} ${sc.bg} ${sc.color}`}>
-                          {invoice.paymentStatus}
-                      </div>
+                      <AppBadge variant={sc.color.includes('emerald') ? 'success' : sc.color.includes('amber') ? 'warning' : sc.color.includes('slate') ? 'secondary' : 'danger'} dot uppercase>
+                          {currentStatus}
+                      </AppBadge>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <AppButton variant="secondary" onClick={handlePrint} className="rounded-2xl">
-                        <Printer size={18} className="mr-2"/> Dispatch Print
+                <div className="flex flex-wrap gap-3">
+                    <AppButton variant="secondary" onClick={handleDownloadPDF} className="rounded-md border-slate-200">
+                        <Download size={18} className="mr-2"/> Download PDF
+                    </AppButton>
+                    <AppButton variant="secondary" onClick={handlePrint} className="rounded-md border-slate-200">
+                        <Printer size={18} className="mr-2"/> Print
                     </AppButton>
                     <Link to={`/invoices/edit/${id}`}>
-                      <AppButton className="rounded-2xl">
-                          <Edit size={18} className="mr-2"/> Modify Record
+                      <AppButton className="rounded-md">
+                          <Edit size={18} className="mr-2"/> Edit
                       </AppButton>
                     </Link>
                 </div>
             </div>
 
             {/* Document Body */}
-            <div id="invoice-print" className="bg-[var(--bg-card)] rounded-[2.5rem] shadow-2xl overflow-hidden border border-[var(--border)] print:border-none print:shadow-none">
-                {/* Branding Banner */}
-                <div className="bg-slate-900 dark:bg-slate-800 p-12 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-                    <div className="relative z-10 flex justify-between items-end">
-                        <div className="space-y-6">
-                            <div className="w-16 h-16 bg-primary rounded-2xl shadow-2xl shadow-primary/40 flex items-center justify-center transform rotate-3">
-                                <FileText size={32} className="text-white"/>
+            <div id="invoice-print" className="bg-[var(--bg-card)] rounded-lg shadow-sm overflow-hidden border border-[var(--border)] print:border-none print:shadow-none">
+                {/* Header Banner */}
+                <div className="p-8 border-b border-[var(--border)]">
+                    <div className="flex justify-between items-start">
+                        <div className="space-y-4">
+                            <div className="w-12 h-12 bg-[var(--primary)] text-white rounded flex items-center justify-center font-bold text-2xl">
+                                H
                             </div>
                             <div>
-                                <h3 className="text-4xl font-black uppercase tracking-tighter italic">Sales Receipt</h3>
-                                <p className="text-primary font-black uppercase tracking-[0.3em] text-[9px] mt-1">DMS Enterprise Operations Hub</p>
+                                <h3 className="text-xl font-bold text-[var(--text-main)]">Hamdaan Traders</h3>
+                                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Distribution Management System</p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Authenticated Stamp</div>
-                            <div className="text-2xl font-black italic">{new Date(invoice.invoiceDate).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                            <h2 className="text-2xl font-bold text-[var(--text-main)] uppercase tracking-tight mb-4">INVOICE</h2>
+                            <div className="space-y-1">
+                                <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Date</p>
+                                <p className="text-sm font-bold text-[var(--text-main)]">{new Date(invoice.invoiceDate).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Logistics Context */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 p-12 bg-[var(--bg-app)]/50 border-b border-[var(--border)]">
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-3 text-primary font-black text-[10px] uppercase tracking-[0.4em]">
-                            <User size={16}/> Billing Destination
-                        </div>
-                        <div className="space-y-3">
-                            <div className="text-3xl font-black text-[var(--text-main)] uppercase tracking-tight">{invoice.customer?.customerName || 'Standard Client'}</div>
-                            <div className="space-y-2">
-                                <div className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-3"><Barcode size={14} className="text-primary"/> Client-ID: {invoice.customerId}</div>
-                                <div className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-3"><Truck size={14} className="text-primary"/> {invoice.customer?.address || 'Terminal A Distribution'}</div>
+                {/* Details Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-[var(--secondary)]">
+                    <div className="space-y-4">
+                        <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest">Customer Information</p>
+                        <div className="space-y-2">
+                            <p className="text-xl font-bold text-[var(--text-main)]">{invoice.customer?.customerName || 'Direct Sale'}</p>
+                            <div className="space-y-1 text-sm text-[var(--text-muted)]">
+                                <p className="flex items-center gap-2"><Barcode size={14}/> ID: {invoice.customerId}</p>
+                                <p className="flex items-center gap-2"><Truck size={14}/> {invoice.customer?.address || 'Generic Address'}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="space-y-6 md:text-right">
-                        <div className="flex items-center md:justify-end gap-3 text-primary font-black text-[10px] uppercase tracking-[0.4em]">
-                            <Hash size={16}/> Operational Flow
-                        </div>
-                        <div className="space-y-6">
-                            <div className="inline-block p-4 bg-[var(--secondary)] rounded-2xl border border-[var(--border)] text-left min-w-[200px]">
-                                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1 italic">Responsible Rep</p>
-                                <p className="text-lg font-black text-[var(--text-main)]">{invoice.salesman?.name || 'Central Office'}</p>
+                    <div className="space-y-4 md:text-right">
+                        <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest">Sales Information</p>
+                        <div className="space-y-3">
+                            <div className="inline-block text-left">
+                                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">Sales Representative</p>
+                                <p className="text-base font-bold text-[var(--text-main)]">{invoice.salesman?.name || 'Head Office'}</p>
                             </div>
                             <div className="print:hidden">
-                                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 italic">Ledger Control</p>
-                                <select value={invoice.paymentStatus} onChange={e => handleStatusChange(e.target.value)}
-                                    className={`appearance-none px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border shadow-sm ${sc.border} ${sc.bg} ${sc.color} focus:outline-none cursor-pointer outline-none transition-all hover:scale-105`}>
-                                    {Object.keys(STATUS_CONFIG).map(s => <option key={s} className="bg-white dark:bg-slate-900">{s}</option>)}
+                                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Update Status</p>
+                                <select value={currentStatus} onChange={e => handleStatusChange(e.target.value)}
+                                    className="appearance-none px-4 py-1.5 rounded border border-[var(--border)] bg-[var(--bg-app)] text-[var(--text-main)] text-[10px] font-bold uppercase tracking-wider focus:ring-2 focus:ring-[var(--primary)] outline-none cursor-pointer">
+                                    {Object.keys(STATUS_CONFIG).map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
                                 </select>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Inventory Manifest */}
-                <div className="p-0 overflow-x-auto">
+                {/* Items Table */}
+                <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-[var(--secondary)]/50 border-b border-[var(--border)]">
-                            <tr>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)]">Inventory Item</th>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] text-center">Unit Valve</th>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] text-center">Volume</th>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.3em] text-primary text-center">Empties Returned</th>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] text-right">Segment total</th>
+                        <thead>
+                            <tr className="border-b border-[var(--border)] bg-[var(--secondary)]">
+                                <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Product Description</th>
+                                <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] text-center">Unit Price</th>
+                                <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] text-center">Qty</th>
+                                <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] text-center">Returned</th>
+                                <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] text-right">Total</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border)]">
                             {invoice.invoiceItems?.map((item, idx) => (
-                                <tr key={idx} className="group hover:bg-[var(--secondary)]/20 transition-colors">
-                                    <td className="p-10">
-                                        <div className="font-black text-lg text-[var(--text-main)] uppercase tracking-tight italic">{item.product?.productName || 'Line Item'}</div>
-                                        <div className="text-[10px] font-extrabold text-[var(--text-muted)] mt-1 uppercase tracking-widest whitespace-nowrap">SKU: {item.product?.barcode || 'INTERNAL'}</div>
+                                <tr key={idx}>
+                                    <td className="px-8 py-4">
+                                        <p className="font-bold text-sm text-[var(--text-main)]">{item.product?.productName || 'Line Item'}</p>
                                     </td>
-                                    <td className="p-10 text-center font-bold text-[var(--text-muted)]">Rs. {item.unitPrice.toLocaleString()}</td>
-                                    <td className="p-10 text-center">
-                                       <span className="text-2xl font-black text-[var(--text-main)]">{item.quantity}</span>
-                                       <span className="text-[10px] font-black text-[var(--text-muted)] uppercase ml-1">PCS</span>
+                                    <td className="px-8 py-4 text-center text-sm font-medium text-[var(--text-muted)]">Rs. {item.unitPrice.toLocaleString()}</td>
+                                    <td className="px-8 py-4 text-center font-bold text-sm text-[var(--text-main)]">{item.quantity}</td>
+                                    <td className="px-8 py-4 text-center">
+                                        <span className="text-xs font-semibold text-slate-500">{item.returnedQuantity || 0}</span>
                                     </td>
-                                    <td className="p-10 text-center">
-                                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 text-primary rounded-xl border border-primary/10 font-black text-xs shadow-sm">
-                                            <RotateCcw size={14}/> {item.returnedQuantity || 0}
-                                        </div>
-                                    </td>
-                                    <td className="p-10 text-right font-black text-2xl text-emerald-500 italic">Rs. {item.totalPrice.toLocaleString()}</td>
+                                    <td className="px-8 py-4 text-right font-bold text-sm text-[var(--text-main)]">Rs. {item.totalPrice.toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -173,39 +178,52 @@ export default function InvoiceDetail() {
                 </div>
 
                 {/* Summary Section */}
-                <div className="p-12 bg-[var(--bg-app)]/30 grid grid-cols-1 lg:grid-cols-2 gap-12 border-t border-[var(--border)]">
+                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-[var(--border)]">
                     <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-primary font-black text-[10px] uppercase tracking-[0.4em]">Audit Observations</div>
-                        <div className="p-8 bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] shadow-inner min-h-[120px] text-sm font-bold text-[var(--text-muted)] italic leading-relaxed">
-                            {invoice.notes || 'No exceptional variances recorded for this transaction. All logistics segments and empty bottle reconciliations have been audited at point of site exit.'}
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Notes</p>
+                        <div className="p-4 bg-[var(--secondary)] rounded border border-[var(--border)] text-sm text-[var(--text-muted)] min-h-[80px]">
+                            {invoice.notes || 'No notes provided.'}
                         </div>
                     </div>
-                    <div className="space-y-6">
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center text-[var(--text-muted)]">
-                                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Segmental Total</span>
-                                <span className="font-black">Rs. {invoice.totalAmount?.toLocaleString()}</span>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">Subtotal</span>
+                                <span className="font-bold">Rs. {invoice.totalAmount?.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between items-center text-rose-500">
-                                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Promotional Discount</span>
-                                <span className="font-black">- Rs. {invoice.discount?.toLocaleString()}</span>
+                            <div className="flex justify-between text-sm text-red-500">
+                                <span className="font-semibold uppercase tracking-wider text-[10px]">Discount</span>
+                                <span className="font-bold">- Rs. {invoice.discount?.toLocaleString()}</span>
                             </div>
                         </div>
-                        <div className="pt-8 border-t-2 border-slate-900 dark:border-white flex justify-between items-end">
-                            <div>
-                                <div className="text-[10px] font-black uppercase tracking-[0.5em] text-primary mb-2">Net Distribution Yield</div>
-                                <div className="text-5xl font-black text-[var(--text-main)] tracking-tighter italic">Rs. {invoice.netAmount?.toLocaleString()}</div>
+                        <div className="pt-4 border-t border-[var(--text-main)]">
+                            <div className="flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest mb-1">Total Payable</p>
+                                    <p className="text-3xl font-bold text-[var(--text-main)]">Rs. {invoice.netAmount?.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-[var(--border)]">
+                                <div>
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Paid</p>
+                                    <p className="text-lg font-bold text-emerald-600 tabular-nums">Rs. {(invoice.paidAmount || 0).toLocaleString()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">Due</p>
+                                    <p className="text-lg font-bold text-red-600 tabular-nums">Rs. {(invoice.remainingAmount || 0).toLocaleString()}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Validation Signature */}
-                <div className="p-16 flex justify-end">
-                    <div className="w-1/3 text-center space-y-4">
-                        <div className="h-px bg-[var(--border)] w-full"></div>
-                        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)]">Executive Clearance Stamp</div>
-                        <div className="text-xs font-bold text-primary italic uppercase tracking-widest">{invoice.salesman?.name || 'ADMIN-HQ'}</div>
+                {/* Footer Signature Area */}
+                <div className="p-12 border-t border-[var(--border)] border-dashed">
+                    <div className="flex justify-end">
+                        <div className="w-64 text-center">
+                            <div className="h-px bg-slate-300 w-full mb-2"></div>
+                            <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em]">Authorized Signature</p>
+                        </div>
                     </div>
                 </div>
             </div>

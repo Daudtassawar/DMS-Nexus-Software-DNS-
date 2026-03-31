@@ -7,14 +7,14 @@ const SidebarItem = ({ icon: Icon, label, route, isActive, isCollapsed, onClick 
       to={route}
       onClick={onClick}
       className={`
-        flex items-center gap-[8px] px-[14px] py-[10px] mx-3 rounded-[12px] transition-all duration-200 group relative
-        font-[500] text-[13px]
+        flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-all duration-150 group relative
+        text-sm font-medium
         ${isActive 
-          ? 'bg-[rgba(59,130,246,0.18)] text-primary border-l-[3px] border-primary' 
-          : 'text-slate-400 hover:bg-[rgba(59,130,246,0.12)] hover:text-primary'}
+          ? 'bg-[var(--primary)] text-white' 
+          : 'text-[var(--text-muted)] hover:bg-[var(--secondary)] hover:text-[var(--text-main)]'}
       `}
     >
-      <div className={`shrink-0 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
+      <div className={`shrink-0 ${isActive ? 'text-white' : 'group-hover:text-[var(--text-main)]'}`}>
         <Icon size={18} />
       </div>
       
@@ -24,9 +24,7 @@ const SidebarItem = ({ icon: Icon, label, route, isActive, isCollapsed, onClick 
         </span>
       )}
 
-      {isActive && !isCollapsed && (
-        <div className="absolute right-3 w-1 h-1 bg-primary rounded-full"></div>
-      )}
+      {/* Removed absolute active indicator line for a cleaner block solid look */}
     </Link>
   );
 };

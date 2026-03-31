@@ -17,12 +17,14 @@ namespace DMS.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Customer>> GetAllAsync()
+        public async Task<IEnumerable<Customer>> GetAllAsync(int? routeId = null, int? salesmanId = null)
         {
-            return await _context.Customers
-                .Include(c => c.Salesman)
-                .OrderBy(c => c.CustomerName)
-                .ToListAsync();
+            var query = _context.Customers.Include(c => c.Salesman).AsQueryable();
+            
+            if (routeId.HasValue && routeId > 0) query = query.Where(c => c.RouteId == routeId.Value);
+            if (salesmanId.HasValue && salesmanId > 0) query = query.Where(c => c.SalesmanId == salesmanId.Value);
+            
+            return await query.OrderBy(c => c.CustomerName).ToListAsync();
         }
 
         public async Task<Customer?> GetByIdAsync(int id)
@@ -42,11 +44,15 @@ namespace DMS.Infrastructure.Repositories
                 .FirstOrDefaultAsync(c => c.CustomerId == id);
         }
 
-        public async Task<IEnumerable<Customer>> SearchAsync(string query)
+        public async Task<IEnumerable<Customer>> SearchAsync(string query, int? routeId = null, int? salesmanId = null)
         {
             var q = query.ToLower();
-            return await _context.Customers
-                .Include(c => c.Salesman)
+            var dbQuery = _context.Customers.Include(c => c.Salesman).AsQueryable();
+
+            if (routeId.HasValue && routeId > 0) dbQuery = dbQuery.Where(c => c.RouteId == routeId.Value);
+            if (salesmanId.HasValue && salesmanId > 0) dbQuery = dbQuery.Where(c => c.SalesmanId == salesmanId.Value);
+
+            return await dbQuery
                 .Where(c => c.CustomerName.ToLower().Contains(q)
                          || c.Phone.Contains(q)
                          || (c.Area != null && c.Area.ToLower().Contains(q)))

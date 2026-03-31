@@ -10,17 +10,19 @@ namespace DMS.Application.Services
     public class CustomerService
     {
         private readonly ICustomerRepository _customerRepository;
+        private readonly ICustomerLedgerService _ledgerService;
 
-        public CustomerService(ICustomerRepository customerRepository)
+        public CustomerService(ICustomerRepository customerRepository, ICustomerLedgerService ledgerService)
         {
             _customerRepository = customerRepository;
+            _ledgerService = ledgerService;
         }
 
-        public async Task<IEnumerable<Customer>> GetAllCustomersAsync(string? search = null)
+        public async Task<IEnumerable<Customer>> GetAllCustomersAsync(string? search = null, int? routeId = null, int? salesmanId = null)
         {
             if (!string.IsNullOrWhiteSpace(search))
-                return await _customerRepository.SearchAsync(search);
-            return await _customerRepository.GetAllAsync();
+                return await _customerRepository.SearchAsync(search, routeId, salesmanId);
+            return await _customerRepository.GetAllAsync(routeId, salesmanId);
         }
 
         public async Task<Customer?> GetCustomerByIdAsync(int id) 
@@ -146,6 +148,18 @@ namespace DMS.Application.Services
             // Reduce customer balance
             customer.Balance = Math.Max(0, customer.Balance - amount);
             _customerRepository.Update(customer);
+
+            // Add Ledger Entry (Credit)
+            await _ledgerService.AddTransactionAsync(new Application.DTOs.CustomerLedgerDTO
+            {
+                CustomerId = customerId,
+                TransactionType = TransactionType.Credit,
+                Amount = amount,
+                Description = notes ?? "Payment Received",
+                Reference = unpaidInvoice?.InvoiceNumber, // Link to the invoice if possible
+                Date = DateTime.UtcNow
+            });
+
             await _customerRepository.SaveChangesAsync();
         }
     }

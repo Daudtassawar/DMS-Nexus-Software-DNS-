@@ -5,9 +5,14 @@ const API_URL = '/api/v1/auth';
 
 const login = async (username, password) => {
     const response = await axios.post(`${API_URL}/login`, { username, password });
-    if (response.data.token) {
-        localStorage.setItem('dms_user', JSON.stringify(response.data));
-        setupAxiosInterceptors(response.data.token);
+    // Backend returns Token (capital T) and User (capital U) — normalize to lowercase for consistency
+    const rawData = response.data;
+    const token = rawData.token || rawData.Token;
+    const user = rawData.user || rawData.User;
+    if (token) {
+        const normalized = { token, user };
+        localStorage.setItem('dms_user', JSON.stringify(normalized));
+        setupAxiosInterceptors(token);
     }
     return response.data;
 };
@@ -91,8 +96,19 @@ const logout = () => {
 };
 
 const getCurrentUser = () => {
-    const user = localStorage.getItem('dms_user');
-    return user ? JSON.parse(user) : null;
+    const stored = localStorage.getItem('dms_user');
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    // Normalize: handle both Token (capital) and token (lowercase) from older sessions
+    if (parsed.Token && !parsed.token) {
+        parsed.token = parsed.Token;
+        delete parsed.Token;
+    }
+    if (parsed.User && !parsed.user) {
+        parsed.user = parsed.User;
+        delete parsed.User;
+    }
+    return parsed;
 };
 
 // Helper to decode JWT token
@@ -114,13 +130,18 @@ const hasPermission = (permissionString) => {
     const user = getCurrentUser();
     if (!user || !user.token) return false;
 
-    // Admin role bypasses specific permission checks
-    if (user.user?.role === 'Admin') return true;
+    // Admin role bypasses all permission checks
+    const role = user.user?.role || user.user?.Role;
+    if (role === 'Admin') return true;
 
     const decoded = decodeToken(user.token);
-    if (!decoded || !decoded.Permissions) return false;
+    if (!decoded) return false;
 
-    const permissions = decoded.Permissions.split(',');
+    // Handle Permissions as comma-separated string (how backend encodes it)
+    const rawPerms = decoded.Permissions || decoded.permissions || '';
+    if (!rawPerms) return false;
+
+    const permissions = rawPerms.split(',').map(p => p.trim()).filter(Boolean);
     return permissions.includes(permissionString);
 };
 

@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { Plus, Trash2, Search, ArrowLeft, CheckCircle, User, ShoppingCart, Calculator, Hash, RotateCcw, Info, Package, DollarSign, Target, Zap, Activity, ShieldAlert, Layers, UserCircle } from 'lucide-react';
 import invoiceService from '../services/invoiceService';
 import customerService from '../services/customerService';
 import productService from '../services/productService';
 import salesmanService from '../services/salesmanService';
+import routeService from '../services/routeService';
+import vehicleService from '../services/vehicleService';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppInput from '../components/AppInput';
@@ -18,16 +21,29 @@ export default function CreateInvoice() {
     const [customers, setCustomers] = useState([]);
     const [products, setProducts] = useState([]);
     const [salesmen, setSalesmen] = useState([]);
+    const [routes, setRoutes] = useState([]);
+    const [vehicles, setVehicles] = useState([]);
 
     const [customerId, setCustomerId] = useState('');
     const [salesmanId, setSalesmanId] = useState('');
+    const [routeId, setRouteId] = useState('');
+    const [vehicleId, setVehicleId] = useState('');
     const [items, setItems] = useState([]);
     const [discount, setDiscount] = useState(0);
+    const [paidAmount, setPaidAmount] = useState(0);
     const [notes, setNotes] = useState('');
-
+    const [deliveryDate, setDeliveryDate] = useState(() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
+    });
+    const [invoiceType, setInvoiceType] = useState('Spot');
+    
     const [productSearch, setProductSearch] = useState('');
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
+    const searchRef = useRef(null);
+
 
     const [loading, setLoading] = useState(isEdit);
     const [submitting, setSubmitting] = useState(false);
@@ -37,21 +53,30 @@ export default function CreateInvoice() {
     useEffect(() => {
         const init = async () => {
             try {
-                const [c, p, s] = await Promise.all([
+                const [c, p, s, r, v] = await Promise.all([
                     customerService.getAll(),
                     productService.getAll(),
-                    salesmanService.getSalesmen()
+                    salesmanService.getSalesmen(),
+                    routeService.getAll(),
+                    vehicleService.getAll()
                 ]);
                 setCustomers(c || []);
                 setProducts(p || []);
                 setSalesmen(s || []);
+                setRoutes(r || []);
+                setVehicles(v || []);
 
                 if (isEdit) {
                     const inv = await invoiceService.getById(id);
                     setCustomerId(inv.customerId.toString());
                     setSalesmanId(inv.salesmanId?.toString() || '');
+                    setRouteId(inv.routeId?.toString() || '');
+                    setVehicleId(inv.vehicleId?.toString() || '');
                     setDiscount(inv.discount);
+                    setPaidAmount(inv.paidAmount || 0);
                     setNotes(inv.notes || '');
+                    setDeliveryDate(inv.deliveryDate ? inv.deliveryDate.split('T')[0] : '');
+                    setInvoiceType(inv.invoiceType || 'Spot');
                     setItems(inv.invoiceItems?.map(item => ({
                         productId: item.productId,
                         productName: item.product?.productName || `Product #${item.productId}`,
@@ -75,12 +100,30 @@ export default function CreateInvoice() {
         if (!productSearch.trim()) { setFilteredProducts([]); setShowDropdown(false); return; }
         const q = productSearch.toLowerCase();
         const results = products.filter(p =>
-            p.productName?.toLowerCase().includes(q) ||
-            p.barcode?.toLowerCase().includes(q)
+            (p.productName?.toLowerCase() || '').includes(q) ||
+            (p.barcode?.toLowerCase() || '').includes(q)
         ).slice(0, 8);
         setFilteredProducts(results);
         setShowDropdown(results.length > 0);
     }, [productSearch, products]);
+
+    const getDropdownStyle = () => {
+        if (!searchRef.current) return { display: 'none' };
+        const rect = searchRef.current.getBoundingClientRect();
+        // If the rect is zero-sized, hide the dropdown
+        if (rect.width === 0 || rect.height === 0) return { display: 'none' };
+        
+        const style = {
+            position: 'fixed',
+            top: `${rect.bottom + 8}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`,
+            zIndex: 99999,
+            pointerEvents: 'auto'
+        };
+        console.log('Dropdown Style:', style);
+        return style;
+    };
 
     const addProduct = (product) => {
         setProductSearch('');
@@ -121,6 +164,7 @@ export default function CreateInvoice() {
     const subtotal = items.reduce((s, i) => s + i.lineTotal, 0);
     const discountAmt = Math.min(parseFloat(discount) || 0, subtotal);
     const netTotal = Math.max(0, subtotal - discountAmt);
+    const remainingTotal = Math.max(0, netTotal - (parseFloat(paidAmount) || 0));
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -136,7 +180,12 @@ export default function CreateInvoice() {
                 discount: discountAmt,
                 totalAmount: subtotal,
                 netAmount: netTotal,
+                paidAmount: parseFloat(paidAmount) || 0,
                 notes: notes,
+                deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : null,
+                routeId: routeId ? parseInt(routeId) : null,
+                vehicleId: vehicleId ? parseInt(vehicleId) : null,
+                invoiceType: invoiceType,
                 invoiceItems: items.map(i => ({
                     productId: i.productId,
                     quantity: i.quantity,
@@ -169,7 +218,7 @@ export default function CreateInvoice() {
     if (success) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 animate-fade-in text-center">
-                <div className="w-32 h-32 bg-emerald-500 text-white rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-emerald-500/40 animate-bounce border-8 border-white/20">
+                <div className="w-32 h-32 bg-emerald-500 text-white rounded-md flex items-center justify-center shadow-md border-4 border-emerald-200">
                     <CheckCircle size={64} />
                 </div>
                 <div>
@@ -183,181 +232,189 @@ export default function CreateInvoice() {
     const selectedCustomer = customers.find(c => c.customerId === parseInt(customerId));
 
     return (
-        <div className="max-w-[1700px] mx-auto space-y-10 animate-fade-in pb-20">
+        <div className="max-w-[1700px] mx-auto space-y-6 animate-fade-in pb-20">
             {/* Header / Command Bar */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10 bg-[var(--bg-card)] p-10 rounded-[3.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden group">
-                <div className="relative z-10">
-                   <button onClick={() => navigate('/invoices')} className="flex items-center gap-2 text-[var(--text-muted)] font-black uppercase text-[10px] tracking-[0.4em] hover:text-primary transition-all mb-6 group/back italic">
-                        <ArrowLeft size={16} className="group-hover/back:-translate-x-1 transition-transform"/> ABORT PROTOCOL
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
+                <div>
+                   <button onClick={() => navigate('/invoices')} className="flex items-center gap-2 text-[var(--text-muted)] font-medium text-sm hover:text-[var(--primary)] transition-all mb-4 group/back">
+                        <ArrowLeft size={16} className="group-hover/back:-translate-x-1 transition-transform"/> Back to Invoices
                     </button>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:rotate-12 transition-transform duration-500"><Calculator size={22}/></div>
-                        <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] italic">Requisition Channel</span>
-                    </div>
-                    <h1 className="text-5xl font-black tracking-tighter uppercase italic text-[var(--text-main)]">
-                       Transaction <span className="text-primary not-italic">{isEdit ? 'Override' : 'Entry'}</span>
+                    <h1 className="text-2xl font-bold text-[var(--text-main)]">
+                       {isEdit ? 'Edit Invoice' : 'Create New Invoice'}
                     </h1>
+                    <p className="text-sm text-[var(--text-muted)] mt-1">Manage transaction details and inventory allocation.</p>
                 </div>
                 
-                <div className="bg-slate-900 dark:bg-primary/10 px-10 py-6 rounded-[2.5rem] border border-white/5 flex items-center gap-8 shadow-2xl relative z-10">
+                <div className="bg-[var(--primary)] px-6 py-4 rounded-lg flex items-center gap-6 shadow-sm border border-[var(--primary-hover)]">
                     <div>
-                        <div className="text-[11px] font-black text-primary uppercase tracking-[0.4em] mb-1 italic">Net Valuation</div>
-                        <div className="text-4xl font-black text-white italic tracking-tighter tabular-nums leading-none">Rs.{netTotal.toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-white/80 uppercase tracking-wider mb-0.5">Net Total</div>
+                        <div className="text-2xl font-bold text-white tabular-nums">Rs.{netTotal.toLocaleString()}</div>
                     </div>
-                    <div className="p-4 bg-primary rounded-2xl text-white shadow-xl shadow-primary/20 shrink-0"><DollarSign size={28}/></div>
+                    <div className="p-2.5 bg-white/20 rounded-md text-white"><DollarSign size={20}/></div>
                 </div>
-                <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/5 rounded-bl-[20rem] -mr-40 -mt-40 blur-[100px] pointer-events-none"></div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-10">
-                {error && <div className="p-6 bg-rose-500 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest flex items-center gap-4 shadow-xl shadow-rose-500/20 animate-shake italic"> <ShieldAlert size={24}/> {error}</div>}
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {error && <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-center gap-3 shadow-sm"> <ShieldAlert size={20}/> {error}</div>}
 
-                {/* Tactical Parameters */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    <AppCard p0 className="overflow-hidden border-t-8 border-t-blue-500 group transition-all duration-500 hover:shadow-2xl">
-                        <div className="p-8 bg-blue-500/5 border-b border-[var(--border)]">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-500/10 text-blue-600 rounded-lg"><UserCircle size={18}/></div>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-600 italic">Billing Terminal</h3>
-                          </div>
-                        </div>
-                        <div className="p-8 space-y-8">
-                            <div className="flex flex-col gap-2.5">
-                                <label className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] italic">Assign target entity</label>
+                {/* Parameters */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AppCard p0 title="Customer Information" className="border-t-4 border-t-blue-500">
+                        <div className="p-6 space-y-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-[var(--text-main)]">Select Customer</label>
                                 <select required value={customerId} onChange={e => setCustomerId(e.target.value)}
-                                    className="w-full px-6 py-5 bg-[var(--bg-app)] border border-[var(--border)] rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all font-black text-xl italic outline-none cursor-pointer appearance-none shadow-inner">
-                                    <option value="">-- [SELECT CLIENT NODE] --</option>
-                                    {customers.map(c => <option key={c.customerId} value={c.customerId}>{c.customerName.toUpperCase()}</option>)}
+                                    className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                    <option value="">-- Select Client --</option>
+                                    {customers.map(c => <option key={c.customerId} value={c.customerId}>{c.customerName}</option>)}
                                 </select>
                             </div>
                             {selectedCustomer && (
-                                <div className="grid grid-cols-2 gap-6 animate-slide-up">
-                                    <div className="p-6 bg-rose-500/5 border border-rose-500/10 rounded-2xl group/stat transition-all hover:bg-rose-500/10">
-                                        <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1 italic">Debt Exposure</p>
-                                        <h4 className="text-2xl font-black italic text-rose-600 tabular-nums">Rs.{selectedCustomer.balance?.toLocaleString()}</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+                                        <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Current Balance</p>
+                                        <h4 className="text-lg font-bold text-red-700 tabular-nums">Rs.{selectedCustomer.balance?.toLocaleString()}</h4>
                                     </div>
-                                    <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl group/stat transition-all hover:bg-blue-500/10">
-                                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1 italic">Crate Registry</p>
-                                        <h4 className="text-2xl font-black italic text-blue-600 tabular-nums">{selectedCustomer.emptyCratesBalance || 0} PCS</h4>
+                                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Empty Crates</p>
+                                        <h4 className="text-lg font-bold text-blue-700 tabular-nums">{selectedCustomer.emptyCratesBalance || 0} PCS</h4>
                                     </div>
                                 </div>
                             )}
                         </div>
                     </AppCard>
 
-                    <AppCard p0 className="overflow-hidden border-t-8 border-t-primary group transition-all duration-500 hover:shadow-2xl">
-                        <div className="p-8 bg-primary/5 border-b border-[var(--border)]">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary/10 text-primary rounded-lg"><Target size={18}/></div>
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary italic">Fulfillment Strategy</h3>
-                          </div>
-                        </div>
-                        <div className="p-8 space-y-8">
-                            <div className="flex flex-col gap-2.5">
-                                <label className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] italic">Designate field representative</label>
+                    <AppCard p0 title="Order Details" className="border-t-4 border-t-[var(--primary)]">
+                        <div className="p-6 space-y-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-[var(--text-main)]">Assign Salesman</label>
                                 <select value={salesmanId} onChange={e => setSalesmanId(e.target.value)}
-                                    className="w-full px-6 py-5 bg-[var(--bg-app)] border border-[var(--border)] rounded-2xl focus:ring-4 focus:ring-primary/10 transition-all font-black text-xl italic outline-none cursor-pointer appearance-none shadow-inner">
-                                    <option value="">-- [SELECT FIELD REP] --</option>
-                                    {salesmen.map(s => <option key={s.salesmanId} value={s.salesmanId}>{s.name.toUpperCase()} [{s.area.toUpperCase()}]</option>)}
+                                    className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                    <option value="">-- Select Salesman --</option>
+                                    {salesmen.map(s => <option key={s.salesmanId} value={s.salesmanId}>{s.name} [{s.area}]</option>)}
                                 </select>
                             </div>
-                            <div className="flex items-center gap-4 p-6 bg-primary/5 rounded-2xl border border-primary/10">
-                              <Info size={20} className="text-primary"/>
-                              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest italic leading-relaxed">Ensure rep availability for the assigned territory node before commitment.</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold text-[var(--text-main)]">Invoice Type</label>
+                                    <select value={invoiceType} onChange={e => setInvoiceType(e.target.value)}
+                                        className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                        <option value="Spot">Spot (Instant)</option>
+                                        <option value="Delivery">Delivery (Scheduled)</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold text-[var(--text-main)]">Delivery Date</label>
+                                    <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)}
+                                        className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold text-[var(--text-main)]">Route</label>
+                                    <select value={routeId} onChange={e => setRouteId(e.target.value)}
+                                        className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                        <option value="">-- Select Route --</option>
+                                        {routes.map(r => <option key={r.routeId} value={r.routeId}>{r.routeName}</option>)}
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold text-[var(--text-main)]">Vehicle</label>
+                                    <select value={vehicleId} onChange={e => setVehicleId(e.target.value)}
+                                        className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                        <option value="">-- Select Vehicle --</option>
+                                        {vehicles.map(v => <option key={v.vehicleId} value={v.vehicleId}>{v.vehicleNumber}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </AppCard>
                 </div>
 
                 {/* Inventory Matrix */}
-                <AppCard p0 className="overflow-hidden shadow-2xl border-t-8 border-t-emerald-500 group transition-all duration-500">
-                    <div className="p-10 space-y-8">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-emerald-600 font-black text-[12px] uppercase tracking-[0.5em] italic">
-                               <Package size={20} className="group-hover:rotate-12 transition-transform"/> Inventory Interface
-                          </div>
-                          <AppBadge variant="info" size="md" className="px-5 py-2 border-none shadow-lg shadow-blue-500/10 italic font-black text-[10px] uppercase tracking-widest !rounded-xl">ACTIVE_NODES: {items.length}</AppBadge>
-                        </div>
-                        <div className="relative">
+                <AppCard p0 title="Inventory Items" className="relative z-50 border-t-4 border-t-emerald-500">
+                    <div className="p-6 space-y-4">
+                        <div className="relative" ref={searchRef}>
                             <AppInput 
-                                placeholder="Scan Barcode or Interrogate Asset Hierarchy..."
+                                placeholder="Search products by name or barcode..."
                                 value={productSearch}
-                                onChange={e => setProductSearch(e.target.value)}
-                                onFocus={() => filteredProducts.length > 0 && setShowDropdown(true)}
-                                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                                onChange={e => {
+                                    setProductSearch(e.target.value);
+                                    if (e.target.value.trim().length > 0) setShowDropdown(true);
+                                }}
+                                onFocus={() => { if (productSearch.trim().length > 0) setShowDropdown(true); }}
                                 icon={Search}
-                                className="!py-6 bg-[var(--bg-app)] !rounded-[2.5rem] !text-2xl shadow-inner border-[var(--border)] italic font-black placeholder:italic"
+                                className="!bg-[var(--bg-app)]"
                             />
-                            {showDropdown && (
-                                <div className="absolute top-full left-0 right-0 mt-6 bg-[var(--bg-card)] rounded-[3rem] z-[100] overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.3)] border border-[var(--border)] divide-y divide-[var(--border)] animate-slide-up">
-                                    {filteredProducts.map(p => (
-                                        <div key={p.productId} onMouseDown={() => addProduct(p)} className="p-8 flex justify-between items-center hover:bg-primary/5 cursor-pointer transition-all group/item">
-                                            <div className="flex items-center gap-6">
-                                               <div className="p-4 bg-primary/5 text-primary rounded-2xl group-hover/item:scale-110 group-hover/item:bg-primary group-hover/item:text-white transition-all"><ShoppingCart size={24}/></div>
-                                               <div>
-                                                  <h5 className="font-black text-xl uppercase tracking-tighter italic text-[var(--text-main)] leading-none">{p.productName}</h5>
-                                                  <div className="flex items-center gap-2 mt-2">
-                                                    <AppBadge variant="secondary" size="sm" className="px-3 border-none shadow-sm italic font-black text-[9px] uppercase tracking-widest">{p.brand || 'GENERAL'}</AppBadge>
-                                                    <span className="text-[10px] font-black text-[var(--text-muted)] opacity-40">|</span>
-                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest italic">{p.category}</p>
-                                                  </div>
-                                               </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <h4 className="text-emerald-500 font-black text-3xl italic tracking-tighter tabular-nums leading-none">Rs.{p.salePrice}</h4>
-                                                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mt-2 italic">Unit yield</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                            {showDropdown && filteredProducts.length > 0 && createPortal(
+                                <div className="fixed inset-0 z-[99998]" onClick={() => setShowDropdown(false)}>
+                                  <div style={{...getDropdownStyle(), border: '1px solid var(--border)', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)'}} onClick={e => e.stopPropagation()} className="shadow-xl divide-y divide-[var(--border)] animate-fade-in max-h-[400px] overflow-y-auto">
+                                      {filteredProducts.map(p => (
+                                          <div key={p.productId} onClick={() => addProduct(p)} className="p-4 flex justify-between items-center hover:bg-[var(--secondary)] cursor-pointer transition-all">
+                                              <div className="flex items-center gap-4">
+                                                <div className="p-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-md"><ShoppingCart size={18}/></div>
+                                                <div>
+                                                    <h5 className="font-semibold text-sm text-[var(--text-main)]">{p.productName}</h5>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                      <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">{p.brand || 'General'}</span>
+                                                      <span className="text-[10px] text-[var(--text-muted)]">•</span>
+                                                      <span className="text-[10px] text-[var(--primary)] font-medium uppercase tracking-wider">{p.category}</span>
+                                                    </div>
+                                                </div>
+                                              </div>
+                                              <div className="text-right">
+                                                  <h4 className="text-[var(--primary)] font-bold text-base tabular-nums">Rs.{p.salePrice.toLocaleString()}</h4>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                                </div>,
+                                document.body
                             )}
                         </div>
                     </div>
 
                     {items.length > 0 && (
-                        <div className="overflow-x-auto border-t-4 border-[var(--bg-app)]">
-                            <table className="w-full text-left">
-                                <thead className="bg-[var(--secondary)]/10">
+                        <div className="overflow-x-auto border-t border-[var(--border)]">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-[var(--secondary)]/50">
                                     <tr>
-                                        <th className="px-10 py-8 text-[11px] font-black uppercase tracking-[0.4em] text-[var(--text-muted)] italic">Asset Descriptor</th>
-                                        <th className="px-10 py-8 text-[11px] font-black uppercase tracking-[0.4em] text-[var(--text-muted)] text-center w-52 italic">Valuation Matrix</th>
-                                        <th className="px-10 py-8 text-[11px] font-black uppercase tracking-[0.4em] text-[var(--text-muted)] text-center w-40 italic">Density</th>
-                                        <th className="px-10 py-8 text-[11px] font-black uppercase tracking-[0.4em] text-primary text-center w-40 italic">Returns</th>
-                                        <th className="px-10 py-8 text-[11px] font-black uppercase tracking-[0.4em] text-[var(--text-muted)] text-right italic">Yield Delta</th>
-                                        <th className="px-10 py-8 w-24"></th>
+                                        <th className="px-6 py-3 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Product</th>
+                                        <th className="px-6 py-3 text-xs font-semibold text-[var(--text-muted)] text-center w-48 uppercase tracking-wider">Unit Price</th>
+                                        <th className="px-6 py-3 text-xs font-semibold text-[var(--text-muted)] text-center w-32 uppercase tracking-wider">Qty</th>
+                                        <th className="px-6 py-3 text-xs font-semibold text-[var(--primary)] text-center w-32 uppercase tracking-wider">Returns</th>
+                                        <th className="px-6 py-3 text-xs font-semibold text-[var(--text-muted)] text-right uppercase tracking-wider">Total</th>
+                                        <th className="px-6 py-3 w-16"></th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y-8 divide-[var(--bg-app)]">
+                                <tbody className="divide-y divide-[var(--border)]">
                                     {items.map((item, i) => (
-                                        <tr key={i} className="group hover:bg-primary/5 transition-all">
-                                            <td className="px-10 py-8">
-                                                <h5 className="font-black text-lg uppercase tracking-tighter italic text-[var(--text-main)] leading-none">{item.productName}</h5>
-                                                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mt-2 italic">MANIFEST: #{item.productId}</p>
+                                        <tr key={i} className="hover:bg-[var(--secondary)]/30 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <h5 className="font-semibold text-sm text-[var(--text-main)]">{item.productName}</h5>
+                                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-tight">ID: #{item.productId}</p>
                                             </td>
-                                            <td className="px-10 py-8">
-                                                <div className="relative group/input">
-                                                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black text-xs">Rs.</span>
+                                            <td className="px-6 py-4">
+                                                <div className="relative">
+                                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">Rs.</span>
                                                   <input type="number" step="0.01" value={item.unitPrice} onChange={e => changePrice(i, e.target.value)}
-                                                      className="w-full pl-14 pr-6 py-5 bg-[var(--bg-app)] border border-[var(--border)] rounded-2xl text-center font-black text-xl italic outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-inner" />
+                                                      className="w-full pl-10 pr-3 py-1.5 bg-[var(--bg-app)] border border-[var(--border)] rounded focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] outline-none text-right font-medium text-sm tabular-nums" />
                                                 </div>
                                             </td>
-                                            <td className="px-10 py-8">
+                                            <td className="px-6 py-4 text-center">
                                                 <input type="number" min="1" value={item.quantity} onChange={e => changeQty(i, e.target.value)}
-                                                    className="w-full px-6 py-5 bg-[var(--bg-app)] border border-[var(--border)] rounded-2xl text-center font-black text-xl italic outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-inner" />
+                                                    className="w-full px-3 py-1.5 bg-[var(--bg-app)] border border-[var(--border)] rounded focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] outline-none text-center font-medium text-sm tabular-nums" />
                                             </td>
-                                            <td className="px-10 py-8">
-                                                <div className="relative group/input">
-                                                    <input type="number" min="0" value={item.returnedQuantity} onChange={e => changeReturn(i, e.target.value)}
-                                                        className="w-full px-6 py-5 bg-primary/5 border border-primary/20 rounded-2xl text-center font-black text-xl italic text-primary outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-inner" />
-                                                    <RotateCcw size={18} className="absolute -top-1 -right-1 text-primary animate-spin-slow opacity-20"/>
-                                                </div>
+                                            <td className="px-6 py-4 text-center">
+                                                <input type="number" min="0" value={item.returnedQuantity} onChange={e => changeReturn(i, e.target.value)}
+                                                    className="w-full px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 rounded focus:ring-2 focus:ring-red-200 outline-none text-center font-medium text-sm tabular-nums" />
                                             </td>
-                                            <td className="px-10 py-8 text-right">
-                                                <h4 className="text-2xl font-black text-[var(--text-main)] italic tracking-tighter tabular-nums leading-none">Rs.{item.lineTotal.toLocaleString()}</h4>
+                                            <td className="px-6 py-4 text-right font-bold text-sm tabular-nums text-[var(--text-main)]">
+                                                Rs.{item.lineTotal.toLocaleString()}
                                             </td>
-                                            <td className="px-10 py-8 text-right">
-                                                <button type="button" onClick={() => removeItem(i)} className="p-4 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all interactive shadow-sm">
-                                                    <Trash2 size={24}/>
+                                            <td className="px-6 py-4 text-center">
+                                                <button type="button" onClick={() => removeItem(i)} className="p-2 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 rounded transition-all">
+                                                    <Trash2 size={18}/>
                                                 </button>
                                             </td>
                                         </tr>
@@ -369,61 +426,63 @@ export default function CreateInvoice() {
                 </AppCard>
 
                 {/* Economic Reconciliation */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
-                    <AppCard p0 className="lg:col-span-3 min-h-[350px] overflow-hidden group border-t-8 border-t-amber-500 transition-all duration-500 hover:shadow-2xl">
-                        <div className="p-8 bg-amber-500/5 border-b border-[var(--border)] flex items-center gap-3">
-                          <div className="p-2 bg-amber-500/10 text-amber-600 rounded-lg"><Layers size={18}/></div>
-                          <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-600 italic">Audit Log & Observations</h3>
-                        </div>
-                        <div className="p-8">
-                          <textarea rows={8} value={notes} onChange={e => setNotes(e.target.value)} placeholder="ENTER MISSION CRITICAL OBSERVATIONS, LOGISTICS BOTTLENECKS, OR DELIVERY SPECIFICATIONS..."
-                              className="w-full px-8 py-6 bg-[var(--bg-app)] border border-[var(--border)] rounded-[2.5rem] focus:ring-4 focus:ring-primary/10 outline-none font-black text-sm uppercase tracking-widest resize-none shadow-inner italic placeholder:opacity-30" />
+                {/* Economic Reconciliation */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+                    <AppCard p0 title="Order Notes" className="lg:col-span-3 border-t-4 border-t-orange-500">
+                        <div className="p-6">
+                          <textarea rows={6} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add any special instructions or observations..."
+                              className="w-full px-4 py-3 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] outline-none text-sm resize-none" />
                         </div>
                     </AppCard>
                     
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-slate-900 border border-slate-800 rounded-[3.5rem] p-10 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden text-white group">
-                           {/* Dynamic Decorative Elements */}
-                           <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full group-hover:bg-primary/20 transition-all duration-700"></div>
-                           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-500/5 blur-[100px] rounded-full"></div>
-                           
-                           <div className="space-y-10 relative z-10">
-                                <div className="space-y-6">
-                                    <div className="flex justify-between items-center opacity-40">
-                                        <span className="text-[11px] font-black uppercase tracking-[0.6em] italic">Gross Manifest</span>
-                                        <span className="font-black text-xl italic tabular-nums leading-none">Rs.{subtotal.toLocaleString()}</span>
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-[var(--bg-card)] border-2 border-[var(--border)] rounded-md p-8 shadow-sm">
+                           <div className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center opacity-70">
+                                        <span className="text-xs font-bold uppercase tracking-wider">Subtotal</span>
+                                        <span className="font-bold text-lg tabular-nums">Rs.{subtotal.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-[11px] font-black uppercase tracking-[0.6em] text-primary italic">Promotional Delta</span>
-                                        <div className="relative w-44 group/discount">
-                                          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-500 group-hover/discount:text-primary transition-colors">-</span>
+                                        <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider">Discount</span>
+                                        <div className="relative w-32">
                                           <input type="number" step="0.01" placeholder="0.00" value={discount} onChange={e => setDiscount(e.target.value)}
-                                            className="w-full pl-10 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-right font-black text-lg italic outline-none focus:ring-4 focus:ring-primary/20 transition-all text-primary shadow-inner" />
+                                            className="w-full px-3 py-1.5 bg-[var(--bg-app)] border border-[var(--border)] rounded focus:ring-2 focus:ring-[var(--primary)] outline-none text-right font-bold text-sm text-[var(--primary)]" />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Paid Amount</span>
+                                        <div className="relative w-32">
+                                          <input type="number" step="0.01" placeholder="0.00" value={paidAmount} onChange={e => setPaidAmount(e.target.value)}
+                                            className="w-full px-3 py-1.5 bg-[var(--bg-app)] border border-[var(--border)] rounded focus:ring-2 focus:ring-emerald-500 outline-none text-right font-bold text-sm text-emerald-600" />
                                         </div>
                                     </div>
                                 </div>
-                                <div className="pt-12 border-t border-white/5 flex flex-col gap-10">
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-4">
-                                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_#2563EB]"></div>
-                                          <h5 className="text-[11px] font-black text-primary uppercase tracking-[0.8em] italic leading-none">Final Economic Reconciliation</h5>
+                                <div className="pt-6 border-t border-[var(--border)] space-y-6">
+                                    <div className="flex justify-between items-end">
+                                        <div>
+                                            <h5 className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-[0.2em] mb-1">Net Payable</h5>
+                                            <h2 className="text-4xl font-bold tabular-nums">Rs.{netTotal.toLocaleString()}</h2>
                                         </div>
-                                        <h2 className="text-6xl font-black italic tracking-tighter leading-none tabular-nums group-hover:scale-105 transition-transform origin-left duration-500">Rs.{netTotal.toLocaleString()}</h2>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1">Balance</p>
+                                            <p className="text-xl font-bold tabular-nums text-[var(--text-muted)]">Rs.{remainingTotal.toLocaleString()}</p>
+                                        </div>
                                     </div>
                                     <button 
                                       type="submit" 
                                       disabled={submitting || items.length === 0} 
-                                      className="w-full py-8 rounded-[2.5rem] bg-primary text-white text-[12px] uppercase tracking-[0.5em] font-black shadow-[0_25px_60px_-15px_rgba(37,99,235,0.6)] active:scale-95 transition-all hover:brightness-110 hover:shadow-[0_30px_70px_-10px_rgba(37,99,235,0.7)] disabled:grayscale disabled:opacity-30 disabled:shadow-none flex items-center justify-center gap-4 group/btn"
+                                      className="w-full py-4 rounded-md bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-bold uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
                                         {submitting ? (
                                           <>
-                                            <Activity size={20} className="animate-spin"/>
-                                            <span>COMMITTING PROTOCOL...</span>
+                                            <Activity size={18} className="animate-spin"/>
+                                            <span>Processing...</span>
                                           </>
                                         ) : (
                                           <>
-                                            <Zap size={20} className="group-hover/btn:scale-125 transition-transform"/>
-                                            <span>{isEdit ? 'OVERRIDE REQUISITION' : 'COMMIT TRANSACTION'}</span>
+                                            <CheckCircle size={18}/>
+                                            <span>{isEdit ? 'Update Invoice' : 'Create Invoice'}</span>
                                           </>
                                         )}
                                     </button>
@@ -431,9 +490,9 @@ export default function CreateInvoice() {
                            </div>
                         </div>
 
-                        <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex items-center gap-5 italic text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest leading-relaxed">
-                          <ShieldAlert size={28} className="text-primary shrink-0"/>
-                          <p>Committing this ledger will trigger immediate stock adjustments and credit exposure updates across the network.</p>
+                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-3">
+                          <Info size={20} className="text-blue-500 shrink-0 mt-0.5"/>
+                          <p className="text-xs text-blue-700 leading-relaxed font-medium">Finalizing this invoice will update stock levels and customer credit limits immediately.</p>
                         </div>
                     </div>
                 </div>

@@ -11,7 +11,7 @@ namespace DMS.API.Controllers
 {
     [ApiController]
     [Route("api/v1/[controller]")]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Manager,Salesman")]
     public class CustomersController : ControllerBase
     {
         private readonly CustomerService _customerService;
@@ -21,47 +21,99 @@ namespace DMS.API.Controllers
             _customerService = customerService;
         }
 
+        private void GetIsolationFilters(out int? routeId, out int? salesmanId)
+        {
+            routeId = null;
+            salesmanId = null;
+            if (User.IsInRole("Salesman"))
+            {
+                if (int.TryParse(User.FindFirst("RouteId")?.Value, out int r)) routeId = r;
+                if (int.TryParse(User.FindFirst("SalesmanId")?.Value, out int s)) salesmanId = s;
+            }
+        }
+
+        private bool IsAuthorizedForCustomer(Customer customer)
+        {
+            if (!User.IsInRole("Salesman")) return true;
+            
+            GetIsolationFilters(out int? routeId, out int? salesmanId);
+
+            if (routeId.HasValue && customer.RouteId != routeId.Value) return false;
+            // Removed strict salesman check for customers in the same route to allow collaboration if needed, 
+            // but strict per requirements: "customers are assigned based on routes"
+            
+            return true;
+        }
+
         // GET: api/v1/customers
         [HttpGet]
-        [RequirePermission("Customers.View")] // Added
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers([FromQuery] string? search) // Renamed from Get
-            => Ok(await _customerService.GetAllCustomersAsync(search));
+        [RequirePermission("Customers.View")]
+        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers([FromQuery] string? search)
+        {
+            GetIsolationFilters(out int? routeId, out int? salesmanId);
+            return Ok(await _customerService.GetAllCustomersAsync(search, routeId, salesmanId));
+        }
 
         // GET: api/v1/customers/5
         [HttpGet("{id}")]
-        [RequirePermission("Customers.View")] // Added
-        public async Task<ActionResult<Customer>> GetCustomer(int id) // Renamed from Get
+        [RequirePermission("Customers.View")]
+        public async Task<ActionResult<Customer>> GetCustomer(int id)
         {
             var customer = await _customerService.GetCustomerByIdAsync(id);
             if (customer == null) return NotFound();
+            
+            if (!IsAuthorizedForCustomer(customer)) return Forbid();
+
             return Ok(customer);
         }
 
         // GET /api/v1/customers/{id}/history
         [HttpGet("{id}/history")]
-        [RequirePermission("Customers.View")] // Added
+        [RequirePermission("Customers.View")]
         public async Task<ActionResult> GetHistory(int id)
         {
+            var customer = await _customerService.GetCustomerByIdAsync(id);
+            if (customer == null) return NotFound();
+            if (!IsAuthorizedForCustomer(customer)) return Forbid();
+
             var history = await _customerService.GetCustomerWithHistoryAsync(id);
-            if (history == null) return NotFound();
             return Ok(history);
         }
 
         // POST: api/v1/customers
         [HttpPost]
-        [RequirePermission("Customers.Create")] // Added
-        public async Task<ActionResult<Customer>> PostCustomer([FromBody] Customer customer) // Renamed from Post
+        [RequirePermission("Customers.Create")]
+        public async Task<ActionResult<Customer>> PostCustomer([FromBody] Customer customer)
         {
+            if (User.IsInRole("Salesman"))
+            {
+                GetIsolationFilters(out int? routeId, out int? salesmanId);
+                if (routeId.HasValue) customer.RouteId = routeId.Value;
+                if (salesmanId.HasValue) customer.SalesmanId = salesmanId.Value;
+            }
+
             var created = await _customerService.CreateCustomerAsync(customer);
-            return CreatedAtAction(nameof(GetCustomer), new { id = created.CustomerId }, created); // Updated nameof
+            return CreatedAtAction(nameof(GetCustomer), new { id = created.CustomerId }, created);
         }
 
         // PUT: api/v1/customers/5
         [HttpPut("{id}")]
-        [RequirePermission("Customers.Edit")] // Added
-        public async Task<IActionResult> PutCustomer(int id, [FromBody] Customer customer) // Renamed from Put, changed return type
+        [RequirePermission("Customers.Edit")]
+        public async Task<IActionResult> PutCustomer(int id, [FromBody] Customer customer)
         {
             if (id != customer.CustomerId) return BadRequest("ID mismatch.");
+            
+            var existing = await _customerService.GetCustomerByIdAsync(id);
+            if (existing == null) return NotFound();
+            if (!IsAuthorizedForCustomer(existing)) return Forbid();
+
+            // Prevent salesman from changing Route/Salesman assignment
+            if (User.IsInRole("Salesman"))
+            {
+                customer.RouteId = existing.RouteId;
+                customer.SalesmanId = existing.SalesmanId;
+            }
+
             try
             {
                 await _customerService.UpdateCustomerAsync(customer);
@@ -75,9 +127,13 @@ namespace DMS.API.Controllers
 
         // DELETE: api/v1/customers/5
         [HttpDelete("{id}")]
-        [RequirePermission("Customers.Delete")] // Added
-        public async Task<IActionResult> DeleteCustomer(int id) // Renamed from Delete, changed return type
+        [RequirePermission("Customers.Delete")]
+        public async Task<IActionResult> DeleteCustomer(int id)
         {
+            var existing = await _customerService.GetCustomerByIdAsync(id);
+            if (existing == null) return NotFound();
+            if (!IsAuthorizedForCustomer(existing)) return Forbid();
+
             await _customerService.DeleteCustomerAsync(id);
             return NoContent();
         }
@@ -86,6 +142,10 @@ namespace DMS.API.Controllers
         [HttpPost("{id}/payment")]
         public async Task<ActionResult> RecordPayment(int id, [FromBody] PaymentRequest req)
         {
+            var existing = await _customerService.GetCustomerByIdAsync(id);
+            if (existing == null) return NotFound("Customer not found.");
+            if (!IsAuthorizedForCustomer(existing)) return Forbid();
+
             try
             {
                 await _customerService.RecordPaymentAsync(id, req.Amount, req.Note);

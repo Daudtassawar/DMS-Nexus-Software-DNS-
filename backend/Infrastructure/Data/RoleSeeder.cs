@@ -97,11 +97,11 @@ namespace DMS.Infrastructure.Data
             {
                 { "Admin", permissions.Select(p => p.Id).ToList() }, // Admin gets everything
                 { "Manager", new List<string> { 
-                    "Products.View", "Products.Edit", "Customers.View", "Stock.View", "Reports.View", "Invoices.View", 
+                    "Dashboard.View", "Products.View", "Products.Edit", "Customers.View", "Stock.View", "Reports.View", "Invoices.View", 
                     "Finance.View", "Finance.Update", "Operations.View", "Operations.Update",
                     "Distributors.View", "Distributors.Create", "Distributors.Edit", "Distributors.Delete"
                 } },
-                { "Salesman", new List<string> { "Invoices.Create", "Invoices.View", "Customers.View" } }
+                { "Salesman", new List<string> { "Dashboard.View", "Invoices.Create", "Invoices.View", "Customers.View", "Products.View", "Operations.View", "Operations.Update" } }
             };
 
             foreach (var mapping in rolePermissionMaps)
@@ -137,10 +137,85 @@ namespace DMS.Infrastructure.Data
                     Status = "Approved"
                 };
 
-                var result = await userManager.CreateAsync(newAdmin, "Admin@123!");
-                if (result.Succeeded)
+                try 
                 {
-                    await userManager.AddToRoleAsync(newAdmin, "Admin");
+                    var result = await userManager.CreateAsync(newAdmin, "Admin@123!");
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(newAdmin, "Admin");
+                    }
+                } 
+                catch (Exception ex) 
+                {
+                    Console.WriteLine($"WARNING: Failed to seed admin user. They may already exist. Error: {ex.Message}");
+                }
+            }
+
+            // 5. Seed Predefined Order Bookers (Phase 8)
+            var predefinedSalesmen = new List<(string Id, string Name)>
+            {
+                ("SAL-001", "Waseem"),
+                ("SAL-002", "Moazzam"),
+                ("SAL-003", "Fahad"),
+                ("SAL-004", "Asad"),
+                ("SAL-005", "Ahmad"),
+                ("SAL-006", "Shabbir"),
+                ("SAL-007", "Ramish"),
+                ("SAL-008", "Younas"),
+                ("SAL-009", "Shahid")
+            };
+
+            foreach (var s in predefinedSalesmen)
+            {
+                // Ensure Salesman Entity exists
+                var salesmanRecord = await dbContext.Salesmen.FirstOrDefaultAsync(x => x.EmployeeId == s.Id);
+                if (salesmanRecord == null)
+                {
+                    // Fallback to check by Name if EmployeeId was null previously
+                    salesmanRecord = await dbContext.Salesmen.FirstOrDefaultAsync(x => x.Name == s.Name);
+                    if (salesmanRecord == null)
+                    {
+                        salesmanRecord = new Salesman { EmployeeId = s.Id, Name = s.Name, Phone = "0000000000" };
+                        dbContext.Salesmen.Add(salesmanRecord);
+                        await dbContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        salesmanRecord.EmployeeId = s.Id;
+                        await dbContext.SaveChangesAsync();
+                    }
+                }
+
+                // Ensure AppUser exists
+                var userRecord = await userManager.FindByNameAsync(s.Id);
+                if (userRecord == null)
+                {
+                    var newUser = new AppUser
+                    {
+                        UserName = s.Id,
+                        Email = $"{s.Id.ToLower()}@dms.com",
+                        FullName = s.Name,
+                        Role = "Salesman",
+                        Status = "Approved",
+                        EmployeeId = s.Id,
+                        SalesmanId = salesmanRecord.SalesmanId
+                    };
+
+                    var result = await userManager.CreateAsync(newUser, "Salesman@123!");
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(newUser, "Salesman");
+                    }
+                }
+                else
+                {
+                    // Sync up existing user if needed
+                    if (userRecord.EmployeeId != s.Id || userRecord.SalesmanId != salesmanRecord.SalesmanId)
+                    {
+                        userRecord.EmployeeId = s.Id;
+                        userRecord.SalesmanId = salesmanRecord.SalesmanId;
+                        await userManager.UpdateAsync(userRecord);
+                    }
                 }
             }
         }

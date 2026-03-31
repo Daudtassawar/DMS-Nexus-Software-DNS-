@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
-import { Shield, Lock, User, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { Shield, Lock, User, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import AppButton from '../components/AppButton';
 
 export default function Login() {
@@ -19,64 +19,60 @@ export default function Login() {
             await authService.login(username, password);
             window.location.href = '/'; 
         } catch (err) {
-            setError(err.response?.data?.message || 'Authentication sequence failed.');
+            setError(err.response?.data?.message || 'The username or password you entered is incorrect.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0f172a] relative overflow-hidden font-sans">
-            {/* Animated Background Accents */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse transition-all duration-[5000ms]"></div>
-            
-            <div className="w-full max-w-[480px] p-4 relative z-10 animate-fade-in">
-                <div className="bg-white/5 backdrop-blur-2xl p-10 rounded-[2.5rem] border border-white/10 shadow-[0_32px_80px_rgba(0,0,0,0.5)] flex flex-col items-center">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans p-6">
+            <div className="w-full max-w-[440px] animate-fade-in">
+                <div className="bg-white p-8 md:p-12 rounded-lg border border-slate-200 shadow-xl flex flex-col items-center">
                     
                     {/* Brand Identity */}
                     <div className="mb-10 text-center">
-                        <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.4)] mx-auto mb-6 transform rotate-12 hover:rotate-0 transition-transform duration-500">
-                           <Shield size={40} className="text-white"/>
+                        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 mx-auto mb-6">
+                           <Shield size={32} className="text-white"/>
                         </div>
-                        <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">DMS <span className="text-primary not-italic">OS</span></h1>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3 italic">Enterprise Distribution Intelligence</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Hamdaan <span className="text-blue-600">Traders</span></h1>
+                        <p className="text-xs font-medium text-slate-500 mt-2 uppercase tracking-wider">Enterprise Distribution System</p>
                     </div>
 
                     {error && (
-                        <div className="w-full mb-6 p-4 bg-rose-500 text-white rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-widest animate-shake">
-                            <AlertCircle size={18}/> {error}
+                        <div className="w-full mb-6 p-4 bg-red-50 border border-red-100 text-red-700 rounded-md flex items-center gap-3 text-xs font-medium animate-shake">
+                            <AlertCircle size={16} className="shrink-0"/> {error}
                         </div>
                     )}
 
                     <form onSubmit={handleLogin} className="w-full space-y-6">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">System Handle</label>
+                            <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider pl-1">Username</label>
                             <div className="relative group">
-                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
                                     <User size={18}/>
                                 </div>
                                 <input
                                     type="text"
                                     required
-                                    className="w-full pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-primary outline-none text-white font-bold text-sm placeholder:text-slate-600 transition-all focus:bg-white/10"
+                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-100 focus:border-blue-600 outline-none text-slate-900 font-medium text-sm placeholder:text-slate-400 transition-all"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    placeholder="Username"
+                                    placeholder="Enter your username"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Security Key</label>
+                            <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider pl-1">Password</label>
                             <div className="relative group">
-                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
                                     <Lock size={18}/>
                                 </div>
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-primary outline-none text-white font-bold text-sm placeholder:text-slate-600 transition-all focus:bg-white/10"
+                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-md focus:ring-2 focus:ring-blue-100 focus:border-blue-600 outline-none text-slate-900 font-medium text-sm placeholder:text-slate-400 transition-all"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
@@ -86,25 +82,25 @@ export default function Login() {
 
                         <AppButton
                             disabled={loading}
-                            className="w-full py-5 rounded-2xl bg-primary hover:bg-blue-600 text-white font-black uppercase tracking-[0.2em] italic text-xs shadow-xl shadow-primary/20 flex justify-center group"
+                            className="w-full py-3.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md transition-all flex justify-center group"
                         >
                             {loading ? (
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Synchronizing...
+                                    Signing in...
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2">
-                                    Initialize Core <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform"/>
+                                    Sign In <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform"/>
                                 </div>
                             )}
                         </AppButton>
                         
-                        <div className="pt-8 text-center border-t border-white/5">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                New Terminal Access?{' '}
-                                <Link to="/register" className="text-primary hover:text-blue-400 transition-colors">
-                                    Apply for Credentials
+                        <div className="pt-8 text-center border-t border-slate-100">
+                            <p className="text-xs text-slate-500 font-medium">
+                                Don't have an account?{' '}
+                                <Link to="/register" className="text-blue-600 hover:underline font-bold transition-colors">
+                                    Request Access
                                 </Link>
                             </p>
                         </div>
@@ -112,12 +108,12 @@ export default function Login() {
                 </div>
                 
                 {/* Footer Security Badge */}
-                <div className="mt-8 flex items-center justify-center gap-3 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-                   <div className="flex items-center gap-2 text-[9px] font-black text-white uppercase tracking-[0.3em]">
-                       <CheckCircle size={10}/> End-to-End Encrypted
+                <div className="mt-8 flex items-center justify-center gap-4 opacity-50">
+                   <div className="flex items-center gap-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                       <CheckCircle2 size={12} className="text-emerald-600"/> Secure Data Link
                    </div>
-                   <div className="w-1 h-1 bg-white rounded-full"></div>
-                   <div className="text-[9px] font-black text-white uppercase tracking-[0.3em]">v4.2.0-Production</div>
+                   <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+                   <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">v4.2.0-STABLE</div>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import distributorService from '../services/distributorService';
-import { Truck, Edit, TrendingUp, Phone, MapPin, Trash2, Settings, RefreshCcw, UserSquare2, Zap, Share2, Activity, Info, CheckCircle, AlertCircle, Plus } from 'lucide-react';
+import { Truck, Edit, TrendingUp, Phone, MapPin, Trash2, Settings, RefreshCcw, UserSquare2, Zap, Share2, Activity, Info, CheckCircle, AlertCircle, Plus, Search, Globe, Network, Building2 } from 'lucide-react';
 import DistributorModal from '../components/DistributorModal';
 import DistributorPerformanceModal from '../components/DistributorPerformanceModal';
 import AppCard from '../components/AppCard';
@@ -14,6 +14,7 @@ export default function Distributors() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [status, setStatus] = useState({ type: '', message: '' });
+    const [search, setSearch] = useState('');
 
     // Modal States
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +30,7 @@ export default function Distributors() {
             const data = await distributorService.getDistributors();
             setDistributors(data || []);
         } catch (err) {
-            setError('Supply Chain Registry Access Failure.');
+            setError('Failed to retrieve distributor directory records.');
         } finally {
             setLoading(false);
         }
@@ -44,10 +45,10 @@ export default function Distributors() {
         try {
             if (formData.distributorId) {
                 await distributorService.updateDistributor(formData.distributorId, formData);
-                showStatus('success', `Partner node '${formData.name}' upgraded.`);
+                showStatus('success', `Partner record for '${formData.name}' updated.`);
             } else {
                 await distributorService.createDistributor(formData);
-                showStatus('success', `New partner '${formData.name}' enlisted.`);
+                showStatus('success', `New logistics partner '${formData.name}' registered.`);
             }
             setIsModalOpen(false);
             fetchDistributors();
@@ -57,158 +58,137 @@ export default function Distributors() {
     const handleDelete = async (d) => {
         const id = d.distributorId || d.id;
         if (!id) {
-            console.error("Purge Error: Identifier Missing", d);
-            showStatus('error', 'Purge Protocol Failure: Unit reference lost.');
+            showStatus('error', 'Critical Error: Record identifier missing.');
             return;
         }
 
-        if (!window.confirm(`Permanently terminate logistics pipeline for '${d.name}'?`)) return;
+        if (!window.confirm(`Permanently remove records for distributor '${d.name}'?`)) return;
         
         try {
             await distributorService.deleteDistributor(id);
-            showStatus('success', `Partner node '${d.name}' successfully purged from registry.`);
-            fetchDistributors(); // Synchronize with backend to ensure data integrity
+            showStatus('success', `Distributor '${d.name}' successfully removed.`);
+            fetchDistributors();
         } catch (err) {
-            console.error("Purge Error Logged:", err);
-            const msg = err.response?.data?.message || err.message || "Pipeline linkages found: Dependent data prevents purge.";
+            const msg = err.response?.data?.message || err.message || "Failed to remove distributor record.";
             showStatus('error', msg);
         }
     };
 
+    const displayedDisributors = distributors.filter(d => 
+        !search || 
+        d.name?.toLowerCase().includes(search.toLowerCase()) || 
+        d.region?.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
-        <div className="space-y-10 max-w-[1700px] mx-auto animate-fade-in pb-20">
-            {/* Header / Config Bar */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10 bg-[var(--bg-card)] p-10 rounded-[3.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden group">
-                <div className="relative z-10">
-                   <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:rotate-12 transition-transform duration-500"><Truck size={22}/></div>
-                        <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] italic">Supply Chain Infrastructure</span>
-                   </div>
-                    <h1 className="text-5xl font-black tracking-tighter uppercase italic text-[var(--text-main)]">
-                       Logistic <span className="text-primary not-italic">Nodes</span>
-                    </h1>
-                    <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mt-3 italic">Coordinate logistics partners, optimize supply flow, and monitor pipeline integrity.</p>
-                </div>
-                
-                <div className="flex flex-wrap gap-5 relative z-10">
-                    <AppButton onClick={() => { setEditingDistributor(null); setIsModalOpen(true); }} className="!px-10 !py-4 !rounded-2xl shadow-lg shadow-primary/20">
-                        <Plus className="w-5 h-5 mr-3"/> <span className="uppercase tracking-[0.15em] font-black text-[10px]">Onboard Partner</span>
-                    </AppButton>
-                </div>
-                <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/5 rounded-bl-[20rem] -mr-40 -mt-40 blur-[100px] pointer-events-none"></div>
-            </div>
-
-            {/* Tactical Metrics Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-blue-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
-                        <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Network capacity</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-[var(--text-main)] tabular-nums">{distributors.length}</h4>
-                        </div>
-                        <div className="p-3.5 bg-blue-500/10 text-blue-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <Share2 size={24}/>
-                        </div>
-                    </div>
-                </AppCard>
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-emerald-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
-                        <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Node distribution</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-emerald-600 tabular-nums">{[...new Set(distributors.map(d => d.region).filter(Boolean))].length}</h4>
-                        </div>
-                        <div className="p-3.5 bg-emerald-500/10 text-emerald-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <MapPin size={24}/>
-                        </div>
-                    </div>
-                </AppCard>
-            </div>
-
+        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
             {status.message && (
-                <div className={`p-6 border rounded-[2rem] text-[11px] font-black uppercase tracking-widest flex items-center gap-4 animate-slide-up shadow-xl ${status.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-rose-500/10 border-rose-500/20 text-rose-600'}`}>
-                    {status.type === 'success' ? <CheckCircle size={24}/> : <Info size={24}/>}
-                    {status.message}
+                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-xl shadow-xl font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/10 animate-slide-up ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+                    {status.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}{status.message}
                 </div>
             )}
 
-            {/* Central Terminal */}
-            <AppCard p0 className="overflow-hidden shadow-2xl border-t-8 border-t-primary group">
-                <div className="flex flex-col xl:flex-row gap-8 items-center p-8 bg-[var(--secondary)]/10 border-b border-[var(--border)]">
-                    <div className="flex-1 w-full relative">
-                        <AppInput 
-                            placeholder="Interrogate pipeline: partner, ID, region..." 
-                            icon={RefreshCcw}
-                            className="!rounded-2xl"
-                            readOnly
-                        />
+            {/* Header Section */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                        <Building2 className="text-blue-600" size={24}/> Distributor Management
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-1">Manage external distributors, regional coverage, and contact information.</p>
+                </div>
+                <AppButton onClick={() => { setEditingDistributor(null); setIsModalOpen(true); }} className="rounded-md">
+                    <Plus size={18} className="mr-2"/> Add Distributor
+                </AppButton>
+            </div>
+
+            {/* Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <AppCard className="border-t-4 border-t-blue-500 shadow-sm">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Distributors</p>
+                            <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{distributors.length}</h4>
+                        </div>
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded"><Building2 size={18}/></div>
                     </div>
-                    <AppButton variant="secondary" onClick={fetchDistributors} className="!px-8 !py-3.5 !rounded-2xl group">
-                      <RefreshCcw size={18} className="mr-3 text-primary group-hover:rotate-180 transition-transform duration-700"/> 
-                      <span className="uppercase tracking-[0.2em] font-black text-[10px]">Deep Refresh</span>
+                </AppCard>
+                <AppCard className="border-t-4 border-t-emerald-500 shadow-sm">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Coverage Regions</p>
+                            <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{[...new Set(distributors.map(d => d.region).filter(Boolean))].length}</h4>
+                        </div>
+                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded"><Globe size={18}/></div>
+                    </div>
+                </AppCard>
+            </div>
+
+            {error && <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-lg flex items-center gap-3 text-sm font-semibold"> <AlertCircle size={18}/> {error}</div>}
+
+            <AppCard p0 className="overflow-hidden shadow-sm border border-slate-200">
+                <div className="flex flex-col md:flex-row gap-4 items-center p-4 bg-slate-50/50 border-b border-slate-200">
+                    <div className="relative flex-1 w-full">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or region..." 
+                               className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                    </div>
+                    <AppButton variant="secondary" onClick={fetchDistributors} className="rounded-md w-full md:w-auto">
+                        <RefreshCcw size={16} className="mr-2"/> Sync
                     </AppButton>
                 </div>
 
-                <div className="p-4">
+                <div className="p-0">
                   <AppTable 
-                      headers={['Partner Profile', 'Logistic Intel', 'Dispatch Infrastructure', 'Actions']}
-                      data={distributors}
+                      headers={['Distributor', 'Region', 'Contact', 'Actions']}
+                      data={displayedDisributors}
                       loading={loading}
                       renderRow={(d) => (
                           <>
-                              <td className="px-8 py-7">
-                                  <div className="flex items-center gap-5">
-                                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-primary/20 group-hover:scale-110 transition-transform border-4 border-white/20">
-                                        <Truck size={24}/>
+                              <td className="px-6 py-4">
+                                  <div className="flex items-center gap-4">
+                                      <div className="w-10 h-10 bg-slate-50 text-blue-600 rounded-md flex items-center justify-center border border-slate-200 shadow-sm">
+                                        <Building2 size={18}/>
                                       </div>
                                       <div>
-                                          <p className="font-black text-base italic uppercase tracking-tighter text-[var(--text-main)] mb-1 leading-none">{d.name}</p>
-                                          <AppBadge variant="secondary" size="sm" className="px-2 border-none shadow-sm leading-none italic font-black text-[9px] !rounded-md uppercase tracking-widest">NODE-VAL: DIST-{d.distributorId}</AppBadge>
+                                          <p className="font-bold text-sm text-slate-900 leading-tight">{d.name || 'Unknown Distributor'}</p>
+                                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">ID: {d.distributorId}</p>
                                       </div>
                                   </div>
                               </td>
-                              <td className="px-8 py-7">
-                                  <div className="space-y-2">
-                                      <div className="flex items-center gap-2">
-                                        <MapPin size={10} className="text-primary"/>
-                                        <p className="text-xs font-black text-[var(--text-main)] italic leading-none tracking-tight uppercase">{d.region || 'UNMAPPED_NODE'}</p>
-                                      </div>
-                                      <AppBadge variant="info" size="sm" className="px-4 py-1 border-none shadow-sm leading-none italic font-black text-[8px] uppercase tracking-[0.2em] !rounded-lg">GEO_TAGGED</AppBadge>
+                              <td className="px-6 py-4">
+                                  <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                    <MapPin size={14} className="text-slate-400"/>
+                                    {d.region || 'Not Assigned'}
                                   </div>
                               </td>
-                              <td className="px-8 py-7">
-                                  <div className="space-y-2.5">
-                                      <div className="flex items-center gap-2">
-                                          <Phone size={10} className="text-primary"/>
-                                          <p className="text-[10px] font-black text-[var(--text-muted)] italic tracking-widest leading-none">{d.contact || 'SIGNAL_LOST'}</p>
-                                      </div>
-                                      <div className="flex items-center gap-1.5 py-1 px-3 bg-primary/5 border border-primary/10 rounded-xl w-fit">
-                                          <Zap size={10} className="text-primary"/>
-                                          <p className="text-[9px] font-black text-primary uppercase tracking-widest italic leading-none">LOGISTIC_CHANNEL_A</p>
-                                      </div>
+                              <td className="px-6 py-4">
+                                  <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                                      <Phone size={14} className="text-slate-400"/>
+                                      {d.contact || '—'}
                                   </div>
                               </td>
-                              <td className="px-8 py-7 text-right">
-                                  <div className="flex justify-end gap-3">
+                              <td className="px-6 py-4">
+                                  <div className="flex items-center gap-2 justify-end">
                                       <button 
                                           onClick={() => { setSelectedDistributor(d); setIsPerformanceOpen(true); }}
-                                          className="p-3.5 rounded-2xl bg-emerald-500/5 text-emerald-500 border border-emerald-500/10 hover:bg-emerald-600 hover:text-white transition-all interactive shadow-sm"
-                                          title="Flow Analysis"
+                                          className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm"
+                                          title="View Performance"
                                       >
-                                          <TrendingUp size={20}/>
+                                          <TrendingUp size={16}/>
                                       </button>
                                       <button 
                                           onClick={() => { setEditingDistributor(d); setIsModalOpen(true); }}
-                                          className="p-3.5 rounded-2xl bg-blue-500/5 text-blue-500 border border-blue-500/10 hover:bg-blue-600 hover:text-white transition-all interactive shadow-sm"
-                                          title="Override Parameters"
+                                          className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-all shadow-sm"
+                                          title="Edit Distributor"
                                       >
-                                          <Settings size={20}/>
+                                          <Edit size={16}/>
                                       </button>
                                       <button 
                                           onClick={() => handleDelete(d)}
-                                          className="p-3.5 rounded-2xl bg-rose-500/5 text-rose-500 border border-rose-500/10 hover:bg-rose-600 hover:text-white transition-all interactive shadow-sm"
-                                          title="Purge Pipeline"
+                                          className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm"
+                                          title="Delete Distributor"
                                       >
-                                          <Trash2 size={20}/>
+                                          <Trash2 size={16}/>
                                       </button>
                                   </div>
                               </td>
@@ -218,7 +198,7 @@ export default function Distributors() {
                 </div>
             </AppCard>
 
-            {/* Modals */}
+            {/* Application Modals */}
             {isModalOpen && (
                 <DistributorModal
                     distributor={editingDistributor}

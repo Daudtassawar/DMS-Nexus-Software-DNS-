@@ -5,45 +5,45 @@
 @tailwind utilities;
 
 :root {
-  /* Professional Light Mode Palette - DMS OS */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary: #f1f5f9;
-  --bg-app: #f8fafc;
-  --bg-card: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --ring: rgba(37, 99, 235, 0.15);
+  /* Clean Professional Light Theme */
+  --bg-app: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --text-main: #1E293B;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --secondary: #F1F5F9;
+  --ring: rgba(37, 99, 235, 0.2);
   
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2.5rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
 }
 
 [data-theme="dark"] {
-  /* Professional Dark Mode Palette - Enterprise Black */
-  --primary: #3b82f6;
-  --primary-hover: #60a5fa;
-  --secondary: #1e293b;
-  --bg-app: #0f172a;
-  --bg-card: #1e293b;
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
+  /* Clean Professional Dark Theme */
+  --bg-app: #0F172A;
+  --bg-card: #1E293B;
+  --text-main: #E2E8F0;
+  --text-muted: #94A3B8;
   --border: #334155;
-  --ring: rgba(59, 130, 246, 0.15);
+  --primary: #3B82F6;
+  --primary-hover: #60A5FA;
+  --secondary: #334155;
+  --ring: rgba(59, 130, 246, 0.2);
 }
 
 @layer base {
   body {
-    @apply antialiased bg-[var(--bg-app)] text-[var(--text-main)];
+    @apply antialiased text-[var(--text-main)];
+    background-color: var(--bg-app);
     font-family: 'Inter', 'Outfit', sans-serif;
-    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
   ::selection {
     background-color: rgba(37, 99, 235, 0.2);
@@ -52,80 +52,297 @@
 }
 
 @layer components {
+  /* Base card structure without glass/blur */
   .app-card {
-    @apply bg-[var(--bg-card)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-sm transition-all duration-300;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
   }
   
   .interactive {
-    @apply active:scale-[0.98] transition-all duration-200 cursor-pointer;
+    @apply active:scale-[0.99] transition-all duration-150 cursor-pointer;
   }
 
-  /* Global Section Title */
+  /* Global Section Title - Kept simple and professional */
   .section-title {
-    @apply text-sm font-black text-primary uppercase tracking-[0.3em] mb-6 italic flex items-center gap-3;
+    @apply text-sm font-bold text-[var(--text-main)] uppercase tracking-wider mb-6 flex items-center gap-2;
   }
 }
 
-/* Custom Tactical Scrollbar */
+/* Custom Scrollbar - Simple */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-app);
 }
 
 ::-webkit-scrollbar-thumb {
   background-color: var(--border);
-  border-radius: 9999px;
-  border: 4px solid transparent;
-  background-clip: content-box;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--text-muted);
 }
 
-/* Advanced Tactical Animations */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Animations minimized for ERP professional look */
+[class*="animate-"]:not(.animate-spin):not(.animate-pulse) {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
 }
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Force solid backgrounds and remove neon glows */
+[class*="/50"], [class*="/20"], [class*="/10"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
-@keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-.animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
-.animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-slide-in { animation: slide-up 0.4s ease-out forwards; }
-.animate-shake { animation: shake 0.4s ease-in-out; }
-.animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
-
-/* Table Glow & Hover Effects */
+/* Table Hover Effects */
 tr:hover td {
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: var(--secondary);
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px var(--ring), 0 4px 6px -1px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 2px var(--ring);
 }
+
+/* Responsive Table Shorthands */
+@media (max-width: 768px) {
+  .mobile-card {
+    @apply bg-[var(--bg-card)] border border-[var(--border)] p-4 rounded-lg mb-4 shadow-sm;
+  }
+  
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL PRINT STYLESHEET
+   Hides app chrome, forces white background + black text,
+   and makes invoices/loading summaries print professionally.
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+  /* Force light colors globally */
+  :root {
+    --bg-app: #ffffff !important;
+    --bg-card: #ffffff !important;
+    --text-main: #000000 !important;
+    --text-muted: #333333 !important;
+    --border: #cccccc !important;
+    --primary: #2563eb !important;
+    --secondary: #f8f8f8 !important;
+  }
+
+  /* Reset body for clean print */
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all app chrome: sidebar, navbar, AI assistant, floating elements */
+  aside,
+  header,
+  nav,
+  .sidebar,
+  .navbar,
+  .fixed,
+  [class*="z-[45]"],
+  [class*="z-[70]"],
+  [class*="z-[100]"],
+  [class*="z-50"],
+  [class*="z-40"],
+  button[title="Back"],
+  .print\\:hidden {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Reset layout wrappers that use flex/h-screen */
+  #root, 
+  #root > div, 
+  #root > div > div, 
+  .flex,
+  .flex-col,
+  .lg\\:flex-row {
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* Show print-only elements */
+  .hidden.print\\:block {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Make the main content fill the page */
+  main {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  .h-screen,
+  .h-16,
+  .h-24 {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  /* Kill all dark backgrounds */
+  [class*="bg-[#020617]"],
+  [class*="bg-slate-900"],
+  [class*="bg-[var(--bg-app)]"],
+  [class*="bg-[var(--bg-card)]"],
+  [class*="bg-[var(--secondary)]"] {
+    background-color: #ffffff !important;
+  }
+
+  /* Force all text to black */
+  [class*="text-white"],
+  [class*="text-slate-"],
+  [class*="text-[var(--text-main)]"],
+  [class*="text-[var(--text-muted)]"] {
+    color: #000000 !important;
+  }
+
+  /* Keep colored text for visual hierarchy where appropriate */
+  [class*="text-primary"] { color: #2563eb !important; }
+  [class*="text-emerald"] { color: #059669 !important; }
+  [class*="text-rose"], [class*="text-red"] { color: #dc2626 !important; }
+  [class*="text-amber"] { color: #d97706 !important; }
+
+  /* Clean up borders */
+  [class*="border-[var(--border)]"],
+  [class*="border-white"],
+  [class*="border-r"],
+  [class*="border-b"],
+  td, th {
+    border-color: #cccccc !important;
+  }
+
+  /* Tables print cleanly */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  th, td {
+    padding: 6px 10px !important;
+    border-bottom: 1px solid #cccccc !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+  thead th {
+    background: #f3f4f6 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+  }
+
+  /* Summary cards for Loading Summary — force visible and thin borders */
+  [class*="grid-cols-1"][class*="md:grid-cols-3"] > div,
+  [class*="grid-cols-1"][class*="sm:grid-cols-3"] > div {
+    border: 1px solid #cccccc !important;
+    background: #ffffff !important;
+    padding: 10px !important;
+    margin-bottom: 10px !important;
+    page-break-inside: avoid;
+  }
+
+  /* Remove decorative UI elements */
+  [class*="rounded-"],
+  [class*="shadow"] {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  [class*="blur"],
+  [class*="backdrop-blur"],
+  [class*="animate-"] {
+    display: none !important;
+    animation: none !important;
+  }
+
+  /* Invoice header banner — keep professional look */
+  .bg-slate-900.dark\\:bg-slate-800,
+  [class*="bg-slate-900"][class*="text-white"] {
+    background-color: #1e293b !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .bg-slate-900.dark\\:bg-slate-800 * {
+    color: white !important;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 1cm;
+    size: portrait A4;
+  }
+
+  /* Avoid page breaks in middle of rows */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Force page break after each invoice in bulk print */
+  .invoice-page {
+    page-break-after: always;
+    page-break-inside: avoid;
+    break-after: page;
+  }
+
+  /* Global Print Utilities */
+  .print-hidden,
+  aside, 
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: white !important;
+  }
+}
+
+

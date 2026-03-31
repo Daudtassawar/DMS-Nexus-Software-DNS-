@@ -8,7 +8,7 @@ import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
-import { Package, AlertTriangle, Clock, Search, Settings2, BarChart3, Plus, Layers, RefreshCcw, Zap, Box, Activity } from 'lucide-react';
+import { Package, AlertTriangle, Clock, Search, Settings2, BarChart3, Plus, Layers, RefreshCw, Zap, Box, Activity } from 'lucide-react';
 
 export default function Stock() {
     const [inventory, setInventory] = useState([]);
@@ -35,172 +35,157 @@ export default function Stock() {
     );
 
     return (
-        <div className="space-y-10 max-w-[1700px] mx-auto animate-fade-in pb-20">
-            {/* Header / Config Bar */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10 bg-[var(--bg-card)] p-10 rounded-[3.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden group">
-                <div className="relative z-10">
-                   <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 bg-primary/10 text-primary rounded-xl group-hover:rotate-12 transition-transform duration-500"><Layers size={22}/></div>
-                        <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em] italic">Inventory Infrastructure</span>
-                   </div>
-                    <h1 className="text-5xl font-black tracking-tighter uppercase italic text-[var(--text-main)]">
-                       Stock <span className="text-primary not-italic">Omni</span>
-                    </h1>
-                    <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mt-3 italic">Global inventory density, batch tracking, and life-cycle monitoring.</p>
+        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
+                <div>
+                    <h1 className="text-2xl font-bold text-[var(--text-main)]">Stock Inventory</h1>
+                    <p className="text-sm text-[var(--text-muted)] mt-1">Monitor stock levels, batch expiries, and inventory history.</p>
                 </div>
                 
-                <div className="flex flex-wrap gap-5 relative z-10">
-                    <AppButton onClick={() => setIsAddModalOpen(true)} className="!px-10 !py-4 !rounded-2xl shadow-lg shadow-primary/20">
-                        <Plus className="w-5 h-5 mr-3"/> <span className="uppercase tracking-[0.15em] font-black text-[10px]">Registry Stock</span>
+                <div className="flex flex-wrap gap-3">
+                    <AppButton onClick={() => setIsAddModalOpen(true)}>
+                        <Plus size={18} className="mr-2"/> Update Stock Registry
                     </AppButton>
                 </div>
-                <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/5 rounded-bl-[20rem] -mr-40 -mt-40 blur-[100px] pointer-events-none"></div>
             </div>
 
-            {/* Tactical Metrics Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-blue-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <AppCard className="border-t-4 border-t-blue-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Registry asset count</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-[var(--text-main)] tabular-nums">{inventory.length}</h4>
+                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Total Products</p>
+                            <h4 className="text-2xl font-bold text-[var(--text-main)] tabular-nums">{inventory.length}</h4>
                         </div>
-                        <div className="p-3.5 bg-blue-500/10 text-blue-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <Box size={24}/>
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-md">
+                            <Box size={20}/>
                         </div>
                     </div>
                 </AppCard>
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-emerald-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+                <AppCard className="border-t-4 border-t-emerald-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Volumetric units</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-emerald-600 tabular-nums">{inventory.reduce((s, p) => s + p.totalQuantity, 0)}</h4>
+                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Total Units</p>
+                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">{inventory.reduce((s, p) => s + p.totalQuantity, 0)}</h4>
                         </div>
-                        <div className="p-3.5 bg-emerald-500/10 text-emerald-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <Package size={24}/>
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-md">
+                            <Package size={20}/>
                         </div>
                     </div>
                 </AppCard>
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-rose-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+                <AppCard className="border-t-4 border-t-rose-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Critical depletion</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-rose-600 tabular-nums animate-pulse">{inventory.filter(p => p.isLowStock).length}</h4>
+                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Low Stock Alerts</p>
+                            <h4 className="text-2xl font-bold text-rose-600 tabular-nums">{inventory.filter(p => p.isLowStock).length}</h4>
                         </div>
-                        <div className="p-3.5 bg-rose-500/10 text-rose-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <AlertTriangle size={24}/>
+                        <div className="p-3 bg-red-50 text-red-600 rounded-md">
+                            <AlertTriangle size={20}/>
                         </div>
                     </div>
                 </AppCard>
-                <AppCard className="group relative overflow-hidden border-t-4 border-t-amber-500 transition-all duration-500 hover:shadow-2xl">
-                    <div className="flex justify-between items-start relative z-10">
+                <AppCard className="border-t-4 border-t-amber-500 shadow-sm">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-2 italic">Integrity alerts</p>
-                            <h4 className="text-3xl font-black italic tracking-tighter text-amber-500 tabular-nums">{inventory.filter(p => p.isExpiringSoon || p.isExpired).length}</h4>
+                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Expiring Soon</p>
+                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{inventory.filter(p => p.isExpiringSoon || p.isExpired).length}</h4>
                         </div>
-                        <div className="p-3.5 bg-amber-500/10 text-amber-500 rounded-2xl group-hover:scale-110 transition-transform">
-                            <Clock size={24}/>
+                        <div className="p-3 bg-amber-50 text-amber-600 rounded-md">
+                            <Clock size={20}/>
                         </div>
                     </div>
                 </AppCard>
             </div>
 
-            {/* Central Terminal */}
-            <AppCard p0 className="overflow-hidden shadow-2xl border-t-8 border-t-primary group">
-                <div className="flex flex-col xl:flex-row gap-8 items-center p-8 bg-[var(--secondary)]/10 border-b border-[var(--border)]">
-                    <div className="flex-1 w-full relative">
+            {/* Filter Section */}
+            <AppCard p0 className="overflow-hidden shadow-sm border border-slate-200">
+                <div className="flex flex-col md:flex-row gap-4 items-center p-4 bg-slate-50/50 border-b border-slate-200">
+                    <div className="flex-1 w-full">
                         <AppInput 
-                            placeholder="Interrogate data: name, brand, barcode..." 
+                            placeholder="Search by product name or barcode..." 
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             icon={Search}
-                            className="!rounded-2xl"
                         />
                     </div>
-                    <AppButton variant="secondary" onClick={fetchStock} className="!px-8 !py-3.5 !rounded-2xl group">
-                      <RefreshCcw size={18} className="mr-3 text-primary group-hover:rotate-180 transition-transform duration-700"/> 
-                      <span className="uppercase tracking-[0.2em] font-black text-[10px]">Sync Cluster</span>
+                    <AppButton variant="secondary" onClick={fetchStock} className="rounded-md">
+                      <RefreshCw size={16} className="mr-2"/>
+                      <span className="text-xs font-bold uppercase tracking-wider">Sync</span>
                     </AppButton>
                 </div>
 
-                <div className="p-4">
+                <div className="p-2">
                   <AppTable 
-                      headers={['Asset Specification', 'Segment Hub', 'Volumetric Density', 'Batch / Lifecycle', 'Actions']}
+                      headers={['Product Name', 'Category', 'Stock Level', 'Expiry', 'Actions']}
                       data={filtered}
                       loading={loading}
                       renderRow={(p) => (
                           <>
-                              <td className="px-8 py-7">
-                                  <div className="flex items-center gap-5">
-                                      <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black group-hover:scale-110 transition-transform border border-primary/20 shadow-sm">
-                                        <Package size={24}/>
+                              <td className="px-6 py-4">
+                                  <div className="flex items-center gap-4">
+                                      <div className="w-10 h-10 rounded-md bg-slate-50 border border-slate-200 text-blue-600 flex items-center justify-center shadow-sm">
+                                        <Package size={20}/>
                                       </div>
                                       <div>
-                                          <p className="font-black text-base italic uppercase tracking-tighter text-[var(--text-main)] mb-1 leading-none">{p.productName}</p>
-                                          <AppBadge variant="secondary" size="sm" className="px-2 border-none shadow-sm leading-none italic font-black text-[9px] !rounded-md uppercase tracking-widest">REF: {p.barcode || 'NO_LINK'}</AppBadge>
+                                          <p className="font-bold text-sm text-slate-900 leading-tight">{p.productName}</p>
+                                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Barcode: {p.barcode || '---'}</p>
                                       </div>
                                   </div>
                               </td>
-                              <td className="px-8 py-7 text-center sm:text-left">
-                                  <AppBadge variant="info" size="sm" className="px-5 py-1.5 border-none shadow-sm italic font-black uppercase tracking-widest !rounded-xl">{p.category || 'GENERAL'}</AppBadge>
+                              <td className="px-6 py-4">
+                                  <AppBadge variant="secondary" size="xs" className="rounded px-2 font-bold">{p.category || 'GENERAL'}</AppBadge>
                               </td>
-                              <td className="px-8 py-7">
-                                  <div className="flex items-center gap-6">
+                              <td className="px-6 py-4">
+                                  <div className="flex items-center gap-4">
                                       <div>
-                                        <p className={`text-3xl font-black tracking-tighter tabular-nums leading-none mb-2 ${p.isLowStock ? 'text-rose-600 animate-pulse' : 'text-emerald-600'}`}>
+                                        <h4 className={`text-xl font-bold tabular-nums ${p.isLowStock ? 'text-red-600' : 'text-emerald-600'}`}>
                                             {p.totalQuantity}
+                                        </h4>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                          {p.isLowStock ? 'LOW STOCK' : 'IN STOCK'}
                                         </p>
-                                        <div className="flex items-center gap-2">
-                                          <div className={`w-2 h-2 rounded-full ${p.isLowStock ? 'bg-rose-500 animate-pulse shadow-[0_0_8px_#f43f5e]' : 'bg-emerald-500'}`}></div>
-                                          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest italic opacity-60">
-                                            {p.isLowStock ? 'CRITICAL DEPLETION' : 'OPTIMAL DENSITY'}
-                                          </p>
-                                        </div>
                                       </div>
-                                      <div className="flex-1 w-32 h-2 bg-[var(--bg-app)] rounded-full overflow-hidden shadow-inner border border-[var(--border)]">
+                                      <div className="flex-1 max-w-[80px] h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                                           <div 
-                                            className={`h-full rounded-full transition-all duration-[1.5s] ${p.isLowStock ? 'bg-rose-600' : 'bg-emerald-500'}`} 
-                                            style={{width: `${Math.min(100, (p.totalQuantity/((p.minStockLevel || 1.5)*2.5))*100)}%`}}
+                                            className={`h-full rounded-full ${p.isLowStock ? 'bg-red-500' : 'bg-emerald-500'}`} 
+                                            style={{width: `${Math.min(100, (p.totalQuantity/((p.minStockLevel || 10)*2))*100)}%`}}
                                           />
                                       </div>
                                   </div>
                               </td>
-                              <td className="px-8 py-7">
-                                  <div className="space-y-3">
+                              <td className="px-6 py-4">
+                                  <div className="space-y-1.5">
                                       {p.isExpired ? (
-                                          <AppBadge variant="danger" size="md" className="px-5 py-2 border-none shadow-lg shadow-rose-500/10 italic font-black uppercase tracking-widest">LIFECYCLE TERMINATED</AppBadge>
+                                          <AppBadge variant="danger" size="xs" className="rounded px-2 font-bold">EXPIRED</AppBadge>
                                       ) : p.isExpiringSoon ? (
-                                          <div className="space-y-2">
-                                              <AppBadge variant="warning" size="md" className="px-5 py-2 border-none shadow-lg shadow-amber-500/10 italic font-black uppercase tracking-widest animate-pulse">NEAR EXPIRY</AppBadge>
-                                              <p className="text-[10px] font-black text-amber-600 italic uppercase tracking-widest pl-2">Limit: {new Date(p.expiryDate).toLocaleDateString()}</p>
+                                          <div className="space-y-1">
+                                              <AppBadge variant="warning" size="xs" className="rounded px-2 font-bold">NEAR EXPIRY</AppBadge>
+                                              <p className="text-[10px] font-bold text-amber-600 uppercase">{new Date(p.expiryDate).toLocaleDateString()}</p>
                                           </div>
                                       ) : (
-                                          <div className="flex flex-col gap-1">
-                                            <p className="text-xs font-black text-[var(--text-main)] italic tabular-nums">{p.expiryDate ? `Exp: ${new Date(p.expiryDate).toLocaleDateString()}` : 'Indefinite'}</p>
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] opacity-60">Lifecycle Threshold</p>
-                                          </div>
+                                          <p className="text-xs font-bold text-slate-700">
+                                            {p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'No Expiry'}
+                                          </p>
                                       )}
-                                      <div className="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/10 rounded-xl w-fit">
-                                        <Zap size={10} className="text-primary"/>
-                                        <p className="text-[9px] font-black text-primary uppercase tracking-widest italic leading-none">Batch: {p.batchNumber || 'CORE_MANIFEST'}</p>
-                                      </div>
+                                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Batch: {p.batchNumber || 'N/A'}</p>
                                   </div>
                               </td>
-                              <td className="px-8 py-7">
-                                  <div className="flex justify-end gap-3">
+                              <td className="px-6 py-4">
+                                  <div className="flex gap-2 justify-end">
                                       <button 
                                         onClick={() => setOpProduct(p)} 
-                                        className="p-3.5 rounded-2xl bg-indigo-500/5 text-indigo-500 border border-indigo-500/10 hover:bg-indigo-600 hover:text-white transition-all interactive shadow-sm"
-                                        title="Override Parameters"
+                                        className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-all shadow-sm"
+                                        title="Stock Operations"
                                       >
-                                          <Settings2 size={20}/>
+                                          <Settings2 size={16}/>
                                       </button>
                                       <button 
                                         onClick={() => setHistoryProduct(p)} 
-                                        className="p-3.5 rounded-2xl bg-[var(--bg-app)] text-[var(--text-muted)] border border-[var(--border)] hover:bg-primary hover:text-white transition-all interactive shadow-sm"
-                                        title="Telemetry Feed"
+                                        className="p-2 rounded border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-all shadow-sm"
+                                        title="Transaction History"
                                       >
-                                          <Activity size={20}/>
+                                          <Activity size={16}/>
                                       </button>
                                   </div>
                               </td>

@@ -16,14 +16,19 @@ namespace DMS.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Invoice>> GetAllAsync()
+        public async Task<IEnumerable<Invoice>> GetAllAsync(int? routeId = null, int? salesmanId = null)
         {
-            return await _context.Invoices
+            var query = _context.Invoices
                 .Include(i => i.Customer)
                 .Include(i => i.Salesman)
                 .Include(i => i.InvoiceItems)
                 .ThenInclude(ii => ii.Product)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (routeId.HasValue && routeId > 0) query = query.Where(i => i.RouteId == routeId.Value);
+            if (salesmanId.HasValue && salesmanId > 0) query = query.Where(i => i.SalesmanId == salesmanId.Value);
+
+            return await query.OrderByDescending(i => i.InvoiceDate).ToListAsync();
         }
 
         public async Task<Invoice?> GetByIdAsync(int id)

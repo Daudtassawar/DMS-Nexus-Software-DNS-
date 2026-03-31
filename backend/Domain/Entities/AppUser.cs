@@ -15,5 +15,10 @@ namespace DMS.Domain.Entities
         public string? ApprovedBy { get; set; }
         public string? InvitationToken { get; set; }
         public DateTime? InvitationExpiry { get; set; }
+
+        // Phase 8: Salesman Portal Data Linkage
+        public string? EmployeeId { get; set; }
+        public int? RouteId { get; set; }
+        public int? SalesmanId { get; set; }
     }
 }

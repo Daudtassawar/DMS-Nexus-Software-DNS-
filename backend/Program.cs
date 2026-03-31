@@ -48,6 +48,7 @@ builder.Services.AddControllers()
     {
         opts.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         opts.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
 // Configure Database
@@ -128,6 +129,11 @@ builder.Services.AddScoped<DailyOperationsService>();
 builder.Services.AddScoped<AIContextAssistantService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
+// Company Ledger Services
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<ICompanyLedgerService, CompanyLedgerService>();
+builder.Services.AddScoped<ICustomerLedgerService, CustomerLedgerService>();
+
 // Authentication & Email Utility
 builder.Services.AddScoped<IEmailService, EmailService>();
 
@@ -176,8 +182,207 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
+
+        // Bypass EF Core Migrations for the new tables by manually ensuring they exist
+        try 
+        {
+            await context.Database.ExecuteSqlRawAsync(@"
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Companies' and xtype='U')
+                BEGIN
+                    CREATE TABLE Companies (
+                        Id INT IDENTITY(1,1) PRIMARY KEY,
+                        Name NVARCHAR(MAX) NOT NULL,
+                        ContactPerson NVARCHAR(MAX) NULL,
+                        Phone NVARCHAR(MAX) NULL,
+                        Address NVARCHAR(MAX) NULL,
+                        CreatedAt DATETIME2 NOT NULL
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CompanyLedgers' and xtype='U')
+                BEGIN
+                    CREATE TABLE CompanyLedgers (
+                        Id INT IDENTITY(1,1) PRIMARY KEY,
+                        CompanyId INT NOT NULL,
+                        TransactionType INT NOT NULL,
+                        Amount DECIMAL(18,2) NOT NULL,
+                        Description NVARCHAR(MAX) NOT NULL,
+                        Reference NVARCHAR(MAX) NULL,
+                        Date DATETIME2 NOT NULL,
+                        RunningBalance DECIMAL(18,2) NOT NULL DEFAULT 0,
+                        CreatedByUserId NVARCHAR(450) NULL,
+                        CONSTRAINT FK_CompanyLedgers_Companies FOREIGN KEY (CompanyId) REFERENCES Companies(Id) ON DELETE CASCADE
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CustomerLedgers' and xtype='U')
+                BEGIN
+                    CREATE TABLE CustomerLedgers (
+                        Id INT IDENTITY(1,1) PRIMARY KEY,
+                        CustomerId INT NOT NULL,
+                        TransactionType INT NOT NULL,
+                        Amount DECIMAL(18,2) NOT NULL,
+                        Description NVARCHAR(MAX) NOT NULL,
+                        Reference NVARCHAR(MAX) NULL,
+                        Date DATETIME2 NOT NULL,
+                        RunningBalance DECIMAL(18,2) NOT NULL DEFAULT 0,
+                        CreatedByUserId NVARCHAR(450) NULL,
+                        CONSTRAINT FK_CustomerLedgers_Customers FOREIGN KEY (CustomerId) REFERENCES Customers(CustomerId) ON DELETE CASCADE
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DailyActivities' and xtype='U')
+                BEGIN
+                    CREATE TABLE DailyActivities (
+                        ActivityId INT IDENTITY(1,1) PRIMARY KEY,
+                        Title NVARCHAR(MAX) NOT NULL,
+                        Description NVARCHAR(MAX) NOT NULL,
+                        ActivityDate DATETIME2 NOT NULL,
+                        CreatedBy NVARCHAR(MAX) NOT NULL
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DailyExpenses' and xtype='U')
+                BEGIN
+                    CREATE TABLE DailyExpenses (
+                        ExpenseId INT IDENTITY(1,1) PRIMARY KEY,
+                        ExpenseTitle NVARCHAR(MAX) NOT NULL,
+                        Category NVARCHAR(MAX) NOT NULL,
+                        Amount DECIMAL(18,2) NOT NULL,
+                        ExpenseDate DATETIME2 NOT NULL,
+                        Notes NVARCHAR(MAX) NULL
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Payments' and xtype='U')
+                BEGIN
+                    CREATE TABLE Payments (
+                        PaymentId INT IDENTITY(1,1) PRIMARY KEY,
+                        InvoiceId INT NOT NULL,
+                        AmountPaid DECIMAL(18,2) NOT NULL,
+                        PaymentDate DATETIME2 NOT NULL,
+                        PaymentMethod NVARCHAR(MAX) NOT NULL,
+                        CONSTRAINT FK_Payments_Invoices FOREIGN KEY (InvoiceId) REFERENCES Invoices(InvoiceId) ON DELETE CASCADE
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='InvoiceItems' and xtype='U')
+                BEGIN
+                    CREATE TABLE InvoiceItems (
+                        Id INT IDENTITY(1,1) PRIMARY KEY,
+                        InvoiceId INT NOT NULL,
+                        ProductId INT NOT NULL,
+                        Quantity INT NOT NULL,
+                        UnitPrice DECIMAL(18,2) NOT NULL,
+                        CONSTRAINT FK_InvoiceItems_Invoices FOREIGN KEY (InvoiceId) REFERENCES Invoices(InvoiceId) ON DELETE CASCADE,
+                        CONSTRAINT FK_InvoiceItems_Products FOREIGN KEY (ProductId) REFERENCES Products(ProductId) ON DELETE CASCADE
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Routes' and xtype='U')
+                BEGIN
+                    CREATE TABLE Routes (
+                        RouteId INT IDENTITY(1,1) PRIMARY KEY,
+                        RouteName NVARCHAR(MAX) NOT NULL,
+                        Area NVARCHAR(MAX) NULL,
+                        Description NVARCHAR(MAX) NULL,
+                        IsActive BIT NOT NULL DEFAULT 1
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Vehicles' and xtype='U')
+                BEGIN
+                    CREATE TABLE Vehicles (
+                        VehicleId INT IDENTITY(1,1) PRIMARY KEY,
+                        VehicleNumber NVARCHAR(MAX) NOT NULL,
+                        DriverName NVARCHAR(MAX) NULL,
+                        DriverPhone NVARCHAR(MAX) NULL,
+                        VehicleType NVARCHAR(MAX) NOT NULL DEFAULT 'Truck',
+                        IsActive BIT NOT NULL DEFAULT 1
+                    );
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RouteId' AND Object_ID = Object_ID(N'Invoices'))
+                BEGIN
+                    ALTER TABLE Invoices ADD RouteId INT NULL;
+                    ALTER TABLE Invoices ADD CONSTRAINT FK_Invoices_Routes FOREIGN KEY (RouteId) REFERENCES Routes(RouteId);
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'VehicleId' AND Object_ID = Object_ID(N'Invoices'))
+                BEGIN
+                    ALTER TABLE Invoices ADD VehicleId INT NULL;
+                    ALTER TABLE Invoices ADD CONSTRAINT FK_Invoices_Vehicles FOREIGN KEY (VehicleId) REFERENCES Vehicles(VehicleId);
+                END
+                
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RouteId' AND Object_ID = Object_ID(N'Customers'))
+                BEGIN
+                    ALTER TABLE Customers ADD RouteId INT NULL;
+                    ALTER TABLE Customers ADD CONSTRAINT FK_Customers_Routes FOREIGN KEY (RouteId) REFERENCES Routes(RouteId);
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RunningBalance' AND Object_ID = Object_ID(N'CompanyLedgers'))
+                BEGIN
+                    ALTER TABLE CompanyLedgers ADD RunningBalance DECIMAL(18,2) NOT NULL DEFAULT 0;
+                END
+
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AuditLogs' and xtype='U')
+                BEGIN
+                    CREATE TABLE AuditLogs (
+                        Id INT IDENTITY(1,1) PRIMARY KEY,
+                        UserId NVARCHAR(MAX) NOT NULL,
+                        UserName NVARCHAR(MAX) NOT NULL,
+                        Action NVARCHAR(MAX) NOT NULL,
+                        Module NVARCHAR(MAX) NOT NULL,
+                        RecordId NVARCHAR(MAX) NULL,
+                        Description NVARCHAR(MAX) NULL,
+                        Timestamp DATETIME2 NOT NULL,
+                        IPAddress NVARCHAR(MAX) NULL
+                    );
+                END
+
+                IF COL_LENGTH('Users', 'EmployeeId') IS NULL
+                BEGIN
+                    ALTER TABLE Users ADD EmployeeId NVARCHAR(MAX) NULL;
+                END
+
+                IF COL_LENGTH('Users', 'RouteId') IS NULL
+                BEGIN
+                    ALTER TABLE Users ADD RouteId INT NULL;
+                END
+
+                IF COL_LENGTH('Users', 'SalesmanId') IS NULL
+                BEGIN
+                    ALTER TABLE Users ADD SalesmanId INT NULL;
+                END
+
+                IF COL_LENGTH('Salesmen', 'EmployeeId') IS NULL
+                BEGIN
+                    ALTER TABLE Salesmen ADD EmployeeId NVARCHAR(MAX) NULL;
+                END
+            ");
+
+            // Seed Default Company
+            if (!await context.Companies.AnyAsync()) 
+            {
+                context.Companies.Add(new DMS.Domain.Entities.Company { Name = "Gourmet Plant", CreatedAt = DateTime.UtcNow });
+                await context.SaveChangesAsync();
+            }
+        } 
+        catch (Exception sqlEx) 
+        {
+            Console.WriteLine($"Error executing raw SQL table generation: {sqlEx.Message}");
+        }
+
         // Apply pending migrations automatically on startup
-        await context.Database.MigrateAsync(); 
+        try 
+        {
+            await context.Database.MigrateAsync(); 
+        } 
+        catch (Exception migEx) 
+        {
+            Console.WriteLine($"Error running EF Migrations (non-fatal): {migEx.Message}");
+        }
+
         await RoleSeeder.SeedRolesAndAdminAsync(services);
     }
     catch (Exception ex)
@@ -226,6 +431,9 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Audit logging middleware - should be AFTER authentication/authorization
+app.UseMiddleware<DMS.API.Middleware.AuditMiddleware>();
 
 app.MapControllers();
 

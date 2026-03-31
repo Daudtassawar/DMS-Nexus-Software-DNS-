@@ -6,6 +6,7 @@ namespace DMS.Domain.Entities
     public class Salesman
     {
         public int SalesmanId { get; set; }
+        public string? EmployeeId { get; set; } // e.g. SAL-001
         public string Name { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string? Area { get; set; }

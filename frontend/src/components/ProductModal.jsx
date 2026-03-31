@@ -69,7 +69,9 @@ export default function ProductModal({ product, onSave, onClose }) {
                 expiryDate: form.expiryDate ? new Date(form.expiryDate).toISOString() : null,
             }, imageFile);
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to save product.');
+            const msg = err.response?.data?.error || err.response?.data?.message || 'Failed to save product.';
+            setError(msg);
+            throw err; // Re-throw so parent can handle if needed, but we show local error first
         } finally { setSaving(false); }
     };
 

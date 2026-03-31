@@ -43,15 +43,30 @@ namespace DMS.Application.Services
 
         public async Task<(bool Success, string Message)> UpdateProductAsync(Product product)
         {
+            var existing = await _repo.GetByIdAsync(product.ProductId);
+            if (existing == null) return (false, "Product not found.");
+
             // Check barcode uniqueness on update (skip same product)
             if (!string.IsNullOrEmpty(product.Barcode))
             {
-                var existing = await _repo.GetByBarcodeAsync(product.Barcode);
-                if (existing != null && existing.ProductId != product.ProductId)
+                var barcodeOwner = await _repo.GetByBarcodeAsync(product.Barcode);
+                if (barcodeOwner != null && barcodeOwner.ProductId != product.ProductId)
                     return (false, $"Another product already has barcode '{product.Barcode}'.");
             }
 
-            _repo.Update(product);
+            // Update only mutable fields
+            existing.ProductName = product.ProductName;
+            existing.Brand = product.Brand;
+            existing.Category = product.Category;
+            existing.Barcode = product.Barcode;
+            existing.PurchasePrice = product.PurchasePrice;
+            existing.SalePrice = product.SalePrice;
+            existing.Unit = product.Unit;
+            existing.MinStockLevel = product.MinStockLevel;
+            existing.ExpiryDate = product.ExpiryDate;
+            existing.DistributorId = product.DistributorId;
+
+            _repo.Update(existing);
             await _repo.SaveChangesAsync();
             return (true, "Product updated.");
         }
@@ -70,6 +85,7 @@ namespace DMS.Application.Services
         {
             int imported = 0, skipped = 0;
             var errors = new List<string>();
+            var seenBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var product in products)
             {
@@ -77,6 +93,13 @@ namespace DMS.Application.Services
                 {
                     if (!string.IsNullOrEmpty(product.Barcode))
                     {
+                        if (seenBarcodes.Contains(product.Barcode))
+                        {
+                            skipped++;
+                            errors.Add($"Skipped '{product.ProductName}': barcode duplicated in CSV file.");
+                            continue;
+                        }
+
                         var existing = await _repo.GetByBarcodeAsync(product.Barcode);
                         if (existing != null)
                         {
@@ -84,6 +107,8 @@ namespace DMS.Application.Services
                             errors.Add($"Skipped '{product.ProductName}': barcode already exists.");
                             continue;
                         }
+
+                        seenBarcodes.Add(product.Barcode);
                     }
                     product.CreatedDate = DateTime.UtcNow;
                     await _repo.AddAsync(product);
@@ -96,7 +121,16 @@ namespace DMS.Application.Services
                 }
             }
 
-            await _repo.SaveChangesAsync();
+            try 
+            {
+                await _repo.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Database commit failed: {ex.Message}");
+                return (0, products.Count(), errors);
+            }
+            
             return (imported, skipped, errors);
         }
     }

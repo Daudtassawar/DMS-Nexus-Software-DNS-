@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ShieldCheck, Plus, Edit, Trash2, X, Lock, CheckCircle2, ShieldAlert, Zap, Search, Info } from 'lucide-react';
+import { ShieldCheck, Plus, Edit, Trash2, X, Lock, CheckCircle2, ShieldAlert, Zap, Search, Info, Shield, Key } from 'lucide-react';
 import authService from '../services/authService';
 import AppTable from '../components/AppTable';
 import AppButton from '../components/AppButton';
@@ -31,7 +31,7 @@ const RolesManagement = () => {
             setPermissions(permsRes.data);
             setError(null);
         } catch (err) {
-            setError('System Access Protocol Failure: Unauthorized.');
+            setError('Failed to load access control data.');
         } finally { setLoading(false); }
     };
 
@@ -86,98 +86,101 @@ const RolesManagement = () => {
             fetchData();
             handleCloseModal();
         } catch (err) {
-            setError(err.response?.data?.message || 'Role definition update failed.');
+            setError(err.response?.data?.message || 'Failed to save role configuration.');
         }
     };
 
     const handleDelete = async (role) => {
         if (['Admin', 'Manager', 'Salesman'].includes(role.name)) {
-            alert('Core protocols restricted: Cannot delete system roles.');
+            alert('Core system roles cannot be deleted.');
             return;
         }
-        if (window.confirm(`Permanently expunge security role '${role.name}'?`)) {
+        if (window.confirm(`Are you sure you want to delete role '${role.name}'?`)) {
             try {
                 await axios.delete(`/api/v1/roles/${role.id}`);
                 fetchData();
             } catch (err) {
-                setError(err.response?.data?.message || 'Purge failed.');
+                setError(err.response?.data?.message || 'Failed to delete role.');
             }
         }
     };
 
     return (
-        <div className="space-y-10 animate-fade-in pb-16 max-w-[1700px] mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
                 <div>
-                   <div className="flex items-center gap-3 mb-1">
-                      <h1 className="text-4xl font-black text-primary tracking-tighter uppercase italic">Authority Hub</h1>
-                      <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-500 animate-pulse"><ShieldCheck size={28}/></div>
-                   </div>
-                   <p className="text-[var(--text-muted)] font-extrabold uppercase tracking-[0.25em] text-[11px] italic">RBAC configuration and security scope definitions.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                        <Shield className="text-blue-600" size={24}/> Roles &amp; Permissions
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-1">Configure user roles and access control policies.</p>
                 </div>
                 {authService.hasPermission("Users.Create") && (
-                    <AppButton onClick={() => handleOpenModal()} className="px-8 py-4 !rounded-2xl shadow-lg shadow-primary/20">
-                        <Plus size={20} className="mr-3"/> <span className="uppercase tracking-[0.1em] font-black">Define Authority</span>
+                    <AppButton onClick={() => handleOpenModal()} className="rounded-md">
+                        <Plus size={18} className="mr-2"/> Add Role
                     </AppButton>
                 )}
             </div>
 
-            {error && <div className="p-6 bg-rose-500 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest flex items-center gap-4 shadow-xl shadow-rose-500/20 animate-slide-in"><ShieldAlert size={24}/> {error}</div>}
+            {error && (
+                <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-lg flex items-center gap-3 text-sm font-semibold">
+                    <ShieldAlert size={20}/> {error}
+                </div>
+            )}
 
-            <AppCard p0 className="overflow-hidden shadow-xl border-t-8 border-t-indigo-500 group">
+            <AppCard p0 className="overflow-hidden shadow-sm border border-slate-200">
                 <AppTable 
-                    headers={['Identity Segment', 'Strategic Definition', 'Capability Matrix', 'Actions']}
+                    headers={['Role Name', 'Description', 'Capabilities', 'Actions']}
                     data={roles}
                     loading={loading}
                     renderRow={(role) => (
                         <>
-                           <td className="px-8 py-7">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 bg-indigo-500/10 text-indigo-500 rounded-2xl flex items-center justify-center font-black group-hover:rotate-12 transition-transform shadow-sm">
-                                      <Lock size={24}/>
+                           <td className="px-6 py-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-lg flex items-center justify-center border border-slate-100 shadow-sm">
+                                      <Lock size={18}/>
                                     </div>
                                     <div>
-                                        <div className="font-black text-[var(--text-main)] uppercase tracking-tighter italic text-lg leading-none mb-1.5">
-                                            {role.name}
+                                        <p className="font-bold text-sm text-[var(--text-main)] leading-none">{role.name}</p>
+                                        <div className="mt-1.5">
+                                            {['Admin', 'Manager', 'Salesman'].includes(role.name) ? (
+                                               <AppBadge variant="primary" size="sm" className="rounded-md px-2">SYSTEM ROLE</AppBadge>
+                                            ) : (
+                                               <AppBadge variant="secondary" size="sm" className="rounded-md px-2">CUSTOM ROLE</AppBadge>
+                                            )}
                                         </div>
-                                        {['Admin', 'Manager', 'Salesman'].includes(role.name) ? (
-                                           <AppBadge variant="primary" size="sm" className="italic border-none px-3 leading-none !rounded-lg">SYSTEM CORE</AppBadge>
-                                        ) : (
-                                           <AppBadge variant="secondary" size="sm" className="italic border-none px-3 leading-none !rounded-lg uppercase">CUSTOM NODE</AppBadge>
-                                        )}
                                     </div>
                                 </div>
                            </td>
-                           <td className="px-8 py-7">
-                               <p className="text-sm font-black text-[var(--text-muted)] italic leading-relaxed max-w-sm lowercase first-letter:uppercase">{role.description || 'No system descriptor provided for this operational role.'}</p>
+                           <td className="px-6 py-4">
+                               <p className="text-xs text-[var(--text-muted)] leading-relaxed max-w-sm">{role.description || 'No description provided.'}</p>
                            </td>
-                           <td className="px-8 py-7">
-                                <div className="flex flex-col gap-2">
-                                  <div className="flex items-center gap-3">
-                                      <div className={`w-2.5 h-2.5 rounded-full ${role.name === 'Admin' ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-indigo-400'}`}></div>
-                                      <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-main)] italic">
-                                          {role.name === 'Admin' ? 'ABSOLUTE AUTHORITY' : `${role.permissions?.length || 0} MODULAR PERMISSIONS`}
-                                      </span>
-                                  </div>
-                                  <div className="flex flex-wrap gap-1 mt-1 opacity-50">
-                                    {role.permissions?.slice(0, 3).map(p => (
-                                      <span key={p} className="text-[8px] font-black uppercase tracking-tighter bg-[var(--bg-app)] px-2 py-0.5 rounded border border-[var(--border)]">NODE-{p}</span>
-                                    ))}
-                                    {role.permissions?.length > 3 && <span className="text-[8px] font-black uppercase tracking-tighter bg-[var(--bg-app)] px-2 py-0.5 rounded border border-[var(--border)]">+{role.permissions.length - 3} MORE</span>}
-                                  </div>
+                           <td className="px-6 py-4">
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <Key size={12} className="text-blue-500"/>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-main)]">
+                                            {role.name === 'Admin' ? 'Full System Access' : `${role.permissions?.length || 0} Permissions`}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {role.permissions?.slice(0, 3).map(p => (
+                                        <span key={p} className="text-[8px] font-bold uppercase tracking-wider bg-slate-50 text-slate-500 px-1.5 py-0.5 rounded border border-slate-100">{p}</span>
+                                      ))}
+                                      {role.permissions?.length > 3 && <span className="text-[8px] font-bold uppercase tracking-wider bg-slate-50 text-slate-500 px-1.5 py-0.5 rounded border border-slate-100">+{role.permissions.length - 3} More</span>}
+                                    </div>
                                 </div>
                            </td>
-                           <td className="px-8 py-7">
-                                <div className="flex justify-end gap-3">
+                           <td className="px-6 py-4 text-right">
+                                <div className="flex justify-end gap-2">
                                     {authService.hasPermission("Users.Edit") && role.name !== 'Admin' && (
-                                        <button onClick={() => handleOpenModal(role)} className="p-3 bg-indigo-500/5 text-indigo-500 border border-indigo-500/10 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all interactive shadow-sm" title="Override Matrix">
-                                            <Edit size={18} />
+                                        <button onClick={() => handleOpenModal(role)} className="p-2 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-sm" title="Edit Role">
+                                            <Edit size={16} />
                                         </button>
                                     )}
                                     {authService.hasPermission("Users.Delete") && !['Admin', 'Manager', 'Salesman'].includes(role.name) && (
-                                        <button onClick={() => handleDelete(role)} className="p-3 bg-rose-500/5 text-rose-500 border border-rose-500/10 rounded-2xl hover:bg-rose-500 hover:text-white transition-all interactive shadow-sm" title="Purge Protocol">
-                                            <Trash2 size={18} />
+                                        <button onClick={() => handleDelete(role)} className="p-2 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all shadow-sm" title="Delete Role">
+                                            <Trash2 size={16} />
                                         </button>
                                     )}
                                 </div>
@@ -187,73 +190,69 @@ const RolesManagement = () => {
                 />
             </AppCard>
 
-            {/* Role Configuration Terminal */}
+            {/* Role Modal */}
             <AppModal 
                 isOpen={isModalOpen} 
                 onClose={handleCloseModal} 
-                title={currentRole ? `RECONFIGURING: ${currentRole.name}` : 'NEW AUTHORITY SPECIFICATION'}
-                maxWidth="max-w-6xl"
+                title={currentRole ? `Edit Role: ${currentRole.name}` : 'Create New Role'}
+                size="xl"
             >
-                <form id="roleForm" onSubmit={handleSubmit} className="space-y-10 py-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-8 py-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <AppInput
-                            label="Authority Identifier"
+                            label="Role Name"
                             required
                             value={formData.name}
                             onChange={e => setFormData({...formData, name: e.target.value})}
                             disabled={currentRole && ['Admin', 'Manager', 'Salesman'].includes(currentRole.name)}
-                            placeholder="e.g. SYSTEM_AUDITOR"
-                            icon={ShieldCheck}
+                            placeholder="e.g. Inventory Manager"
                         />
                         <AppInput
-                            label="Operational Scope Description"
+                            label="Description"
                             value={formData.description}
                             onChange={e => setFormData({...formData, description: e.target.value})}
-                            placeholder="Primary focus and responsibility level..."
-                            icon={Info}
+                            placeholder="Brief purpose of this role..."
                         />
                     </div>
 
-                    <div className="space-y-8">
-                        <div className="flex items-center gap-4 bg-primary/5 p-4 py-3 rounded-2xl border border-primary/20">
-                           <Zap size={18} className="text-primary animate-pulse"/>
-                           <h3 className="text-[11px] font-black text-primary uppercase tracking-[0.5em] italic">Permission Matrix Integration</h3>
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
+                           <Key size={18} className="text-blue-500"/>
+                           <h3 className="text-sm font-bold text-slate-800">Permissions Matrix</h3>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {Object.entries(groupedPermissions).map(([module, perms]) => {
                                 const allSelected = perms.every(p => formData.permissions.includes(p.id));
                                 return (
-                                    <div key={module} className="bg-[var(--bg-app)]/50 rounded-[2.5rem] border border-[var(--border)] space-y-4 group hover:border-primary/40 transition-all shadow-inner relative overflow-hidden">
-                                        <div className="p-6 pb-2">
-                                            <div className="flex justify-between items-center mb-6">
-                                                <h4 className="font-black text-[var(--text-main)] italic text-sm uppercase tracking-[0.2em]">{module} CORE</h4>
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => handleModuleToggle(module, perms)}
-                                                    className="text-[9px] font-black text-primary uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20"
-                                                >
-                                                    {allSelected ? 'NULLIFY' : 'AUTHORIZE'}
-                                                </button>
-                                            </div>
-                                            <div className="space-y-4 pb-4">
-                                                {perms.map(perm => (
-                                                    <label key={perm.id} className="flex items-center justify-between group/item cursor-pointer p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] hover:border-primary/30 transition-all shadow-sm">
-                                                        <span className="text-[11px] font-black text-[var(--text-muted)] group-hover/item:text-primary transition-colors uppercase tracking-widest italic">
-                                                            {perm.name.replace(`${module}.`, '')}
-                                                        </span>
-                                                        <div className="relative">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="sr-only peer"
-                                                                checked={formData.permissions.includes(perm.id)}
-                                                                onChange={() => handlePermissionToggle(perm.id)}
-                                                            />
-                                                            <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-primary transition-all after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
-                                                        </div>
-                                                    </label>
-                                                ))}
-                                            </div>
+                                    <div key={module} className="bg-slate-50/50 rounded-xl border border-slate-200 overflow-hidden flex flex-col">
+                                        <div className="p-4 bg-slate-100/50 border-b border-slate-200 flex justify-between items-center">
+                                            <h4 className="font-bold text-xs text-slate-700 uppercase tracking-wider">{module}</h4>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => handleModuleToggle(module, perms)}
+                                                className="text-[10px] font-bold text-blue-600 uppercase tracking-wider hover:text-blue-700 active:scale-95 transition-all"
+                                            >
+                                                {allSelected ? 'Deselect All' : 'Select All'}
+                                            </button>
+                                        </div>
+                                        <div className="p-3 space-y-2">
+                                            {perms.map(perm => (
+                                                <label key={perm.id} className="flex items-center justify-between cursor-pointer p-2.5 rounded-lg bg-white border border-slate-100 hover:border-blue-200 transition-all shadow-sm">
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                        {perm.name.replace(`${module}.`, '')}
+                                                    </span>
+                                                    <div className="relative inline-flex items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="sr-only peer"
+                                                            checked={formData.permissions.includes(perm.id)}
+                                                            onChange={() => handlePermissionToggle(perm.id)}
+                                                        />
+                                                        <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-500 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 shadow-inner"></div>
+                                                    </div>
+                                                </label>
+                                            ))}
                                         </div>
                                     </div>
                                 );
@@ -261,13 +260,13 @@ const RolesManagement = () => {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-5 pt-10 border-t border-[var(--border)]">
-                        <button type="button" onClick={handleCloseModal} className="px-8 py-4 rounded-[1.5rem] border-2 border-[var(--border)] text-[11px] font-black uppercase tracking-[0.3em] text-[var(--text-muted)] transition-all hover:bg-[var(--bg-app)] active:scale-95 italic">Abort Process</button>
-                        <AppButton type="submit" className="px-10 py-4 !rounded-[1.5rem] !bg-primary text-white shadow-xl shadow-primary/20">
-                            {currentRole ? 'COMMIT AUTHORITY UPDATES' : 'INTIALIZE AUTHORITY SCOPE'}
+                    <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                        <AppButton variant="secondary" onClick={handleCloseModal} className="px-6 rounded-md">Cancel</AppButton>
+                        <AppButton onClick={handleSubmit} className="px-8 rounded-md">
+                            {currentRole ? 'Save Changes' : 'Create Role'}
                         </AppButton>
                     </div>
-                </form>
+                </div>
             </AppModal>
         </div>
     );

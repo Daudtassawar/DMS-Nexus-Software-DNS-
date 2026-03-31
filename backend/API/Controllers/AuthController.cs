@@ -102,7 +102,10 @@ namespace DMS.API.Controllers
                     user.UserName, 
                     user.FullName, 
                     user.Email,
-                    Role = userRole
+                    Role = userRole,
+                    user.EmployeeId,
+                    user.RouteId,
+                    user.SalesmanId
                 }
             });
         }
@@ -120,7 +123,9 @@ namespace DMS.API.Controllers
                 if (existingEmail != null)
                     return BadRequest(new { Message = $"The email '{request.Email}' is already registered to another account." });
             }
-            var roleToAssign = string.IsNullOrEmpty(request.Role) ? "Salesman" : request.Role;
+            
+            // SECURITY FIX: Ignore request.Role for public registration. Always default to Salesman.
+            var roleToAssign = "Salesman";
 
             var user = new AppUser
             {
@@ -439,6 +444,15 @@ namespace DMS.API.Controllers
                 new Claim(ClaimTypes.Role, role),
                 new Claim("Permissions", string.Join(",", permissions)) // Embed permissions
             };
+
+            if (user.RouteId.HasValue)
+                claims.Add(new Claim("RouteId", user.RouteId.Value.ToString()));
+                
+            if (user.SalesmanId.HasValue)
+                claims.Add(new Claim("SalesmanId", user.SalesmanId.Value.ToString()));
+                
+            if (!string.IsNullOrEmpty(user.EmployeeId))
+                claims.Add(new Claim("EmployeeId", user.EmployeeId));
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {

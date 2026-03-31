@@ -3,31 +3,46 @@ import { useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Package, Users, Database, 
   Users2, FileText, BarChart3, Shield, 
-  Truck, Zap, LogOut, Terminal, ShieldCheck
+  Truck, Zap, LogOut, Terminal, ShieldCheck, Building2,
+  TrendingUp, Landmark, MapPin
 } from 'lucide-react';
 import RequirePermission from './RequirePermission';
 import SidebarItem from './SidebarItem';
 import authService from '../services/authService';
 
-const Sidebar = ({ isCollapsed, role, userName }) => {
+const Sidebar = ({ isCollapsed, role, userName, isMobile, onClose }) => {
   const location = useLocation();
 
   const sections = [
     {
       id: 'MAIN',
       items: [
-        { label: 'Dashboard', path: '/', permission: 'Dashboard.View', icon: LayoutDashboard },
+        { label: role === 'Salesman' ? 'My Day' : 'Dashboard', path: '/', permission: 'Dashboard.View', icon: LayoutDashboard },
         { label: 'Operations Center', path: '/daily-operations', permission: 'Finance.View', icon: Zap },
       ]
     },
     {
       id: 'MANAGEMENT',
       items: [
+        { label: 'Companies (Suppliers)', path: '/companies', permission: 'Finance.View', icon: Building2 },
         { label: 'Products', path: '/products', permission: 'Products.View', icon: Package },
         { label: 'Customers', path: '/customers', permission: 'Customers.View', icon: Users },
         { label: 'Stock Management', path: '/stock', permission: 'Stock.View', icon: Database },
         { label: 'Sales Team', path: '/salesmen', permission: 'Salesmen.View', icon: Users2 },
         { label: 'Invoices', path: '/invoices', permission: 'Invoices.View', icon: FileText },
+        { label: 'Routes', path: '/routes', permission: 'Invoices.View', icon: MapPin },
+        { label: 'Vehicles', path: '/vehicles', permission: 'Invoices.View', icon: Truck },
+      ]
+    },
+    {
+      id: 'FINANCE',
+      items: [
+        { label: 'Financial Dashboard', path: '/finance', permission: 'Finance.View', icon: Landmark },
+        { label: 'Profit & Loss', path: '/finance/p-and-l', permission: 'Finance.View', icon: BarChart3 },
+        { label: 'Balance Sheet', path: '/finance/balance-sheet', permission: 'Finance.View', icon: Landmark },
+        { label: 'Cash Flow', path: '/finance/cash-flow', permission: 'Finance.View', icon: Zap },
+        { label: 'Product Profit', path: '/finance/product-profit', permission: 'Finance.View', icon: Package },
+        { label: 'Sales Forecast', path: '/finance/forecast', permission: 'Finance.View', icon: TrendingUp },
       ]
     },
     {
@@ -52,40 +67,56 @@ const Sidebar = ({ isCollapsed, role, userName }) => {
     return location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
   };
 
+  // On mobile, if collapsed, don't render at all to avoid taking space
+  if (isMobile && isCollapsed) return null;
+
   return (
-    <aside className={`
-      h-screen bg-[#020617] text-white flex flex-col border-r border-white/5 transition-all duration-500 relative z-50 overflow-hidden
-      ${isCollapsed ? 'w-24' : 'w-72'}
-    `}>
+    <aside 
+      style={{ display: isMobile && isCollapsed ? 'none' : 'flex' }}
+      className={`
+        h-screen bg-[var(--bg-card)] text-[var(--text-main)] flex flex-col border-r border-[var(--border)] transition-all duration-300 z-50 overflow-hidden
+        ${isMobile ? 'fixed top-0 left-0 w-64 shadow-xl' : (isCollapsed ? 'static w-20' : 'static w-64')}
+      `}
+    >
       {/* Brand Identity */}
-      <div className="p-8 mb-4 relative z-10">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/40 transform rotate-12 shrink-0 border border-white/10">
-            <Terminal size={22} className="text-white"/>
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="font-black text-xl tracking-tighter leading-none italic uppercase text-white">DMS <span className="text-primary not-italic">NEXUS</span></span>
-              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1 italic">V4.8.2-ULT</span>
+      <div className="p-6 border-b border-[var(--border)] bg-[var(--secondary)]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md bg-[var(--primary)] flex items-center justify-center shrink-0">
+              <Terminal size={18} className="text-white"/>
             </div>
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="font-bold text-lg leading-none text-[var(--text-main)]">Hamdaan <span className="text-[var(--primary)]">Traders</span></span>
+                <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider mt-1">ERP SYSTEM</span>
+              </div>
+            )}
+          </div>
+          
+          {isMobile && !isCollapsed && (
+            <button 
+              onClick={onClose}
+              className="lg:hidden p-1.5 text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
+            >
+              <LogOut size={18} className="rotate-180" />
+            </button>
           )}
         </div>
       </div>
 
       {/* Navigation Groups */}
-      <nav className="flex-1 overflow-y-auto scrollbar-hide py-4 flex flex-col gap-2 relative z-10 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto py-4 flex flex-col gap-1 custom-scrollbar">
         {sections.map((section, sidx) => (
-          <div key={section.id} className="mb-6 last:mb-0">
+          <div key={section.id} className="mb-4 last:mb-0">
             {!isCollapsed && (
-              <div className="px-8 mb-3 flex items-center gap-3">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 italic">
+              <div className="px-6 mb-2 flex items-center">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                   {section.id}
                 </span>
-                <div className="flex-1 h-px bg-white/5"></div>
               </div>
             )}
             {isCollapsed && sidx > 0 && (
-              <div className="mx-6 my-4 h-px bg-white/5"></div>
+              <div className="mx-4 my-2 h-px bg-[var(--border)]"></div>
             )}
             
             <div className="flex flex-col gap-1">
@@ -106,22 +137,21 @@ const Sidebar = ({ isCollapsed, role, userName }) => {
         ))}
       </nav>
 
-      {/* Operator Node */}
-      <div className={`p-6 mt-auto border-t border-white/5 bg-slate-900/50 relative z-10`}>
+      {/* User Information */}
+      <div className="p-4 mt-auto border-t border-[var(--border)] bg-[var(--secondary)]">
         {!isCollapsed ? (
-          <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden group">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-black border border-primary/20 shrink-0 uppercase">
-                {userName?.charAt(0)}
+          <div className="flex items-center gap-3 p-3 bg-[var(--bg-card)] rounded-lg border border-[var(--border)] shadow-sm">
+            <div className="w-8 h-8 rounded-md bg-[var(--bg-app)] text-[var(--primary)] flex items-center justify-center font-bold border border-[var(--border)] shrink-0 text-sm">
+                {userName?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 overflow-hidden">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic leading-none mb-1">NODE AUTH</p>
-                <p className="font-black truncate text-xs text-white uppercase italic tracking-tighter">{userName}</p>
+                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight leading-none mb-1">User Account</p>
+                <p className="font-bold truncate text-xs text-[var(--text-main)] uppercase tracking-tight">{userName}</p>
             </div>
-            <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-primary/10 rounded-full blur-xl"></div>
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-black border border-primary/20">
+            <div className="w-8 h-8 rounded-md bg-[var(--bg-app)] text-[var(--primary)] flex items-center justify-center font-bold border border-[var(--border)] shadow-sm text-sm">
                 {userName?.charAt(0).toUpperCase()}
             </div>
           </div>

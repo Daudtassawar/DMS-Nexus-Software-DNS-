@@ -5,48 +5,49 @@ import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
-import { ShieldCheck, Search, Filter, RefreshCcw, User, Clock, Layers, FileText, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Search, Filter, RefreshCcw, User, Clock, Layers, FileText, AlertCircle, Printer, Download, FileSpreadsheet, Shield } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const MODULES = ['All', 'Auth', 'Products', 'Stock', 'Invoices', 'Distributors', 'Users', 'Operations', 'Finance', 'System'];
 
-const MODULE_COLORS = {
-    Auth: 'bg-violet-500/10 text-violet-500 border-violet-500/20',
-    Products: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    Stock: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    Invoices: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    Distributors: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
-    Users: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-    Operations: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    Finance: 'bg-teal-500/10 text-teal-500 border-teal-500/20',
-    System: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+const MODULE_STYLES = {
+    Auth: { color: 'violet', icon: Shield },
+    Products: { color: 'blue', icon: Layers },
+    Stock: { color: 'amber', icon: Layers },
+    Invoices: { color: 'emerald', icon: FileText },
+    Distributors: { color: 'cyan', icon: User },
+    Users: { color: 'rose', icon: User },
+    Operations: { color: 'orange', icon: Activity },
+    Finance: { color: 'teal', icon: Wallet2 },
+    System: { color: 'slate', icon: Settings },
 };
 
-const ACTION_ICON_COLOR = {
-    Create: 'text-emerald-500',
-    Edit: 'text-blue-500',
-    Update: 'text-blue-500',
-    Delete: 'text-rose-500',
-    Login: 'text-violet-500',
-    Add: 'text-emerald-500',
-    Reduce: 'text-amber-500',
-    Transfer: 'text-cyan-500',
-    Adjust: 'text-orange-500',
-    Bulk: 'text-indigo-500',
+const ACTION_COLORS = {
+    Create: 'text-emerald-600',
+    Edit: 'text-blue-600',
+    Update: 'text-blue-600',
+    Delete: 'text-red-600',
+    Login: 'text-violet-600',
+    Add: 'text-emerald-600',
+    Reduce: 'text-amber-600',
+    Transfer: 'text-cyan-600',
+    Adjust: 'text-orange-600',
+    Bulk: 'text-indigo-600',
 };
 
-function moduleBadge(module) {
-    const cls = MODULE_COLORS[module] || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+function ModuleBadge({ module }) {
     return (
-        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest ${cls}`}>
-            <Layers size={10} />
+        <AppBadge variant="secondary" size="sm" className="rounded-md font-bold px-2">
             {module}
-        </span>
+        </AppBadge>
     );
 }
 
-function actionColor(action) {
+function getActionColor(action) {
     const first = action?.split(' ')[0];
-    return ACTION_ICON_COLOR[first] || 'text-[var(--text-muted)]';
+    return ACTION_COLORS[first] || 'text-slate-600';
 }
 
 export default function SystemActivityLogs() {
@@ -73,13 +74,12 @@ export default function SystemActivityLogs() {
             });
             setLogs(data || []);
         } catch {
-            setError('Failed to load activity logs. You may not have permission to view this page.');
+            setError('Failed to load activity logs.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Client-side search for instant filtering on top of server results
     const filtered = useMemo(() => {
         if (!searchUser) return logs;
         const q = searchUser.toLowerCase();
@@ -92,7 +92,7 @@ export default function SystemActivityLogs() {
     }, [logs, searchUser]);
 
     const handleSearch = (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         fetchLogs();
     };
 
@@ -102,182 +102,195 @@ export default function SystemActivityLogs() {
         return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
-    return (
-        <div className="space-y-8 max-w-[1800px] mx-auto animate-fade-in pb-20">
+    const handlePrint = () => window.print();
 
-            {/* Header */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8 bg-[var(--bg-card)] p-8 rounded-[3rem] border border-[var(--border)] shadow-xl relative overflow-hidden group">
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 bg-violet-500/10 text-violet-500 rounded-xl group-hover:rotate-12 transition-transform duration-500">
-                            <ShieldCheck size={22} />
-                        </div>
-                        <span className="text-[11px] font-black text-violet-500 uppercase tracking-[0.4em] italic">Security &amp; Compliance</span>
-                    </div>
-                    <h1 className="text-5xl font-black tracking-tighter uppercase italic text-[var(--text-main)]">
-                        Activity <span className="text-violet-500 not-italic">Audit</span>
+    const handleExportPDF = () => {
+        if (!filtered.length) return;
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.setTextColor(30, 41, 59); // Slate-800
+        doc.text('System Activity Audit Log', 14, 22);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+
+        const tableData = filtered.map(log => [
+            log.userName || log.userId || '—',
+            log.action || '—',
+            log.module || 'System',
+            log.description || '—',
+            log.ipAddress || '—',
+            formatDate(log.timestamp)
+        ]);
+
+        autoTable(doc, {
+            head: [['User', 'Action', 'Module', 'Description', 'IP Address', 'Timestamp']],
+            body: tableData,
+            startY: 35,
+            styles: { fontSize: 8, cellPadding: 3 },
+            headStyles: { fillColor: [59, 130, 246] }, // Blue-500
+        });
+
+        doc.save(`activity_log_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
+
+    const handleExportExcel = () => {
+        if (!filtered.length) return;
+        const worksheet = XLSX.utils.json_to_sheet(filtered.map(log => ({
+            'User': log.userName || log.userId || '—',
+            'Action': log.action || '—',
+            'Module': log.module || 'System',
+            'Description': log.description || '—',
+            'IP Address': log.ipAddress || '—',
+            'Timestamp': formatDate(log.timestamp)
+        })));
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Activity Logs");
+        XLSX.writeFile(workbook, `activity_log_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    return (
+        <div className="space-y-6 max-w-[1800px] mx-auto animate-fade-in pb-20">
+            {/* Header Section */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                        <Shield className="text-blue-600" size={24}/> System Activity Logs
                     </h1>
-                    <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mt-3 italic">
-                        Track all system events · user actions · data changes across every module.
-                    </p>
+                    <p className="text-sm text-slate-500 mt-1">Comprehensive audit trail of all system actions and modifications.</p>
                 </div>
-                <div className="flex flex-wrap gap-4 relative z-10">
-                    <AppButton variant="secondary" onClick={fetchLogs} className="!px-8 !py-3.5 !rounded-2xl group">
-                        <RefreshCcw size={16} className="mr-2 group-hover:rotate-180 transition-transform duration-700 text-violet-500" />
-                        <span className="uppercase tracking-[0.2em] font-black text-[10px]">Refresh</span>
+                <div className="flex flex-wrap gap-2 print:hidden">
+                    <AppButton variant="secondary" onClick={handleExportExcel} disabled={!filtered.length} className="rounded-md px-4">
+                        <FileSpreadsheet size={16} className="mr-2 text-emerald-600" /> Excel
+                    </AppButton>
+                    <AppButton variant="secondary" onClick={handleExportPDF} disabled={!filtered.length} className="rounded-md px-4">
+                        <Download size={16} className="mr-2 text-rose-600" /> PDF
+                    </AppButton>
+                    <AppButton variant="secondary" onClick={handlePrint} className="rounded-md px-4">
+                        <Printer size={16} className="mr-2" /> Print
+                    </AppButton>
+                    <AppButton onClick={fetchLogs} className="rounded-md px-4 ml-2">
+                        <RefreshCcw size={16} className="mr-2" /> Refresh
                     </AppButton>
                 </div>
-                <div className="absolute top-0 right-0 w-[35rem] h-[35rem] bg-violet-500/5 rounded-bl-[20rem] -mr-32 -mt-32 blur-[80px] pointer-events-none" />
             </div>
 
-            {/* Stats row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 print:hidden">
                 {[
-                    { label: 'Total Events', value: logs.length, color: 'violet' },
-                    { label: 'Users Active', value: [...new Set(logs.map(l => l.userName))].filter(Boolean).length, color: 'blue' },
-                    { label: 'Modules Covered', value: [...new Set(logs.map(l => l.module))].filter(Boolean).length, color: 'emerald' },
-                    { label: 'Today', value: logs.filter(l => new Date(l.timestamp).toDateString() === new Date().toDateString()).length, color: 'amber' },
+                    { label: 'Total Logs', value: logs.length, color: 'blue' },
+                    { label: 'Unique Users', value: [...new Set(logs.map(l => l.userName))].filter(Boolean).length, color: 'indigo' },
+                    { label: "Today's Actions", value: logs.filter(l => new Date(l.timestamp).toDateString() === new Date().toDateString()).length, color: 'emerald' },
+                    { label: 'Delete / Fail Events', value: logs.filter(l => l.action?.toLowerCase().includes('delete') || l.action?.toLowerCase().includes('fail')).length, color: 'rose' },
                 ].map(s => (
-                    <AppCard key={s.label} className={`border-t-4 border-t-${s.color}-500`}>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] italic mb-1">{s.label}</p>
-                        <h4 className={`text-3xl font-black tabular-nums text-${s.color}-500`}>{s.value}</h4>
+                    <AppCard key={s.label} className="border-t-4 border-t-blue-500 shadow-sm">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">{s.label}</p>
+                        <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{s.value}</h4>
                     </AppCard>
                 ))}
             </div>
 
-            {/* Filters */}
-            <AppCard className="overflow-hidden">
-                <form onSubmit={handleSearch} className="flex flex-col xl:flex-row gap-4 p-4 items-end flex-wrap">
-                    {/* Search user */}
-                    <div className="flex-1 min-w-[180px]">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1.5 block">Search User / Action</label>
+            {/* Filter Controls */}
+            <AppCard className="print:hidden border border-slate-200 shadow-sm">
+                <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="lg:col-span-1">
+                        <label className="text-[10px] font-bold uppercase text-slate-500 mb-1.5 block">Search Action/User</label>
                         <div className="relative">
-                            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                            <input
-                                type="text"
-                                value={searchUser}
-                                onChange={e => setSearchUser(e.target.value)}
-                                placeholder="Username or action..."
-                                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-app)] text-sm text-[var(--text-main)] focus:outline-none focus:border-violet-500 transition-colors"
-                            />
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={searchUser} onChange={e => setSearchUser(e.target.value)} placeholder="Type to search..."
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-blue-500 transition-colors" />
                         </div>
                     </div>
-
-                    {/* Module filter */}
-                    <div className="min-w-[160px]">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1.5 block">Module</label>
+                    <div>
+                        <label className="text-[10px] font-bold uppercase text-slate-500 mb-1.5 block">System Module</label>
                         <div className="relative">
-                            <Filter size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                            <select
-                                value={selectedModule}
-                                onChange={e => setSelectedModule(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-app)] text-sm text-[var(--text-main)] focus:outline-none focus:border-violet-500 appearance-none transition-colors"
-                            >
-                                {MODULES.map(m => <option key={m}>{m}</option>)}
+                            <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <select value={selectedModule} onChange={e => setSelectedModule(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm appearance-none focus:outline-none focus:border-blue-500">
+                                {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                         </div>
                     </div>
-
-                    {/* From Date */}
-                    <div className="min-w-[160px]">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1.5 block">From Date</label>
-                        <input
-                            type="date"
-                            value={fromDate}
-                            onChange={e => setFromDate(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-app)] text-sm text-[var(--text-main)] focus:outline-none focus:border-violet-500 transition-colors"
-                        />
+                    <div>
+                        <label className="text-[10px] font-bold uppercase text-slate-500 mb-1.5 block">Start Date</label>
+                        <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
+                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm" />
                     </div>
-
-                    {/* To Date */}
-                    <div className="min-w-[160px]">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1.5 block">To Date</label>
-                        <input
-                            type="date"
-                            value={toDate}
-                            onChange={e => setToDate(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-app)] text-sm text-[var(--text-main)] focus:outline-none focus:border-violet-500 transition-colors"
-                        />
+                    <div>
+                        <label className="text-[10px] font-bold uppercase text-slate-500 mb-1.5 block">End Date</label>
+                        <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
+                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm" />
                     </div>
-
-                    <AppButton type="submit" className="!px-8 !py-2.5 !rounded-xl whitespace-nowrap">
-                        <Search size={14} className="mr-2" />
-                        <span className="uppercase tracking-widest font-black text-[10px]">Apply Filters</span>
-                    </AppButton>
-                    <AppButton
-                        type="button"
-                        variant="secondary"
-                        className="!px-6 !py-2.5 !rounded-xl whitespace-nowrap"
-                        onClick={() => { setSearchUser(''); setSelectedModule('All'); setFromDate(''); setToDate(''); setTimeout(fetchLogs, 50); }}
-                    >
-                        <span className="uppercase tracking-widest font-black text-[10px]">Clear</span>
-                    </AppButton>
+                    <div className="flex items-end gap-2">
+                        <AppButton type="submit" className="flex-1 rounded-md py-2">Apply</AppButton>
+                        <AppButton type="button" variant="secondary" onClick={() => { setSearchUser(''); setSelectedModule('All'); setFromDate(''); setToDate(''); setTimeout(fetchLogs, 50); }}
+                                   className="rounded-md py-2">Clear</AppButton>
+                    </div>
                 </form>
             </AppCard>
 
-            {/* Error */}
+            {/* Error Notification */}
             {error && (
-                <div className="flex items-center gap-3 p-5 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-600 text-sm font-semibold">
-                    <AlertCircle size={20} />
+                <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-lg flex items-center gap-3 text-sm font-semibold">
+                    <AlertCircle size={18} />
                     {error}
                 </div>
             )}
 
-            {/* Logs Table */}
-            <AppCard p0 className="overflow-hidden shadow-2xl border-t-4 border-t-violet-500">
-                <div className="p-4 border-b border-[var(--border)] bg-[var(--secondary)]/10 flex items-center justify-between">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                        {filtered.length} event{filtered.length !== 1 ? 's' : ''} found
+            {/* Data Table */}
+            <AppCard p0 className="overflow-hidden shadow-sm border border-[var(--border)]">
+                <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                        Found {filtered.length} matching events
                     </span>
                 </div>
-                <div className="p-4">
-                    <AppTable
-                        headers={['User', 'Action', 'Module', 'Description', 'IP Address', 'Timestamp']}
-                        data={filtered}
-                        loading={loading}
-                        emptyMessage="No activity logs found. System events will appear here as users perform actions."
-                        renderRow={(log) => (
-                            <>
-                                <td className="px-6 py-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-violet-500/20 border-2 border-white/20">
-                                            {(log.userName || log.userId || '?')[0].toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-sm text-[var(--text-main)] leading-none">{log.userName || log.userId}</p>
-                                            <p className="text-[9px] text-[var(--text-muted)] font-mono mt-0.5 leading-none">{log.userId?.substring(0, 12)}...</p>
-                                        </div>
+                <AppTable
+                    headers={['User', 'Action', 'Module', 'Description', 'Origin', 'Timestamp']}
+                    data={filtered}
+                    loading={loading}
+                    emptyMessage="No activity logs found for the selected criteria."
+                    renderRow={(log) => (
+                        <>
+                            <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-md bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold border border-slate-200">
+                                        {(log.userName || log.userId || '?')[0].toUpperCase()}
                                     </div>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <span className={`font-black text-sm italic tracking-tight ${actionColor(log.action)}`}>
-                                        {log.action}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-5">
-                                    {moduleBadge(log.module || 'System')}
-                                </td>
-                                <td className="px-6 py-5 max-w-xs">
-                                    <div className="flex items-start gap-2">
-                                        <FileText size={12} className="text-[var(--text-muted)] mt-0.5 shrink-0" />
-                                        <p className="text-xs text-[var(--text-muted)] leading-relaxed truncate">{log.description || '—'}</p>
+                                    <div>
+                                        <p className="font-bold text-sm text-slate-900 leading-none">{log.userName || log.userId}</p>
+                                        <p className="text-[9px] text-slate-400 font-mono mt-1">ID: {log.userId?.substring(0, 8)}</p>
                                     </div>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <span className="font-mono text-[11px] text-[var(--text-muted)] bg-[var(--bg-app)] px-2 py-1 rounded-lg">
-                                        {log.ipAddress || '—'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <div className="flex items-center gap-1.5">
-                                        <Clock size={11} className="text-violet-500 shrink-0" />
-                                        <span className="text-xs text-[var(--text-muted)] font-semibold whitespace-nowrap">{formatDate(log.timestamp)}</span>
-                                    </div>
-                                </td>
-                            </>
-                        )}
-                    />
-                </div>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <span className={`font-bold text-sm ${getActionColor(log.action)}`}>
+                                    {log.action}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4">
+                                <ModuleBadge module={log.module || 'System'} />
+                            </td>
+                            <td className="px-6 py-4 max-w-xs">
+                                <div className="flex items-start gap-2">
+                                    <FileText size={12} className="text-slate-400 mt-0.5 shrink-0" />
+                                    <p className="text-xs text-slate-500 leading-relaxed truncate" title={log.description}>{log.description || '—'}</p>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <span className="font-mono text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded">
+                                    {log.ipAddress || 'Internal'}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                    <Clock size={11} className="text-blue-500 shrink-0" />
+                                    <span className="text-xs text-slate-500 font-medium whitespace-nowrap">{formatDate(log.timestamp)}</span>
+                                </div>
+                            </td>
+                        </>
+                    )}
+                />
             </AppCard>
         </div>
     );

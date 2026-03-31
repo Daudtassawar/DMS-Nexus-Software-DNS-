@@ -6,7 +6,7 @@ namespace DMS.Application.Interfaces
 {
     public interface IInvoiceRepository
     {
-        Task<IEnumerable<Invoice>> GetAllAsync();
+        Task<IEnumerable<Invoice>> GetAllAsync(int? routeId = null, int? salesmanId = null);
         Task<Invoice?> GetByIdAsync(int id);
         Task<Invoice> AddAsync(Invoice invoice);
         void Update(Invoice invoice);

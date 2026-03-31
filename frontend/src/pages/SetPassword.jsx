@@ -101,7 +101,7 @@ export default function SetPassword() {
                 )}
             </div>
             <div className="fixed bottom-8 text-center w-full z-0 text-[10px] uppercase tracking-[0.5em] font-black text-[var(--text-muted)] opacity-50 select-none">
-                DMS Enterprise // Secured Authentication
+                Hamdaan Traders // Secured Authentication
             </div>
         </div>
     );

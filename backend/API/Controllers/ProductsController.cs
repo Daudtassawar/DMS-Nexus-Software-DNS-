@@ -147,7 +147,7 @@ namespace DMS.API.Controllers
         // POST /api/v1/products/bulk-import — Excel/CSV upload
         [HttpPost("bulk-import")]
         [Authorize(Roles = "Admin,Manager")]
-        public async Task<ActionResult> BulkImport(IFormFile file)
+        public async Task<ActionResult> BulkImport([FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest(new { error = "No file provided." });
@@ -170,9 +170,9 @@ namespace DMS.API.Controllers
                     products.Add(new Product
                     {
                         ProductName = cols[0].Trim(),
-                        Brand = cols.Length > 1 ? cols[1].Trim() : null,
-                        Category = cols.Length > 2 ? cols[2].Trim() : null,
-                        Barcode = cols.Length > 3 ? cols[3].Trim() : null,
+                        Brand = cols.Length > 1 && !string.IsNullOrWhiteSpace(cols[1]) ? cols[1].Trim() : null,
+                        Category = cols.Length > 2 && !string.IsNullOrWhiteSpace(cols[2]) ? cols[2].Trim() : null,
+                        Barcode = cols.Length > 3 && !string.IsNullOrWhiteSpace(cols[3]) ? cols[3].Trim() : null,
                         PurchasePrice = decimal.TryParse(cols[4].Trim(), out var pp) ? pp : 0,
                         SalePrice = decimal.TryParse(cols[5].Trim(), out var sp) ? sp : 0,
                         Unit = cols.Length > 6 ? cols[6].Trim() : "Pcs",

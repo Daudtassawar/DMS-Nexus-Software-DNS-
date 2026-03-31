@@ -12,7 +12,7 @@ namespace DMS.API.Controllers
 {
     [ApiController]
     [Route("api/v1/daily-operations")]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Manager,Salesman")]
     public class DailyOperationsController : ControllerBase
     {
         private readonly DailyOperationsService _service;

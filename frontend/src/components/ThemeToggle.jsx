@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Sun, Moon } from 'lucide-react';
 
 // Apply theme to document root (both Tailwind class + CSS custom properties)
 function applyTheme(isDark) {
@@ -14,15 +15,12 @@ function applyTheme(isDark) {
 
 export default function ThemeToggle() {
     const [isDark, setIsDark] = useState(() => {
-        // Read persisted preference; default to light
         return localStorage.getItem('theme') === 'dark';
     });
 
-    // Apply theme once on mount (restores after refresh)
     useEffect(() => {
         applyTheme(isDark);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isDark]);
 
     const toggle = () => {
         const next = !isDark;
@@ -35,24 +33,15 @@ export default function ThemeToggle() {
         <button
             onClick={toggle}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '50%',
-                border: isDark ? '2px solid #3b82f6' : '2px solid #cbd5e1',
-                backgroundColor: isDark ? '#1e3a5f' : '#e2e8f0',
-                cursor: 'pointer',
-                fontSize: '1.3rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease',
-                boxShadow: isDark
-                    ? '0 0 12px rgba(59,130,246,0.4)'
-                    : '0 2px 8px rgba(0,0,0,0.15)',
-            }}
+            className={`
+                w-10 h-10 flex items-center justify-center rounded-md border transition-all
+                ${isDark 
+                    ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-750' 
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }
+            `}
         >
-            {isDark ? '☀️' : '🌙'}
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
         </button>
     );
 }

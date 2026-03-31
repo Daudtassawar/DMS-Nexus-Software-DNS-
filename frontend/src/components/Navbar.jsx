@@ -1,77 +1,89 @@
 import React from 'react';
 import ThemeToggle from './ThemeToggle';
 import authService from '../services/authService';
-import { Menu, Search, LogOut, Bell, Shield, Command, Zap, Activity, Globe } from 'lucide-react';
+import { Menu, Search, LogOut, Bell, X } from 'lucide-react';
 
-const Navbar = ({ onToggleSidebar }) => {
+const Navbar = ({ onToggleSidebar, isSidebarOpen, isMobile }) => {
   const user = authService.getCurrentUser()?.user;
+  const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
+  const [notifications] = React.useState([
+    { id: 1, title: 'System Status', message: 'All systems operational.', time: '2m ago', type: 'info' },
+    { id: 2, title: 'New Invoice', message: 'Invoice #INV-2024-001 created.', time: '15m ago', type: 'success' },
+    { id: 3, title: 'Stock Alert', message: 'Low stock for Product A.', time: '1h ago', type: 'warning' },
+  ]);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const close = () => setIsNotificationOpen(false);
+    if (isNotificationOpen) {
+      window.addEventListener('click', close);
+    }
+    return () => window.removeEventListener('click', close);
+  }, [isNotificationOpen]);
 
   return (
-    <header className="h-28 bg-[var(--bg-app)]/80 border-b border-[var(--border)] px-10 flex items-center justify-between sticky top-0 z-40 backdrop-blur-2xl transition-all relative overflow-hidden">
-      {/* Decorative top gradient surge */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 opacity-20"></div>
-
-      <div className="flex items-center gap-10">
+    <header className="h-16 bg-[var(--bg-card)] border-b border-[var(--border)] px-4 md:px-8 flex items-center justify-between sticky top-0 z-40 shadow-sm">
+      <div className="flex items-center gap-4">
         <button 
           onClick={onToggleSidebar}
-          className="p-4 rounded-[1.5rem] bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border)] hover:border-primary/50 hover:bg-primary/5 transition-all shadow-xl interactive group shrink-0"
+          className="p-2 rounded-md border border-[var(--border)] hover:bg-[var(--secondary)] transition-all text-[var(--text-main)]"
         >
-          <Menu className="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" />
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         
-        <div className="hidden xl:flex items-center gap-4 bg-[var(--bg-app)] border border-[var(--border)] px-6 py-3.5 rounded-3xl w-[30rem] shadow-inner group transition-all focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary/40 relative overflow-hidden">
-          <Search size={18} className="text-slate-500 group-focus-within:text-primary transition-colors" />
-          <input 
-            type="text" 
-            placeholder="INTERROGATE GLOBAL CLUSTER MATRIX..." 
-            className="bg-transparent border-none outline-none text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-main)] w-full placeholder:text-slate-500 italic"
-          />
-          <div className="flex items-center gap-2 px-3 py-1 bg-[var(--bg-card)] rounded-xl text-[10px] font-black text-[var(--text-muted)] border border-[var(--border)] shadow-sm">
-            <Command size={11} className="text-primary"/> <span className="tracking-widest">K</span>
-          </div>
-          <div className="absolute bottom-0 left-0 h-0.5 bg-primary w-0 group-focus-within:w-full transition-all duration-700"></div>
+        <div className="hidden lg:flex items-center gap-2 border border-[var(--border)] px-3 py-1.5 rounded-md w-64 bg-[var(--bg-app)] focus-within:ring-2 focus-within:ring-[var(--ring)] focus-within:border-[var(--primary)] transition-all">
+          <Search size={16} className="text-[var(--text-muted)]" />
+          <input type="text" placeholder="Search..." className="bg-transparent text-sm outline-none w-full text-[var(--text-main)] placeholder-[var(--text-muted)]" />
         </div>
       </div>
 
-      <div className="flex items-center gap-6 lg:gap-12">
-        {/* Status Indicators */}
-        <div className="hidden lg:flex items-center gap-8 border-r border-[var(--border)] pr-12">
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-2">
-                <Globe size={12} className="text-emerald-500 animate-pulse"/>
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 italic">Core Network Live</span>
+      <div className="flex items-center gap-3 md:gap-4 shrink-0">
+        <div className="relative">
+          <button 
+            onClick={(e) => { e.stopPropagation(); setIsNotificationOpen(!isNotificationOpen); }}
+            className={`p-2 rounded-md border transition-all relative ${isNotificationOpen ? 'border-[var(--primary)] bg-[var(--bg-app)] text-[var(--primary)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--secondary)]'}`}
+          >
+            <Bell size={20} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[var(--bg-card)]"></span>
+          </button>
+
+          {isNotificationOpen && (
+            <div className="absolute top-full right-0 mt-2 w-80 bg-[var(--bg-card)] border border-[var(--border)] rounded-md shadow-lg z-[100] overflow-hidden">
+              <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--secondary)] flex justify-between items-center">
+                <span className="text-xs font-bold text-[var(--text-main)] uppercase tracking-wider">Notifications</span>
+                <button className="text-[var(--primary)] text-xs font-medium hover:underline" onClick={() => setIsNotificationOpen(false)}>Mark all read</button>
               </div>
-              <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-tighter opacity-40">Uplink Stable</p>
+              <div className="max-h-72 overflow-y-auto">
+                {notifications.map(n => (
+                  <div key={n.id} className="p-4 border-b border-[var(--border)] last:border-0 hover:bg-[var(--secondary)] cursor-pointer transition-colors">
+                    <p className="text-sm font-semibold text-[var(--text-main)] mb-1">{n.title}</p>
+                    <p className="text-xs text-[var(--text-muted)] leading-tight">{n.message}</p>
+                    <p className="text-[10px] text-[var(--text-muted)] mt-2">{n.time}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="p-2 border-t border-[var(--border)] text-center">
+                <button className="text-xs text-[var(--primary)] font-medium hover:underline">View all</button>
+              </div>
             </div>
-            
-            <button className="p-4 rounded-2xl text-[var(--text-muted)] hover:text-primary hover:bg-primary/5 transition-all relative group shadow-sm bg-[var(--bg-card)] border border-[var(--border)]">
-                <Bell size={22} className="group-hover:rotate-12 transition-transform"/>
-                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[var(--bg-app)] shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse"></span>
-            </button>
-            <ThemeToggle />
+          )}
         </div>
-        
-        <div className="flex items-center gap-6 group/user cursor-pointer">
-          <div className="text-right hidden sm:block transition-all group-hover/user:-translate-x-2">
-            <div className="flex items-center justify-end gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_#10b981] animate-pulse"></div>
-                <p className="text-[13px] font-black tracking-tighter uppercase text-[var(--text-main)] italic leading-none">{user?.userName}</p>
-            </div>
-            <p className="text-[10px] text-primary font-black uppercase tracking-[0.3em] leading-none">PRIMARY AUTHORIZED NODE</p>
+
+        <div className="hidden sm:block">
+          <ThemeToggle />
+        </div>
+
+        <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4 h-8">
+          <div className="flex flex-col items-end hidden md:flex">
+            <span className="text-sm font-semibold text-[var(--text-main)] leading-none">{user?.userName}</span>
+            <span className="text-[10px] text-[var(--primary)] font-medium uppercase tracking-wider mt-1">{user?.role || 'Administrator'}</span>
           </div>
-          
-          <div className="relative">
-            <div className="w-14 h-14 rounded-[1.25rem] bg-gradient-to-br from-primary to-primary/60 border-4 border-white/10 shadow-2xl flex items-center justify-center text-white font-black text-xl group-hover/user:rotate-12 transition-transform duration-500">
-               {user?.userName?.charAt(0).toUpperCase()}
-            </div>
-            <button 
-              onClick={() => authService.logout()}
-              className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg hover:scale-110 active:scale-90 transition-all border-2 border-[var(--bg-app)]"
-              title="Terminate Pipeline"
-            >
-              <LogOut size={12} className="font-bold" />
-            </button>
+          <div className="w-8 h-8 rounded-md bg-[var(--bg-app)] text-[var(--primary)] flex items-center justify-center font-bold border border-[var(--border)] text-sm">
+            {user?.userName?.charAt(0).toUpperCase()}
           </div>
+          <button onClick={() => authService.logout()} className="p-2 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md transition-all ml-1" title="Logout">
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
     </header>
