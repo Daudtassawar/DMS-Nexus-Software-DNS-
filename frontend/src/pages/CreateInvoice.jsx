@@ -211,19 +211,19 @@ export default function CreateInvoice() {
     if (loading) return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 animate-pulse">
         <Activity size={48} className="text-primary animate-spin-slow"/>
-        <p className="font-black text-[11px] uppercase tracking-[0.5em] text-[var(--text-muted)] italic">Initializing Transaction Terminal...</p>
+        <p className="font-bold text-[11px] uppercase tracking-[0.5em] text-[var(--text-muted)] italic">Initializing Transaction Terminal...</p>
       </div>
     );
 
     if (success) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 animate-fade-in text-center">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8  text-center">
                 <div className="w-32 h-32 bg-emerald-500 text-white rounded-md flex items-center justify-center shadow-md border-4 border-emerald-200">
                     <CheckCircle size={64} />
                 </div>
                 <div>
-                    <h2 className="text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Ledger Committed</h2>
-                    <p className="text-emerald-500 mt-4 font-black uppercase tracking-[0.3em] text-[11px] italic">Navigating to Receipt Terminal...</p>
+                    <h2 className="text-5xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter italic">Ledger Committed</h2>
+                    <p className="text-emerald-500 mt-4 font-bold uppercase tracking-[0.3em] text-[11px] italic">Navigating to Receipt Terminal...</p>
                 </div>
             </div>
         );
@@ -232,7 +232,7 @@ export default function CreateInvoice() {
     const selectedCustomer = customers.find(c => c.customerId === parseInt(customerId));
 
     return (
-        <div className="max-w-[1700px] mx-auto space-y-6 animate-fade-in pb-20">
+        <div className="max-w-[1700px] mx-auto space-y-6  pb-20">
             {/* Header / Command Bar */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
                 <div>
@@ -348,7 +348,7 @@ export default function CreateInvoice() {
                             />
                             {showDropdown && filteredProducts.length > 0 && createPortal(
                                 <div className="fixed inset-0 z-[99998]" onClick={() => setShowDropdown(false)}>
-                                  <div style={{...getDropdownStyle(), border: '1px solid var(--border)', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)'}} onClick={e => e.stopPropagation()} className="shadow-xl divide-y divide-[var(--border)] animate-fade-in max-h-[400px] overflow-y-auto">
+                                  <div style={{...getDropdownStyle(), border: '1px solid var(--border)', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)'}} onClick={e => e.stopPropagation()} className="shadow-sm divide-y divide-[var(--border)]  max-h-[400px] overflow-y-auto">
                                       {filteredProducts.map(p => (
                                           <div key={p.productId} onClick={() => addProduct(p)} className="p-4 flex justify-between items-center hover:bg-[var(--secondary)] cursor-pointer transition-all">
                                               <div className="flex items-center gap-4">

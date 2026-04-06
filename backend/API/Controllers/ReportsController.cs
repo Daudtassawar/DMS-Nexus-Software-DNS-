@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using DMS.Application.Services;
 using DMS.Infrastructure.Authorization;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DMS.API.Controllers
 {
@@ -12,10 +13,12 @@ namespace DMS.API.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly ReportService _reportService;
+        private readonly IMemoryCache _cache;
 
-        public ReportsController(ReportService reportService)
+        public ReportsController(ReportService reportService, IMemoryCache cache)
         {
             _reportService = reportService;
+            _cache = cache;
         }
 
         // GET: api/v1/reports/dashboard-metrics
@@ -23,7 +26,11 @@ namespace DMS.API.Controllers
         [RequirePermission("Dashboard.View")] // Dashboard uses reports controller for metrics
         public async Task<ActionResult> GetDashboardMetrics()
         {
-            var metrics = await _reportService.GetDashboardMetricsAsync();
+            var metrics = await _cache.GetOrCreateAsync("dashboard_metrics", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = System.TimeSpan.FromMinutes(1);
+                return _reportService.GetDashboardMetricsAsync();
+            });
             return Ok(metrics);
         }
 

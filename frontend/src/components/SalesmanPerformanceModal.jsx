@@ -49,8 +49,8 @@ export default function SalesmanPerformanceModal({ isOpen, onClose, salesmanId, 
     const modalRoot = document.getElementById('modal-root') || document.body;
 
     return createPortal(
-        <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '1rem' }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ background: C.dialog, borderRadius: '0.875rem', width: '100%', maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.7)', border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
+        <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '1rem' }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: C.dialog, borderRadius: '0.875rem', width: '100%', maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto', border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '1.25rem 1.5rem', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: C.headerBg, zIndex: 2, borderRadius: '0.875rem 0.875rem 0 0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <div style={{width: 40, height: 40, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>

@@ -97,7 +97,7 @@ export default function UserModal({ isOpen, onClose, user, onSave }) {
 
                     {/* Profile Information */}
                     <div className="space-y-4">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">👤 Profile Information</p>
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">👤 Profile Information</p>
                         {!isEdit && (
                             <>
                                 <AppInput 
@@ -139,9 +139,9 @@ export default function UserModal({ isOpen, onClose, user, onSave }) {
 
                     {/* Role Selection */}
                     <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">🔐 Authentication & Access</p>
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">🔐 Authentication & Access</p>
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest pl-1">Role *</label>
+                            <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest pl-1">Role *</label>
                             <select 
                                 name="role" 
                                 required 

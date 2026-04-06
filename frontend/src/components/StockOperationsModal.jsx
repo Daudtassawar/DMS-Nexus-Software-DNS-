@@ -74,7 +74,7 @@ export default function StockOperationsModal({ product, onSuccess, onClose }) {
                             }`}
                         >
                             {o.icon}
-                            <span className="text-[10px] font-black uppercase tracking-widest">{o.label}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest">{o.label}</span>
                         </button>
                     ))}
                 </div>
@@ -122,14 +122,14 @@ export default function StockOperationsModal({ product, onSuccess, onClose }) {
                     </div>
 
                     {op === 'add' && (
-                        <div className="grid grid-cols-2 gap-4 animate-slide-in">
+                        <div className="grid grid-cols-2 gap-4 ">
                             <AppInput label="Batch Number" placeholder="B2026-X" value={batchNumber} onChange={e => setBatchNumber(e.target.value)} />
                             <AppInput label="Expiry Date" type="date" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} />
                         </div>
                     )}
 
                     {op === 'reduce' && (
-                        <div className="flex flex-col gap-1.5 animate-slide-in">
+                        <div className="flex flex-col gap-1.5 ">
                             <label className="text-sm font-semibold text-[var(--text-main)]">Deduction Protocol</label>
                             <select 
                                 value={reason} 

@@ -75,7 +75,7 @@ const Sidebar = ({ isCollapsed, role, userName, isMobile, onClose }) => {
       style={{ display: isMobile && isCollapsed ? 'none' : 'flex' }}
       className={`
         h-screen bg-[var(--bg-card)] text-[var(--text-main)] flex flex-col border-r border-[var(--border)] transition-all duration-300 z-50 overflow-hidden
-        ${isMobile ? 'fixed top-0 left-0 w-64 shadow-xl' : (isCollapsed ? 'static w-20' : 'static w-64')}
+        ${isMobile ? 'fixed top-0 left-0 w-64 shadow-sm' : (isCollapsed ? 'static w-20' : 'static w-64')}
       `}
     >
       {/* Brand Identity */}
@@ -142,7 +142,7 @@ const Sidebar = ({ isCollapsed, role, userName, isMobile, onClose }) => {
         {!isCollapsed ? (
           <div className="flex items-center gap-3 p-3 bg-[var(--bg-card)] rounded-lg border border-[var(--border)] shadow-sm">
             <div className="w-8 h-8 rounded-md bg-[var(--bg-app)] text-[var(--primary)] flex items-center justify-center font-bold border border-[var(--border)] shrink-0 text-sm">
-                {userName?.charAt(0).toUpperCase()}
+                {userName?.charAt(0)?.toUpperCase() || '?'}
             </div>
             <div className="flex-1 overflow-hidden">
                 <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight leading-none mb-1">User Account</p>
@@ -152,7 +152,7 @@ const Sidebar = ({ isCollapsed, role, userName, isMobile, onClose }) => {
         ) : (
           <div className="flex justify-center">
             <div className="w-8 h-8 rounded-md bg-[var(--bg-app)] text-[var(--primary)] flex items-center justify-center font-bold border border-[var(--border)] shadow-sm text-sm">
-                {userName?.charAt(0).toUpperCase()}
+                {userName?.charAt(0)?.toUpperCase() || '?'}
             </div>
           </div>
         )}

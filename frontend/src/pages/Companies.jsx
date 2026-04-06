@@ -6,6 +6,7 @@ import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppInput from '../components/AppInput';
 import AppModal from '../components/AppModal';
+import AppBadge from '../components/AppBadge';
 
 const Companies = () => {
     const [company, setCompany] = useState(null);
@@ -49,7 +50,7 @@ const Companies = () => {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center min-h-[400px] animate-fade-in">
+        <div className="flex items-center justify-center min-h-[400px] ">
              <div className="flex flex-col items-center gap-3">
                  <div className="w-10 h-10 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Synchronizing Corporate Data...</p>
@@ -58,7 +59,7 @@ const Companies = () => {
     );
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {/* Header Section */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
                 <div>
@@ -148,7 +149,7 @@ const Companies = () => {
                     </div>
                 </div>
             ) : (
-                <AppCard className="p-16 text-center border-2 border-dashed border-slate-200 bg-slate-50 rounded-xl animate-fade-in">
+                <AppCard className="p-16 text-center border-2 border-dashed border-slate-200 bg-slate-50 rounded-xl ">
                     <div className="max-w-sm mx-auto space-y-6">
                         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-slate-200">
                             <Building2 size={32} className="text-slate-300" />
@@ -158,7 +159,7 @@ const Companies = () => {
                             <p className="text-sm text-slate-500 leading-relaxed">The system has not identified a primary corporate profile. Please establish your organizational identity to enable core modules.</p>
                         </div>
                         <AppButton onClick={() => { setFormData({ id: null, name: 'Corporate Headquarters', contactPerson: '', phone: '', address: '' }); setShowModal(true); }} 
-                                  className="rounded-md w-full py-4 text-sm font-bold uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                                  className="rounded-md w-full py-4 text-sm font-bold uppercase tracking-widest shadow-sm shadow-blue-500/20">
                             <Plus size={20} className="mr-2"/> Initialize Profile
                         </AppButton>
                     </div>

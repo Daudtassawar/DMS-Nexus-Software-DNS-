@@ -30,7 +30,7 @@ services:
       dockerfile: Dockerfile
     container_name: dms-backend
     ports:
-      - "5001:5000"
+      - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       # Connection mapping to the 'sqlserver' container domain name

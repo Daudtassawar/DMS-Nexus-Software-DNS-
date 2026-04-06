@@ -31,7 +31,7 @@ const BalanceSheet = () => {
     const fmt = (v) => (v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
 
     return (
-        <div className="space-y-6 animate-fade-in pb-20 max-w-[1400px] mx-auto">
+        <div className="space-y-6  pb-20 max-w-[1400px] mx-auto">
             {/* Header */}
             <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>

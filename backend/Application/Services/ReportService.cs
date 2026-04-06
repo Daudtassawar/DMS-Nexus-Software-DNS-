@@ -21,24 +21,40 @@ namespace DMS.Application.Services
             
             // 1. Basic Metrics
             var todayInvoices = await _context.Invoices
-                .Where(i => i.InvoiceDate.Date == today)
+                .Include(i => i.InvoiceItems)
+                .Where(i => i.InvoiceDate.Date == today && i.PaymentStatus != "Cancelled")
                 .ToListAsync();
 
             var todaySales = todayInvoices.Sum(i => i.TotalAmount);
+            var todayStockOut = todayInvoices.SelectMany(i => i.InvoiceItems).Sum(ii => ii.Quantity);
             var todayCount = todayInvoices.Count;
             var totalProducts = await _context.Products.CountAsync();
             var totalOutstanding = await _context.Customers.SumAsync(c => c.Balance);
 
-            // Calculate low stock (grouped by product across warehouses)
-            var lowStockCount = await _context.Products
+            // Calculate low stock and out of stock details
+            var productsWithStock = await _context.Products
                 .Include(p => p.Stock)
-                .Where(p => p.Stock != null && p.Stock.Quantity < p.MinStockLevel)
-                .CountAsync();
+                .Select(p => new {
+                    p.ProductName,
+                    p.MinStockLevel,
+                    Quantity = _context.Stock.Where(s => s.ProductId == p.ProductId).Sum(s => s.Quantity)
+                })
+                .ToListAsync();
+
+            var lowStockAlerts = productsWithStock
+                .Where(p => p.Quantity > 0 && p.Quantity < p.MinStockLevel)
+                .Select(p => new { p.ProductName, p.Quantity, p.MinStockLevel })
+                .ToList();
+
+            var outOfStockAlerts = productsWithStock
+                .Where(p => p.Quantity <= 0)
+                .Select(p => new { p.ProductName, p.Quantity })
+                .ToList();
 
             // 2. Monthly Sales Trend (Last 6 Months)
             var sixMonthsAgo = today.AddMonths(-5);
             var rawMonthly = await _context.Invoices
-                .Where(i => i.InvoiceDate >= sixMonthsAgo)
+                .Where(i => i.InvoiceDate >= sixMonthsAgo && i.PaymentStatus != "Cancelled")
                 .GroupBy(i => new { i.InvoiceDate.Year, i.InvoiceDate.Month })
                 .Select(g => new { 
                     Year = g.Key.Year, 
@@ -68,7 +84,9 @@ namespace DMS.Application.Services
 
             // 4. Sales by Salesman
             var rawSalesman = await _context.Invoices
-                .GroupBy(i => i.Salesman.Name)
+                .Where(i => i.PaymentStatus != "Cancelled")
+                .Select(i => new { SalesmanName = i.Salesman != null ? i.Salesman.Name : "Direct/System", i.TotalAmount })
+                .GroupBy(i => i.SalesmanName)
                 .Select(g => new { 
                     Name = g.Key, 
                     Value = g.Sum(i => i.TotalAmount) 
@@ -115,10 +133,16 @@ namespace DMS.Application.Services
             return new { 
                 Totals = new {
                     TodaySales = todaySales,
+                    TodayStockOut = todayStockOut,
                     TodayInvoices = todayCount,
                     TotalProducts = totalProducts,
-                    LowStock = lowStockCount,
+                    LowStockCount = lowStockAlerts.Count,
+                    OutOfStockCount = outOfStockAlerts.Count,
                     OutstandingBalance = totalOutstanding
+                },
+                Alerts = new {
+                    LowStock = lowStockAlerts,
+                    OutOfStock = outOfStockAlerts
                 },
                 Charts = new {
                     MonthlyTrend = monthlySales,
@@ -191,13 +215,17 @@ namespace DMS.Application.Services
             var invoicesQuery = _context.Invoices.AsQueryable();
 
             if (startDate.HasValue) {
-                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate >= startDate.Value);
-                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate >= startDate.Value);
+                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate >= startDate.Value && i.Invoice.PaymentStatus != "Cancelled");
+                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate >= startDate.Value && i.PaymentStatus != "Cancelled");
             }
             if (endDate.HasValue) {
-                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate <= endDate.Value);
-                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate <= endDate.Value);
+                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate <= endDate.Value && i.Invoice.PaymentStatus != "Cancelled");
+                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate <= endDate.Value && i.PaymentStatus != "Cancelled");
             }
+
+            // Also ensure default query handles non-cancelled
+            invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.PaymentStatus != "Cancelled");
+            invoicesQuery = invoicesQuery.Where(i => i.PaymentStatus != "Cancelled");
 
             // Profit = Total Revenue (Sale Price * Qty) - Total Cost (Purchase Price * Qty)
             var profitData = await invoiceItemsQuery

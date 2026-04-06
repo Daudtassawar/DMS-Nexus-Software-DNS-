@@ -36,14 +36,14 @@ const ProductProfitAnalysis = () => {
     );
 
     return (
-        <div className="space-y-6 animate-fade-in pb-20">
+        <div className="space-y-6  pb-20">
             {/* Header */}
             <div>
                 <div className="flex items-center gap-2 mb-1">
                     <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl"><Layers size={20}/></div>
-                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] italic">Product Intelligence</span>
+                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-[0.3em] italic">Product Intelligence</span>
                 </div>
-                <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white">
+                <h1 className="text-3xl font-bold uppercase italic tracking-tighter text-white">
                     Profitability <span className="text-primary not-italic">Ranking</span>
                 </h1>
             </div>
@@ -52,8 +52,8 @@ const ProductProfitAnalysis = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-emerald-500/5 border border-emerald-500/20 p-6 rounded-3xl flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1 italic">Highest Profit Contribution</p>
-                        <h3 className="text-xl font-black text-white italic truncate max-w-[200px]">{products[0]?.productName}</h3>
+                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1 italic">Highest Profit Contribution</p>
+                        <h3 className="text-xl font-bold text-white italic truncate max-w-[200px]">{products[0]?.productName}</h3>
                         <p className="text-[10px] font-bold text-emerald-400 mt-1 uppercase italic">+Rs. {products[0]?.profit?.toLocaleString()} Profit</p>
                     </div>
                     <div className="p-4 bg-emerald-500/20 text-emerald-500 rounded-full animate-pulse">
@@ -62,8 +62,8 @@ const ProductProfitAnalysis = () => {
                 </div>
                 <div className="bg-rose-500/5 border border-rose-500/20 p-6 rounded-3xl flex items-center justify-between">
                     <div>
-                        <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1 italic">Least Profit Contribution</p>
-                        <h3 className="text-xl font-black text-white italic truncate max-w-[200px]">{products[products.length-1]?.productName}</h3>
+                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-1 italic">Least Profit Contribution</p>
+                        <h3 className="text-xl font-bold text-white italic truncate max-w-[200px]">{products[products.length-1]?.productName}</h3>
                         <p className="text-[10px] font-bold text-rose-400 mt-1 uppercase italic">Rs. {products[products.length-1]?.profit?.toLocaleString()} Profit</p>
                     </div>
                     <div className="p-4 bg-rose-500/20 text-rose-500 rounded-full">
@@ -73,14 +73,14 @@ const ProductProfitAnalysis = () => {
             </div>
 
             {/* List with Search */}
-            <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-[2.5rem] overflow-hidden shadow-sm">
                 <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center shrink-0">
                             <Target size={22} />
                         </div>
                         <div>
-                            <h3 className="text-white font-black italic uppercase text-lg tracking-tighter">Margin Analysis</h3>
+                            <h3 className="text-white font-bold italic uppercase text-lg tracking-tighter">Margin Analysis</h3>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">All nodes synchronized</p>
                         </div>
                     </div>
@@ -117,21 +117,21 @@ const ProductProfitAnalysis = () => {
                                                 <Package size={20} className="text-slate-500 group-hover:text-primary transition-colors" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-black text-white italic tracking-tighter">{item.productName}</p>
+                                                <p className="text-sm font-bold text-white italic tracking-tighter">{item.productName}</p>
                                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{item.brand}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-black text-slate-400 font-mono">{item.quantitySold}</span>
+                                            <span className="text-xs font-bold text-slate-400 font-mono">{item.quantitySold}</span>
                                             <span className="text-[9px] font-bold text-slate-600 uppercase">Units</span>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-6 text-sm font-black text-white italic tracking-tighter">Rs. {item.revenue?.toLocaleString()}</td>
-                                    <td className="px-8 py-6 text-sm font-black text-rose-500/80 italic tracking-tighter">-Rs. {item.cost?.toLocaleString()}</td>
+                                    <td className="px-8 py-6 text-sm font-bold text-white italic tracking-tighter">Rs. {item.revenue?.toLocaleString()}</td>
+                                    <td className="px-8 py-6 text-sm font-bold text-rose-500/80 italic tracking-tighter">-Rs. {item.cost?.toLocaleString()}</td>
                                     <td className="px-8 py-6">
-                                        <div className={`px-4 py-2 rounded-xl text-xs font-black italic tracking-tighter inline-block ${item.profit >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                                        <div className={`px-4 py-2 rounded-xl text-xs font-bold italic tracking-tighter inline-block ${item.profit >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                             Rs. {item.profit?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                                         </div>
                                     </td>
@@ -142,7 +142,7 @@ const ProductProfitAnalysis = () => {
                                                 style={{ width: `${Math.max(5, item.margin)}%` }}
                                             ></div>
                                         </div>
-                                        <span className={`text-[10px] font-black italic mt-1 block ${item.margin > 25 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                        <span className={`text-[10px] font-bold italic mt-1 block ${item.margin > 25 ? 'text-emerald-400' : 'text-amber-400'}`}>
                                             {item.margin.toFixed(1)}% Efficiency
                                         </span>
                                     </td>

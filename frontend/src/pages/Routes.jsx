@@ -90,9 +90,9 @@ export default function Routes() {
     };
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {toast.msg && (
-                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-xl shadow-xl font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/10 animate-slide-up ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+                <div className={`toast-notification ${toast.type === 'success' ? 'success' : 'error'}`}>
                     {toast.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}{toast.msg}
                 </div>
             )}

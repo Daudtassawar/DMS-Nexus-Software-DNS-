@@ -122,7 +122,7 @@ namespace DMS.Application.Services
                 TotalSalesToday = salesToday,
                 TotalPaymentsReceived = paymentsReceived,
                 TotalExpensesToday = expensesToday,
-                CashInHand = salesToday - expensesToday
+                CashInHand = paymentsReceived - expensesToday
             };
         }
 

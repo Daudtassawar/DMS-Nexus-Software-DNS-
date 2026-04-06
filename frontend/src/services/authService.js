@@ -1,4 +1,5 @@
 import axios from 'axios';
+console.log("[DEBUG] authService.js: Module evaluation started");
 
 // API URL Base
 const API_URL = '/api/v1/auth';
@@ -96,25 +97,35 @@ const logout = () => {
 };
 
 const getCurrentUser = () => {
-    const stored = localStorage.getItem('dms_user');
-    if (!stored) return null;
-    const parsed = JSON.parse(stored);
-    // Normalize: handle both Token (capital) and token (lowercase) from older sessions
-    if (parsed.Token && !parsed.token) {
-        parsed.token = parsed.Token;
-        delete parsed.Token;
+    try {
+        const stored = localStorage.getItem('dms_user');
+        if (!stored) return null;
+        const parsed = JSON.parse(stored);
+        if (!parsed) return null;
+
+        // Normalize: handle both Token (capital) and token (lowercase) from older sessions
+        if (parsed.Token && !parsed.token) {
+            parsed.token = parsed.Token;
+            delete parsed.Token;
+        }
+        if (parsed.User && !parsed.user) {
+            parsed.user = parsed.User;
+            delete parsed.User;
+        }
+        return parsed;
+    } catch (e) {
+        console.error('Failed to parse current user from localStorage:', e);
+        return null;
     }
-    if (parsed.User && !parsed.user) {
-        parsed.user = parsed.User;
-        delete parsed.User;
-    }
-    return parsed;
 };
 
 // Helper to decode JWT token
 const decodeToken = (token) => {
+    if (!token) return null;
     try {
-        const base64Url = token.split('.')[1];
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const base64Url = parts[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
@@ -122,6 +133,7 @@ const decodeToken = (token) => {
 
         return JSON.parse(jsonPayload);
     } catch (e) {
+        console.error('Failed to decode JWT token:', e);
         return null;
     }
 };
@@ -185,11 +197,16 @@ const setupAxiosInterceptors = (token) => {
     );
 };
 
-// Initialize interceptor on load if logged in
+console.log("[DEBUG] authService.js: About to call getCurrentUser");
 const user = getCurrentUser();
+console.log("[DEBUG] authService.js: getCurrentUser returned", user ? "a user" : "null");
+
 if (user?.token) {
+    console.log("[DEBUG] authService.js: About to call setupAxiosInterceptors");
     setupAxiosInterceptors(user.token);
+    console.log("[DEBUG] authService.js: setupAxiosInterceptors completed");
 }
+console.log("[DEBUG] authService.js: Module evaluation finished");
 
 export default {
     login,

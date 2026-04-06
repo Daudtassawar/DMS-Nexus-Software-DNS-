@@ -14,20 +14,39 @@ export default function Invoices() {
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
     const [statusFilter, setStatusFilter] = useState('All');
     const [toast, setToast] = useState({ type: '', msg: '' });
     const [deletingId, setDeletingId] = useState(null);
 
-    useEffect(() => { fetchInvoices(); }, []);
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1);
+        }, 400);
+        return () => clearTimeout(t);
+    }, [search]);
 
     const fetchInvoices = async () => {
         setLoading(true);
         try {
-            const data = await invoiceService.getAll();
-            setInvoices(data || []);
+            const d = await invoiceService.getAll({ 
+                page, 
+                pageSize: 20, 
+                search: debouncedSearch,
+                status: statusFilter === 'All' ? null : statusFilter
+            });
+            setInvoices(d.items || []);
+            setTotalPages(d.totalPages || 1);
+            setTotalCount(d.totalCount || 0);
         } catch { showToast('error', 'Failed to load invoices.'); }
         finally { setLoading(false); }
     };
+
+    useEffect(() => { fetchInvoices(); }, [page, debouncedSearch, statusFilter]);
 
     const showToast = (type, msg) => {
         setToast({ type, msg });
@@ -39,7 +58,7 @@ export default function Invoices() {
         setDeletingId(inv.invoiceId);
         try {
             await invoiceService.delete(inv.invoiceId);
-            setInvoices(prev => prev.filter(i => i.invoiceId !== inv.invoiceId));
+            fetchInvoices();
             showToast('success', 'Invoice deleted successfully.');
         } catch (err) {
             showToast('error', err.response?.data?.message || 'Failed to delete invoice.');
@@ -56,20 +75,13 @@ export default function Invoices() {
         }
     };
 
-    const filtered = invoices.filter(inv => {
-        const q = search.toLowerCase();
-        const matchSearch = !q ||
-            (inv.invoiceNumber || '').toLowerCase().includes(q) ||
-            (inv.customer?.customerName || '').toLowerCase().includes(q);
-        const matchStatus = statusFilter === 'All' || inv.paymentStatus === statusFilter;
-        return matchSearch && matchStatus;
-    });
+    const filtered = invoices; // Server-side filtering
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {/* Notifications */}
             {toast.msg && (
-                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-lg shadow-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-3 animate-slide-in-right text-white border border-white/10 ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+                <div className={`toast-notification ${toast.type === 'success' ? 'success' : 'error'}`}>
                     {toast.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}
                     {toast.msg}
                 </div>
@@ -103,7 +115,7 @@ export default function Invoices() {
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Invoices</p>
-                            <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{invoices.length}</h4>
+                            <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{totalCount}</h4>
                         </div>
                         <div className="p-2 bg-blue-50 text-blue-600 rounded">
                             <Layers size={18}/>
@@ -113,8 +125,8 @@ export default function Invoices() {
                 <AppCard className="border-t-4 border-t-emerald-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Revenue</p>
-                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">Rs. {invoices.reduce((s, i) => s + (i.netAmount || 0), 0).toLocaleString()}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Invoices in Page</p>
+                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">{invoices.length}</h4>
                         </div>
                         <div className="p-2 bg-emerald-50 text-emerald-600 rounded">
                             <TrendingUp size={18}/>
@@ -124,8 +136,8 @@ export default function Invoices() {
                 <AppCard className="border-t-4 border-t-amber-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Unpaid Invoices</p>
-                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{invoices.filter(i => i.paymentStatus === 'Unpaid').length}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Pages</p>
+                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{totalPages}</h4>
                         </div>
                         <div className="p-2 bg-amber-50 text-amber-600 rounded">
                             <Activity size={18}/>
@@ -135,8 +147,8 @@ export default function Invoices() {
                 <AppCard className="border-t-4 border-t-blue-600 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Paid Invoices</p>
-                            <h4 className="text-2xl font-bold text-blue-600 tabular-nums">{invoices.filter(i => i.paymentStatus === 'Paid').length}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Page</p>
+                            <h4 className="text-2xl font-bold text-blue-600 tabular-nums">{page}</h4>
                         </div>
                         <div className="p-2 bg-blue-50 text-blue-600 rounded">
                             <CheckCircle size={18}/>
@@ -163,7 +175,10 @@ export default function Invoices() {
                            </div>
                            <select 
                                 value={statusFilter} 
-                                onChange={e => setStatusFilter(e.target.value)}
+                                onChange={e => {
+                                    setStatusFilter(e.target.value);
+                                    setPage(1);
+                                }}
                                 className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-md text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-blue-500 transition-colors appearance-none cursor-pointer"
                             >
                                 {['All', 'Unpaid', 'Partial', 'Paid', 'Overdue', 'Cancelled'].map(s => <option key={s} value={s}>{s === 'All' ? 'ALL STATUS' : s.toUpperCase()}</option>)}
@@ -212,6 +227,11 @@ export default function Invoices() {
                       headers={['Invoice', 'Customer', 'Amount', 'Payment Status', 'Actions']}
                       data={filtered}
                       loading={loading}
+                      pagination={true}
+                      currentPage={page}
+                      totalPages={totalPages}
+                      totalCount={totalCount}
+                      onPageChange={(p) => setPage(p)}
                       renderRow={(inv) => {
                           const statusColors = {
                               Paid: 'success',
@@ -243,7 +263,7 @@ export default function Invoices() {
                                       </div>
                                   </td>
                                   <td className="px-6 py-4">
-                                      <p className="font-bold text-sm text-slate-900 leading-tight">{inv.customer?.customerName || 'Direct Sale'}</p>
+                                      <p className="font-bold text-sm text-slate-900 leading-tight">{inv.customerName || 'Direct Sale'}</p>
                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">ID: {inv.customerId || '---'}</p>
                                   </td>
                                   <td className="px-6 py-4">

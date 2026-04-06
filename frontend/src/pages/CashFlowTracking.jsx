@@ -46,7 +46,7 @@ const CashFlowTracking = () => {
     const isPositive = (data?.netCashFlow || 0) >= 0;
 
     return (
-        <div className="space-y-6 animate-fade-in pb-20 max-w-[1700px] mx-auto">
+        <div className="space-y-6  pb-20 max-w-[1700px] mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
                 <div>

@@ -6,6 +6,8 @@ using DMS.Domain.Entities;
 using DMS.Application.Interfaces; // Added
 using DMS.Application.Services;   // Restored
 using DMS.Infrastructure.Authorization; // Added
+using Microsoft.Extensions.Caching.Memory;
+using DMS.Application.DTOs;
 
 namespace DMS.API.Controllers
 {
@@ -15,10 +17,12 @@ namespace DMS.API.Controllers
     public class CustomersController : ControllerBase
     {
         private readonly CustomerService _customerService;
+        private readonly IMemoryCache _cache;
 
-        public CustomersController(CustomerService customerService)
+        public CustomersController(CustomerService customerService, IMemoryCache cache)
         {
             _customerService = customerService;
+            _cache = cache;
         }
 
         private void GetIsolationFilters(out int? routeId, out int? salesmanId)
@@ -45,13 +49,43 @@ namespace DMS.API.Controllers
             return true;
         }
 
-        // GET: api/v1/customers
+        // GET: api/v1/customers?search=&page=1&pageSize=20
         [HttpGet]
         [RequirePermission("Customers.View")]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers([FromQuery] string? search)
+        public async Task<ActionResult<PagedResult<Customer>>> GetCustomers(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
             GetIsolationFilters(out int? routeId, out int? salesmanId);
-            return Ok(await _customerService.GetAllCustomersAsync(search, routeId, salesmanId));
+            IEnumerable<Customer> results;
+
+            if (!routeId.HasValue && !salesmanId.HasValue && string.IsNullOrEmpty(search))
+            {
+                results = await _cache.GetOrCreateAsync("customers_all", entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = System.TimeSpan.FromMinutes(5);
+                    return _customerService.GetAllCustomersAsync(null, null, null);
+                });
+            }
+            else
+            {
+                results = await _customerService.GetAllCustomersAsync(search, routeId, salesmanId);
+            }
+
+            var totalCount = results.Count();
+            var items = results.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var result = new PagedResult<Customer>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return Ok(result);
         }
 
         // GET: api/v1/customers/5
@@ -93,6 +127,7 @@ namespace DMS.API.Controllers
             }
 
             var created = await _customerService.CreateCustomerAsync(customer);
+            _cache.Remove("customers_all");
             return CreatedAtAction(nameof(GetCustomer), new { id = created.CustomerId }, created);
         }
 
@@ -117,6 +152,7 @@ namespace DMS.API.Controllers
             try
             {
                 await _customerService.UpdateCustomerAsync(customer);
+                _cache.Remove("customers_all");
                 return NoContent();
             }
             catch (System.InvalidOperationException ex)
@@ -135,6 +171,7 @@ namespace DMS.API.Controllers
             if (!IsAuthorizedForCustomer(existing)) return Forbid();
 
             await _customerService.DeleteCustomerAsync(id);
+            _cache.Remove("customers_all");
             return NoContent();
         }
 
@@ -149,6 +186,7 @@ namespace DMS.API.Controllers
             try
             {
                 await _customerService.RecordPaymentAsync(id, req.Amount, req.Note);
+                _cache.Remove("customers_all");
                 return Ok(new { message = "Payment recorded." });
             }
             catch (System.InvalidOperationException ex)

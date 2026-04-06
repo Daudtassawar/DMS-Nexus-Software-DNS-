@@ -123,29 +123,47 @@ namespace DMS.Application.Services
             var customer = await _customerRepository.GetByIdWithHistoryAsync(customerId);
             if (customer == null) throw new InvalidOperationException("Customer not found.");
 
-            // Find the oldest unpaid invoice and apply the payment
-            var unpaidInvoice = customer.Invoices
-                .Where(i => i.PaymentStatus != "Paid")
+            decimal remainingPayment = amount;
+
+            // Find all unpaid/partial invoices and apply the payment across them (FIFO)
+            var unpaidInvoices = customer.Invoices
+                .Where(i => i.PaymentStatus != "Paid" && i.PaymentStatus != "Cancelled")
                 .OrderBy(i => i.InvoiceDate)
-                .FirstOrDefault();
+                .ToList();
 
-            if (unpaidInvoice != null)
+            foreach (var invoice in unpaidInvoices)
             {
-                var payment = new Payment
-                {
-                    InvoiceId = unpaidInvoice.InvoiceId,
-                    AmountPaid = amount,
-                    PaymentDate = DateTime.UtcNow,
-                    PaymentMethod = notes ?? string.Empty,
-                };
-                unpaidInvoice.Payments.Add(payment);
+                if (remainingPayment <= 0) break;
 
-                // Recalculate payment status
-                var totalPaid = unpaidInvoice.Payments.Sum(p => p.AmountPaid);
-                unpaidInvoice.PaymentStatus = totalPaid >= unpaidInvoice.NetAmount ? "Paid" : "Partial";
+                decimal balance = Math.Max(0, invoice.NetAmount - invoice.PaidAmount);
+                decimal toApply = Math.Min(remainingPayment, balance);
+
+                if (toApply > 0)
+                {
+                    var payment = new Payment
+                    {
+                        InvoiceId = invoice.InvoiceId,
+                        AmountPaid = toApply,
+                        PaymentDate = DateTime.UtcNow,
+                        PaymentMethod = notes ?? "Manual Payment",
+                    };
+                    invoice.Payments.Add(payment);
+                    invoice.PaidAmount += toApply;
+                    
+                    // Recalculate status
+                    invoice.RemainingAmount = Math.Max(0, invoice.NetAmount - invoice.PaidAmount);
+                    if (invoice.PaidAmount >= invoice.NetAmount)
+                        invoice.PaymentStatus = "Paid";
+                    else if (invoice.PaidAmount > 0)
+                        invoice.PaymentStatus = "Partial";
+                    else
+                        invoice.PaymentStatus = "Unpaid";
+
+                    remainingPayment -= toApply;
+                }
             }
 
-            // Reduce customer balance
+            // Reduce customer balance by the TOTAL amount received
             customer.Balance = Math.Max(0, customer.Balance - amount);
             _customerRepository.Update(customer);
 
@@ -156,7 +174,7 @@ namespace DMS.Application.Services
                 TransactionType = TransactionType.Credit,
                 Amount = amount,
                 Description = notes ?? "Payment Received",
-                Reference = unpaidInvoice?.InvoiceNumber, // Link to the invoice if possible
+                Reference = unpaidInvoices.FirstOrDefault()?.InvoiceNumber, // Principal reference
                 Date = DateTime.UtcNow
             });
 

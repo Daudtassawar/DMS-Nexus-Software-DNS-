@@ -5,7 +5,7 @@ import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
-import { ShieldCheck, Search, Filter, RefreshCcw, User, Clock, Layers, FileText, AlertCircle, Printer, Download, FileSpreadsheet, Shield } from 'lucide-react';
+import { ShieldCheck, Search, Filter, RefreshCcw, User, Clock, Layers, FileText, AlertCircle, Printer, Download, FileSpreadsheet, Shield, Activity, Wallet2, Settings } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -151,7 +151,7 @@ export default function SystemActivityLogs() {
     };
 
     return (
-        <div className="space-y-6 max-w-[1800px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1800px] mx-auto  pb-20">
             {/* Header Section */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
                 <div>

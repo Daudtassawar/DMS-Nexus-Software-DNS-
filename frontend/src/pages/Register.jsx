@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
-import { Shield, User, Lock, Mail, ChevronRight, UserCircle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Shield, User, Lock, Mail, ChevronRight, UserCircle, CheckCircle, AlertCircle } from 'lucide-react';
 import AppButton from '../components/AppButton';
 
 export default function Register() {
@@ -43,11 +43,11 @@ export default function Register() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans p-6 py-12">
-            <div className="w-full max-w-[540px] animate-fade-in">
-                <div className="bg-white p-8 md:p-12 rounded-lg border border-slate-200 shadow-xl">
+            <div className="w-full max-w-[540px] ">
+                <div className="bg-white p-8 md:p-12 rounded-lg border border-slate-200 shadow-sm">
                     
                     <div className="text-center mb-10">
-                        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 mx-auto mb-6">
+                        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200 mx-auto mb-6">
                            <Shield size={32} className="text-white"/>
                         </div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Access <span className="text-blue-600">Request</span></h1>
@@ -60,7 +60,7 @@ export default function Register() {
                                 ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
                                 : 'bg-red-50 border-red-100 text-red-700'
                         }`}>
-                            {status.type === 'success' ? <CheckCircle2 size={16}/> : <AlertCircle size={16}/>}
+                            {status.type === 'success' ? <CheckCircle size={16}/> : <AlertCircle size={16}/>}
                             {status.message}
                         </div>
                     )}

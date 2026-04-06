@@ -35,7 +35,7 @@ export default function Stock() {
     );
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
                 <div>

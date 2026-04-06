@@ -61,7 +61,7 @@ const CumulativeInvoice = () => {
   }, {}) || {};
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto animate-fade-in pb-20">
+    <div className="space-y-6 max-w-[1400px] mx-auto  pb-20">
       
       {/* Header — hidden on print */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
@@ -72,9 +72,9 @@ const CumulativeInvoice = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl"><Truck size={20}/></div>
-              <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] italic">Loading Operations</span>
+              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-[0.3em] italic">Loading Operations</span>
             </div>
-            <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white">
+            <h1 className="text-3xl font-bold uppercase italic tracking-tighter text-white">
               Loading <span className="text-primary not-italic">Summary</span>
             </h1>
           </div>
@@ -83,39 +83,39 @@ const CumulativeInvoice = () => {
 
       {/* Filters Panel — hidden on print */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 print:hidden">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 italic flex items-center gap-2"><Calendar size={12}/> Configuration Panel</p>
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mb-4 italic flex items-center gap-2"><Calendar size={12}/> Configuration Panel</p>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Start Date</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Start Date</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-[#020617] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-white font-bold" />
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">End Date</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">End Date</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-[#020617] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-white font-bold" />
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Salesman</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Salesman</label>
             <select value={salesmanId} onChange={e => setSalesmanId(e.target.value)} className="w-full bg-[#020617] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-white font-bold appearance-none">
               <option value="">All Salesmen</option>
               {salesmen.map(s => <option key={s.salesmanId} value={s.salesmanId}>{s.salesmanName}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Route</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Route</label>
             <select value={routeId} onChange={e => setRouteId(e.target.value)} className="w-full bg-[#020617] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-white font-bold appearance-none">
               <option value="">All Routes</option>
               {routes.map(r => <option key={r.routeId} value={r.routeId}>{r.routeName}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1">Vehicle</label>
+            <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Vehicle</label>
             <select value={vehicleId} onChange={e => setVehicleId(e.target.value)} className="w-full bg-[#020617] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-white font-bold appearance-none">
               <option value="">All Vehicles</option>
               {vehicles.map(v => <option key={v.vehicleId} value={v.vehicleId}>{v.vehicleNumber}</option>)}
             </select>
           </div>
           <div className="flex items-end">
-            <button onClick={generateSummary} disabled={loading} className="w-full bg-primary text-slate-900 px-6 py-3 font-black uppercase text-xs rounded-xl shadow hover:bg-primary/90 flex items-center justify-center gap-2 transition-all disabled:opacity-50">
+            <button onClick={generateSummary} disabled={loading} className="w-full bg-primary text-slate-900 px-6 py-3 font-bold uppercase text-xs rounded-xl shadow hover:bg-primary/90 flex items-center justify-center gap-2 transition-all disabled:opacity-50">
               {loading ? <RefreshCcw size={16} className="animate-spin"/> : <Search size={16}/>}
               {loading ? 'Calculating...' : 'Generate Summary'}
             </button>
@@ -139,22 +139,22 @@ const CumulativeInvoice = () => {
             <div className="bg-[var(--bg-card)] border border-blue-500/20 rounded-xl p-5 flex items-center gap-4">
               <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl"><Layers size={22}/></div>
               <div>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Invoices Processed</p>
-                <h3 className="text-2xl font-black text-white">{data.invoiceCount}</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Invoices Processed</p>
+                <h3 className="text-2xl font-bold text-white">{data.invoiceCount}</h3>
               </div>
             </div>
             <div className="bg-[var(--bg-card)] border border-emerald-500/20 rounded-xl p-5 flex items-center gap-4">
               <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><Package size={22}/></div>
               <div>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Unique Products</p>
-                <h3 className="text-2xl font-black text-white">{data.totalProducts}</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Unique Products</p>
+                <h3 className="text-2xl font-bold text-white">{data.totalProducts}</h3>
               </div>
             </div>
             <div className="bg-[var(--bg-card)] border border-amber-500/20 rounded-xl p-5 flex items-center gap-4">
               <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><BarChart3 size={22}/></div>
               <div>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Units to Load</p>
-                <h3 className="text-2xl font-black text-white">{data.totalItems}</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Units to Load</p>
+                <h3 className="text-2xl font-bold text-white">{data.totalItems}</h3>
               </div>
             </div>
           </div>
@@ -176,7 +176,7 @@ const CumulativeInvoice = () => {
                     });
                 });
                 ExportService.exportToExcel(exportData, 'Cumulative_Loading_Summary');
-            }} className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-6 py-3 font-black uppercase text-xs rounded-xl shadow hover:bg-emerald-800/40 flex items-center gap-2 transition-transform hover:scale-105">
+            }} className="bg-emerald-900/30 border border-emerald-500/50 text-emerald-400 px-6 py-3 font-bold uppercase text-xs rounded-xl shadow hover:bg-emerald-800/40 flex items-center gap-2 transition-transform hover:scale-105">
               <Download size={16}/> Excel
             </button>
             <button onClick={() => {
@@ -202,10 +202,10 @@ const CumulativeInvoice = () => {
                     });
                 });
                 ExportService.exportToPDF(exportData, columns, 'Cumulative_Loading_Summary', 'Cumulative Delivery Sheet');
-            }} className="bg-rose-900/30 border border-rose-500/50 text-rose-400 px-6 py-3 font-black uppercase text-xs rounded-xl shadow hover:bg-rose-800/40 flex items-center gap-2 transition-transform hover:scale-105">
+            }} className="bg-rose-900/30 border border-rose-500/50 text-rose-400 px-6 py-3 font-bold uppercase text-xs rounded-xl shadow hover:bg-rose-800/40 flex items-center gap-2 transition-transform hover:scale-105">
               <FileText size={16}/> PDF
             </button>
-            <button onClick={handlePrint} className="bg-slate-800 border border-[var(--border)] text-white px-6 py-3 font-black uppercase text-xs rounded-xl shadow hover:bg-slate-700 flex items-center gap-2 transition-transform hover:scale-105">
+            <button onClick={handlePrint} className="bg-slate-800 border border-[var(--border)] text-white px-6 py-3 font-bold uppercase text-xs rounded-xl shadow hover:bg-slate-700 flex items-center gap-2 transition-transform hover:scale-105">
               <Printer size={16}/> Print Loading Sheet
             </button>
           </div>
@@ -218,19 +218,19 @@ const CumulativeInvoice = () => {
             </div>
           ) : (
             Object.entries(groupedItems).map(([brand, items]) => (
-              <div key={brand} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden shadow-lg print:shadow-none print:border print:border-gray-300 print:rounded-none print:mb-4">
+              <div key={brand} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden shadow-sm print:shadow-none print:border print:border-gray-300 print:rounded-none print:mb-4">
                 <div className="bg-slate-900/50 px-6 py-3 border-b border-[var(--border)] print:bg-gray-100">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-primary italic print:text-black">{brand}</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-primary italic print:text-black">{brand}</h3>
                 </div>
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[var(--border)] text-[10px] uppercase tracking-widest text-slate-400 print:text-black print:text-xs">
-                      <th className="p-4 font-black">Product</th>
-                      <th className="p-4 font-black">Category</th>
-                      <th className="p-4 font-black">Size / Unit</th>
-                      <th className="p-4 font-black text-right">Quantity</th>
-                      <th className="p-4 font-black text-right">Returned</th>
-                      <th className="p-4 font-black text-right">Net to Load</th>
+                      <th className="p-4 font-bold">Product</th>
+                      <th className="p-4 font-bold">Category</th>
+                      <th className="p-4 font-bold">Size / Unit</th>
+                      <th className="p-4 font-bold text-right">Quantity</th>
+                      <th className="p-4 font-bold text-right">Returned</th>
+                      <th className="p-4 font-bold text-right">Net to Load</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -239,12 +239,12 @@ const CumulativeInvoice = () => {
                         <td className="p-4 text-white font-bold text-base print:text-black print:text-sm">{item.productName}</td>
                         <td className="p-4 text-slate-400 text-sm print:text-gray-600">{item.category}</td>
                         <td className="p-4">
-                          <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-black uppercase print:bg-transparent print:text-black print:px-0">{item.unit}</span>
+                          <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs font-bold uppercase print:bg-transparent print:text-black print:px-0">{item.unit}</span>
                         </td>
-                        <td className="p-4 text-right text-white font-black text-lg tabular-nums print:text-black">{item.totalQuantity}</td>
+                        <td className="p-4 text-right text-white font-bold text-lg tabular-nums print:text-black">{item.totalQuantity}</td>
                         <td className="p-4 text-right text-slate-400 font-bold tabular-nums print:text-gray-500">{item.totalReturned}</td>
                         <td className="p-4 text-right">
-                          <span className={`font-black text-xl tabular-nums ${item.netQuantity >= 50 ? 'text-amber-400 print:text-black print:font-extrabold' : 'text-emerald-400 print:text-black'}`}>
+                          <span className={`font-bold text-xl tabular-nums ${item.netQuantity >= 50 ? 'text-amber-400 print:text-black print:font-extrabold' : 'text-emerald-400 print:text-black'}`}>
                             {item.netQuantity}
                           </span>
                         </td>
@@ -260,12 +260,12 @@ const CumulativeInvoice = () => {
           {data.items?.length > 0 && (
             <div className="bg-[var(--bg-card)] border-2 border-primary/30 rounded-xl p-6 flex flex-col sm:flex-row justify-between items-center gap-4 print:border print:border-black print:rounded-none">
               <div>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest print:text-black">Grand Total — All Products</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest print:text-black">Grand Total — All Products</p>
                 <p className="text-xs text-slate-400 print:text-gray-600">Across {data.invoiceCount} invoices, {data.totalProducts} unique products</p>
               </div>
               <div className="text-right">
-                <p className="text-4xl font-black text-primary tabular-nums print:text-black">{data.totalItems}</p>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest print:text-black">Total Units</p>
+                <p className="text-4xl font-bold text-primary tabular-nums print:text-black">{data.totalItems}</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest print:text-black">Total Units</p>
               </div>
             </div>
           )}

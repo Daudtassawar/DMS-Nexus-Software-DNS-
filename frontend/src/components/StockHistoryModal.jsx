@@ -27,7 +27,7 @@ export default function StockHistoryModal({ product, onClose }) {
         const isAdj = t.includes('adjust');
         
         return (
-            <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+            <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${
                 isOut ? 'bg-rose-100 text-rose-600' : isAdj ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
             }`}>
                 {isOut ? <TrendingDown size={10}/> : isAdj ? <TrendingUp size={10}/> : <TrendingUp size={10}/>}
@@ -50,7 +50,7 @@ export default function StockHistoryModal({ product, onClose }) {
                 <div className="flex bg-[var(--secondary)] p-1 rounded-xl">
                     <button 
                         onClick={() => setActiveTab('breakdown')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all ${
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[10px] font-bold uppercase tracking-[0.1em] transition-all ${
                             activeTab === 'breakdown' ? 'bg-[var(--bg-card)] text-primary shadow-sm' : 'text-[var(--text-muted)] hover:text-primary'
                         }`}
                     >
@@ -58,7 +58,7 @@ export default function StockHistoryModal({ product, onClose }) {
                     </button>
                     <button 
                         onClick={() => setActiveTab('history')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all ${
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[10px] font-bold uppercase tracking-[0.1em] transition-all ${
                             activeTab === 'history' ? 'bg-[var(--bg-card)] text-primary shadow-sm' : 'text-[var(--text-muted)] hover:text-primary'
                         }`}
                     >
@@ -81,7 +81,7 @@ export default function StockHistoryModal({ product, onClose }) {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-xl font-black text-primary">{w.quantity}</p>
+                                        <p className="text-xl font-bold text-primary">{w.quantity}</p>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="w-full bg-[var(--secondary)] h-2 rounded-full overflow-hidden">
@@ -110,7 +110,7 @@ export default function StockHistoryModal({ product, onClose }) {
                                         <Badge type={t.transactionType} />
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="font-black text-sm">{t.quantity > 0 ? `+${t.quantity}` : t.quantity}</p>
+                                        <p className="font-bold text-sm">{t.quantity > 0 ? `+${t.quantity}` : t.quantity}</p>
                                     </td>
                                 </>
                             )}

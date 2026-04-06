@@ -77,9 +77,9 @@ export default function CustomerDetail({ customerId, onClose }) {
 
     return createPortal(
         <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '1rem' }}>
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '1rem' }}>
             <div onClick={(e) => e.stopPropagation()}
-                style={{ background: C.dialog, borderRadius: '0.875rem', width: '100%', maxWidth: '820px', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.7)', border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
+                style={{ background: C.dialog, borderRadius: '0.875rem', width: '100%', maxWidth: '820px', maxHeight: '92vh', overflowY: 'auto', border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
 
                 {/* Header */}
                 <div style={{ padding: '1.1rem 1.4rem', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: C.dialog, zIndex: 2, borderRadius: '0.875rem 0.875rem 0 0' }}>

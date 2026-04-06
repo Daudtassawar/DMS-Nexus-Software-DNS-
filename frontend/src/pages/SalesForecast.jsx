@@ -36,34 +36,34 @@ const SalesForecast = () => {
     const combindedData = [...data.historical, ...data.forecast];
 
     return (
-        <div className="space-y-6 animate-fade-in pb-20">
+        <div className="space-y-6  pb-20">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <div className="p-2 bg-primary/10 text-primary rounded-xl"><BrainCircuit size={20}/></div>
-                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] italic">Predictive Engine</span>
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] italic">Predictive Engine</span>
                     </div>
-                    <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white">
+                    <h1 className="text-3xl font-bold uppercase italic tracking-tighter text-white">
                         Sales <span className="text-primary not-italic">Forecast</span>
                     </h1>
                 </div>
                 <div className="bg-slate-900 border border-white/5 px-6 py-3 rounded-2xl flex items-center gap-4">
                     <div className="flex items-center gap-2">
                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Live Core Sync</span>
+                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Live Core Sync</span>
                     </div>
                     <div className="w-px h-6 bg-white/5"></div>
-                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">Node Status: Active</span>
+                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest italic">Node Status: Active</span>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Visual Projection */}
-                <div className="lg:col-span-3 bg-[var(--bg-card)] border border-[var(--border)] p-8 rounded-[2.5rem] relative overflow-hidden shadow-2xl group">
+                <div className="lg:col-span-3 bg-[var(--bg-card)] border border-[var(--border)] p-8 rounded-[2.5rem] relative overflow-hidden shadow-sm group">
                     <div className="flex justify-between items-center mb-10">
                         <div>
-                            <h3 className="text-sm font-black uppercase tracking-widest text-white italic mb-1">30-Day Velocity & 7-Day Forecast</h3>
+                            <h3 className="text-sm font-bold uppercase tracking-widest text-white italic mb-1">30-Day Velocity & 7-Day Forecast</h3>
                             <p className="text-[10px] text-slate-500 font-bold italic">Linear Moving Average + 1.5% Daily Trend Integration</p>
                         </div>
                         <div className="flex gap-4">
@@ -120,13 +120,13 @@ const SalesForecast = () => {
                     <div className="bg-primary/5 border border-primary/20 p-6 rounded-3xl h-full flex flex-col">
                         <div className="flex items-center gap-3 mb-8">
                              <Sparkles className="text-primary animate-pulse" size={20} />
-                             <h4 className="text-xs font-black text-white italic uppercase tracking-[0.2em]">Demand Briefing</h4>
+                             <h4 className="text-xs font-bold text-white italic uppercase tracking-[0.2em]">Demand Briefing</h4>
                         </div>
                         
                         <div className="space-y-6 flex-1">
                              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Projected Peak</p>
-                                 <h2 className="text-2xl font-black text-white italic tracking-tighter">
+                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Projected Peak</p>
+                                 <h2 className="text-2xl font-bold text-white italic tracking-tighter">
                                      ${Math.max(...data.forecast.map(x => x.predictedAmount)).toLocaleString()}
                                  </h2>
                                  <p className="text-[9px] font-bold text-emerald-400 uppercase mt-1 italic tracking-widest flex items-center gap-1">
@@ -135,8 +135,8 @@ const SalesForecast = () => {
                              </div>
 
                              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Forecast Confidence</p>
-                                 <h2 className="text-2xl font-black text-white italic tracking-tighter">88.4%</h2>
+                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Forecast Confidence</p>
+                                 <h2 className="text-2xl font-bold text-white italic tracking-tighter">88.4%</h2>
                                  <div className="w-full bg-white/10 h-1 rounded-full mt-2 overflow-hidden">
                                       <div className="bg-primary h-full w-[88.4%]"></div>
                                  </div>
@@ -144,7 +144,7 @@ const SalesForecast = () => {
                         </div>
 
                         <div className="mt-auto pt-6">
-                             <button className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest italic shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                             <button className="w-full bg-primary text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest italic shadow-sm shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
                                  Update Demand Model
                              </button>
                         </div>
@@ -158,7 +158,7 @@ const SalesForecast = () => {
                       <AlertCircle size={24} />
                  </div>
                  <div>
-                      <h4 className="text-xs font-black text-white uppercase tracking-widest mb-1 italic">Tactical Sales Advisory</h4>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-1 italic">Tactical Sales Advisory</h4>
                       <p className="text-[10px] text-slate-400 leading-relaxed max-w-[800px]">
                           Predictive analysis indicates a potential stock-out for highly profitable beverages in the next 72 hours based on trend velocity. 
                           We recommend increasing procurement orders for 'Pepsi 1L' and 'Coke 500ml' by at least 15% to capitalize on the upcoming demand spike.

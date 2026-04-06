@@ -22,7 +22,7 @@ export default function InvoicePrint({ invoice }) {
                     </div>
                 </div>
                 <div className="text-right">
-                    <h1 className="text-3xl font-black uppercase text-black m-0 tracking-tight">Hamdaan Traders</h1>
+                    <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">Hamdaan Traders</h1>
                     <p className="text-sm text-gray-800 font-bold m-0 mt-1 uppercase tracking-wide">Distributors & General Order Suppliers</p>
                     <div className="mt-3">
                         <p className="text-sm text-gray-800 m-0">123 Logistics Way, Suite A</p>
@@ -35,8 +35,8 @@ export default function InvoicePrint({ invoice }) {
             {/* Customer Details */}
             <div className="flex justify-between mb-8 bg-gray-50 p-4 border border-black" style={{ backgroundColor: '#f9fafb !important', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                 <div>
-                    <h3 className="font-black text-black text-xs uppercase mb-2 tracking-wider">Billed To:</h3>
-                    <p className="font-black text-black text-xl uppercase leading-tight m-0 mb-1">{invoice.customer?.customerName}</p>
+                    <h3 className="font-bold text-black text-xs uppercase mb-2 tracking-wider">Billed To:</h3>
+                    <p className="font-bold text-black text-xl uppercase leading-tight m-0 mb-1">{invoice.customer?.customerName}</p>
                     <p className="text-sm text-black m-0 mb-1">📍 {invoice.customer?.address || 'No address provided'}</p>
                     <p className="text-sm text-black m-0">📞 {invoice.customer?.phone}</p>
                 </div>
@@ -54,12 +54,12 @@ export default function InvoicePrint({ invoice }) {
             <table className="w-full text-left mb-8 border-collapse border-2 border-black">
                 <thead>
                     <tr className="border-b-2 border-black bg-gray-100" style={{ backgroundColor: '#f3f4f6 !important', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
-                        <th className="p-3 border-r-2 border-black font-black text-black uppercase text-xs">Item Description</th>
-                        <th className="p-3 border-r-2 border-black font-black text-black uppercase text-xs text-center w-24">Variant</th>
-                        <th className="p-3 border-r-2 border-black font-black text-black uppercase text-xs text-center w-20">Size</th>
-                        <th className="p-3 border-r-2 border-black font-black text-black uppercase text-xs text-center w-16">Qty</th>
-                        <th className="p-3 border-r-2 border-black font-black text-black uppercase text-xs text-right w-28">Rate</th>
-                        <th className="p-3 font-black text-black uppercase text-xs text-right w-32">Total</th>
+                        <th className="p-3 border-r-2 border-black font-bold text-black uppercase text-xs">Item Description</th>
+                        <th className="p-3 border-r-2 border-black font-bold text-black uppercase text-xs text-center w-24">Variant</th>
+                        <th className="p-3 border-r-2 border-black font-bold text-black uppercase text-xs text-center w-20">Size</th>
+                        <th className="p-3 border-r-2 border-black font-bold text-black uppercase text-xs text-center w-16">Qty</th>
+                        <th className="p-3 border-r-2 border-black font-bold text-black uppercase text-xs text-right w-28">Rate</th>
+                        <th className="p-3 font-bold text-black uppercase text-xs text-right w-32">Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,7 +70,7 @@ export default function InvoicePrint({ invoice }) {
                             <td className="p-3 border-r-2 border-black text-sm text-center text-gray-700">{item.product?.size || '-'}</td>
                             <td className="p-3 border-r-2 border-black text-sm text-center font-bold">{item.quantity}</td>
                             <td className="p-3 border-r-2 border-black text-sm text-right">Rs. {Number(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                            <td className="p-3 text-sm text-right font-black w-32">Rs. {Number(item.totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td className="p-3 text-sm text-right font-bold w-32">Rs. {Number(item.totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         </tr>
                     ))}
                     {/* Empty rows to fill space if few items */}
@@ -101,8 +101,8 @@ export default function InvoicePrint({ invoice }) {
                         <span className="text-sm font-bold text-black">Rs. {Number(invoice.discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between py-3 border-y-4 border-black border-double mt-2 bg-gray-50 px-2" style={{ backgroundColor: '#f9fafb !important', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
-                        <span className="text-xl font-black uppercase text-black">Net Total:</span>
-                        <span className="text-xl font-black text-black">Rs. {Number(invoice.netAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-xl font-bold uppercase text-black">Net Total:</span>
+                        <span className="text-xl font-bold text-black">Rs. {Number(invoice.netAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                 </div>
             </div>
@@ -110,17 +110,17 @@ export default function InvoicePrint({ invoice }) {
             {/* Footer */}
             <div className="mt-8 flex justify-between items-end pt-4">
                 <div className="w-1/2">
-                    <p className="text-xs text-black font-black uppercase mb-2 tracking-wider">Notes / Terms & Conditions:</p>
+                    <p className="text-xs text-black font-bold uppercase mb-2 tracking-wider">Notes / Terms & Conditions:</p>
                     <ul className="text-xs text-gray-800 m-0 pl-4 list-disc space-y-1 font-medium">
                         <li>Goods once sold will not be taken back.</li>
                         <li>All claims must be made within 3 days of delivery.</li>
                         <li>Make all checks payable to Hamdaan Traders.</li>
                     </ul>
-                    <p className="text-sm text-black font-black italic mt-4">Thank you for your business!</p>
+                    <p className="text-sm text-black font-bold italic mt-4">Thank you for your business!</p>
                 </div>
                 <div className="w-64 text-center">
                     <div className="border-t-2 border-black mb-2 border-solid"></div>
-                    <p className="text-xs font-black uppercase text-black m-0 tracking-wider">Authorized Signature & Stamp</p>
+                    <p className="text-xs font-bold uppercase text-black m-0 tracking-wider">Authorized Signature & Stamp</p>
                 </div>
             </div>
         </div>

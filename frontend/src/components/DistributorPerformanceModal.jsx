@@ -81,11 +81,11 @@ export default function DistributorPerformanceModal({ isOpen, distributor, onClo
 
     return createPortal(
         <div
-            style={{ position: 'fixed', inset: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)', padding: '1rem' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.88)', padding: '1rem' }}
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div
-                style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: '1.1rem', width: '100%', maxWidth: '780px', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}
+                style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: '1.1rem', width: '100%', maxWidth: '780px', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* ─ Header ─ */}

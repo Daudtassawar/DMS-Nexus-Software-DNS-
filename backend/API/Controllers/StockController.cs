@@ -61,7 +61,7 @@ namespace DMS.API.Controllers
         {
             try
             {
-                var result = await _stockService.AddStockAsync(request.ProductId, request.Quantity, request.WarehouseLocation, request.BatchNumber, request.ExpiryDate);
+                var result = await _stockService.AddStockAsync(request.ProductId, request.Quantity, request.WarehouseLocation, request.BatchNumber, request.ExpiryDate, request.Reference);
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
                 var userName = User.FindFirstValue(ClaimTypes.Name) ?? userId;
                 await _auditLogService.LogActionAsync(userId, userName, "Add Stock", "Stock",
@@ -133,6 +133,7 @@ namespace DMS.API.Controllers
         public string? BatchNumber { get; set; }
         public DateTime? ExpiryDate { get; set; }
         public string? Reason { get; set; }
+        public string? Reference { get; set; }
     }
 
     public class StockTransferRequest

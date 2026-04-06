@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
-import { Shield, Lock, User, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, User, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import AppButton from '../components/AppButton';
 
 export default function Login() {
@@ -27,12 +27,12 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans p-6">
-            <div className="w-full max-w-[440px] animate-fade-in">
-                <div className="bg-white p-8 md:p-12 rounded-lg border border-slate-200 shadow-xl flex flex-col items-center">
+            <div className="w-full max-w-[440px] ">
+                <div className="bg-white p-8 md:p-12 rounded-lg border border-slate-200 shadow-sm flex flex-col items-center">
                     
                     {/* Brand Identity */}
                     <div className="mb-10 text-center">
-                        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 mx-auto mb-6">
+                        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200 mx-auto mb-6">
                            <Shield size={32} className="text-white"/>
                         </div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Hamdaan <span className="text-blue-600">Traders</span></h1>
@@ -40,7 +40,7 @@ export default function Login() {
                     </div>
 
                     {error && (
-                        <div className="w-full mb-6 p-4 bg-red-50 border border-red-100 text-red-700 rounded-md flex items-center gap-3 text-xs font-medium animate-shake">
+                        <div className="w-full mb-6 p-4 bg-red-50 border border-red-100 text-red-700 rounded-md flex items-center gap-3 text-xs font-medium ">
                             <AlertCircle size={16} className="shrink-0"/> {error}
                         </div>
                     )}
@@ -110,7 +110,7 @@ export default function Login() {
                 {/* Footer Security Badge */}
                 <div className="mt-8 flex items-center justify-center gap-4 opacity-50">
                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                       <CheckCircle2 size={12} className="text-emerald-600"/> Secure Data Link
+                       <CheckCircle size={12} className="text-emerald-600"/> Secure Data Link
                    </div>
                    <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
                    <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">v4.2.0-STABLE</div>

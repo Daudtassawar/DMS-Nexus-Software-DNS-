@@ -11,6 +11,8 @@ using DMS.Application.Services;
 using DMS.Application.Interfaces;
 using DMS.Domain.Entities;
 using DMS.Infrastructure.Authorization;
+using Microsoft.Extensions.Caching.Memory;
+using DMS.Application.DTOs;
 
 namespace DMS.API.Controllers
 {
@@ -21,24 +23,52 @@ namespace DMS.API.Controllers
     {
         private readonly ProductService _productService;
         private readonly IAuditLogService _auditLogService;
+        private readonly IMemoryCache _cache;
 
-        public ProductsController(ProductService productService, IAuditLogService auditLogService)
+        public ProductsController(ProductService productService, IAuditLogService auditLogService, IMemoryCache cache)
         {
             _productService = productService;
             _auditLogService = auditLogService;
+            _cache = cache;
         }
 
-        // GET /api/v1/products?search=&category=
+        // GET /api/v1/products?search=&category=&page=1&pageSize=20
         [HttpGet]
         [RequirePermission("Products.View")]
-        public async Task<ActionResult<IEnumerable<Product>>> Get(
+        public async Task<ActionResult<PagedResult<Product>>> Get(
             [FromQuery] string? search,
-            [FromQuery] string? category)
+            [FromQuery] string? category,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
-            if (!string.IsNullOrEmpty(search) || (!string.IsNullOrEmpty(category) && category != "All"))
-                return Ok(await _productService.SearchProductsAsync(search, category));
+            IEnumerable<Product> results;
 
-            return Ok(await _productService.GetAllProductsAsync());
+            if (!string.IsNullOrEmpty(search) || (!string.IsNullOrEmpty(category) && category != "All"))
+            {
+                results = await _productService.SearchProductsAsync(search, category);
+            }
+            else
+            {
+                results = await _cache.GetOrCreateAsync("products_all", entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                    return _productService.GetAllProductsAsync();
+                });
+            }
+
+            var totalCount = results.Count();
+            var items = results.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var result = new PagedResult<Product>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return Ok(result);
         }
 
         // GET /api/v1/products/{id}
@@ -66,6 +96,7 @@ namespace DMS.API.Controllers
                 $"Created product '{product.ProductName}'", created!.ProductId.ToString(),
                 HttpContext.Connection.RemoteIpAddress?.ToString());
 
+            _cache.Remove("products_all");
             return CreatedAtAction(nameof(Get), new { id = created!.ProductId }, created);
         }
 
@@ -85,6 +116,7 @@ namespace DMS.API.Controllers
                 $"Updated product '{product.ProductName}'", id.ToString(),
                 HttpContext.Connection.RemoteIpAddress?.ToString());
 
+            _cache.Remove("products_all");
             return NoContent();
         }
 
@@ -102,6 +134,7 @@ namespace DMS.API.Controllers
                 $"Deleted product ID {id}", id.ToString(),
                 HttpContext.Connection.RemoteIpAddress?.ToString());
 
+            _cache.Remove("products_all");
             return NoContent();
         }
 
@@ -141,6 +174,7 @@ namespace DMS.API.Controllers
             var (success, _) = await _productService.UpdateProductAsync(product);
             if (!success) return StatusCode(500);
 
+            _cache.Remove("products_all");
             return Ok(new { imagePath = product.ImagePath });
         }
 
@@ -190,6 +224,7 @@ namespace DMS.API.Controllers
                 $"Imported {imported} products, skipped {skipped}", null,
                 HttpContext.Connection.RemoteIpAddress?.ToString());
 
+            _cache.Remove("products_all");
             return Ok(new { imported, skipped, errors });
         }
 
@@ -197,7 +232,11 @@ namespace DMS.API.Controllers
         [HttpGet("categories")]
         public async Task<ActionResult<IEnumerable<string>>> GetCategories()
         {
-            var all = await _productService.GetAllProductsAsync();
+            var all = await _cache.GetOrCreateAsync("products_all", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return _productService.GetAllProductsAsync();
+            });
             var cats = all
                 .Where(p => !string.IsNullOrEmpty(p.Category))
                 .Select(p => p.Category!)

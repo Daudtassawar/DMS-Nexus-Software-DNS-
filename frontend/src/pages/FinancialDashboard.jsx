@@ -59,7 +59,7 @@ const FinancialDashboard = () => {
     ];
 
     return (
-        <div className="space-y-6 animate-fade-in pb-20 max-w-[1700px] mx-auto">
+        <div className="space-y-6  pb-20 max-w-[1700px] mx-auto">
             {/* Header */}
             <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
                 <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
@@ -122,10 +122,10 @@ const FinancialDashboard = () => {
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false}/>
                                 <XAxis 
                                     dataKey="date" 
-                                    tickFormatter={(str) => new Date(str).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                                    tickFormatter={(str) => str ? new Date(str).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}
                                     stroke="#94a3b8" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false}
                                 />
-                                <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`}/>
+                                <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `${((v || 0)/1000).toFixed(0)}K`}/>
                                 <Tooltip 
                                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}
                                 />
@@ -143,10 +143,10 @@ const FinancialDashboard = () => {
                         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Financial Insights</h3>
                     </div>
                     <div className="space-y-3 flex-1">
-                        {insights.length > 0 ? insights.map((insight, i) => (
+                        {(insights || []).length > 0 ? (insights || []).map((insight, i) => (
                             <div key={i} className="flex gap-3 p-3 bg-slate-50 rounded-md border border-slate-200">
-                                <div className={`p-1.5 rounded shrink-0 ${insight.includes('increased') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                                    {insight.includes('increased') ? <ArrowUpRight size={14}/> : <ArrowDownRight size={14}/>}
+                                <div className={`p-1.5 rounded shrink-0 ${(insight || '').includes('increased') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                    {(insight || '').includes('increased') ? <ArrowUpRight size={14}/> : <ArrowDownRight size={14}/>}
                                 </div>
                                 <p className="text-xs text-slate-600 leading-relaxed">{insight}</p>
                             </div>
@@ -159,11 +159,12 @@ const FinancialDashboard = () => {
                     <div className="mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Net Profit Margin</p>
                         <div className="flex items-center justify-between">
-                            <h4 className="text-xl font-bold text-slate-900 tabular-nums">{stats?.marginPercent?.toFixed(1)}%</h4>
+                            <h4 className="text-xl font-bold text-slate-900 tabular-nums">{(stats?.marginPercent || 0).toFixed(1)}%</h4>
                             <AppBadge variant="success" size="xs" className="rounded font-bold px-2">Stable</AppBadge>
                         </div>
                     </div>
                 </AppCard>
+
             </div>
             
             {/* Navigation Links */}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     MapPin, Users, FileText, DollarSign, 
-    Zap, Activity, Clock, RefreshCw, CheckCircle2
+    Zap, Activity, Clock, RefreshCw, CheckCircle
 } from 'lucide-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -50,7 +50,7 @@ export default function SalesmanDashboard() {
     const percentageVisited = data.totalCustomers > 0 ? (data.visitedCustomers / data.totalCustomers) * 100 : 0;
 
     return (
-        <div className="space-y-6 max-w-[1200px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1200px] mx-auto  pb-20">
             {/* Header */}
             <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
@@ -83,10 +83,10 @@ export default function SalesmanDashboard() {
 
             {/* Quick Metrics */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard title="Customers Visited" val={`${data.visitedCustomers} / ${data.totalCustomers}`} icon={CheckCircle2} color="#10b981" />
-                <MetricCard title="Pending Visits" val={data.pendingCustomers} icon={Clock} color="#f97316" />
-                <MetricCard title="Today's Orders" val={data.todayOrders} icon={FileText} color="#3b82f6" />
-                <MetricCard title="Cash Collected" val={`Rs.${data.todayCashCollected.toLocaleString()}`} icon={DollarSign} color="#8b5cf6" />
+                <MetricCard title="Customers Visited" val={`${data?.visitedCustomers || 0} / ${data?.totalCustomers || 0}`} icon={CheckCircle} color="#10b981" />
+                <MetricCard title="Pending Visits" val={data?.pendingCustomers || 0} icon={Clock} color="#f97316" />
+                <MetricCard title="Today's Orders" val={data?.todayOrders || 0} icon={FileText} color="#3b82f6" />
+                <MetricCard title="Cash Collected" val={`Rs.${(data?.todayCashCollected || 0).toLocaleString()}`} icon={DollarSign} color="#8b5cf6" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -100,7 +100,7 @@ export default function SalesmanDashboard() {
                             </div>
                             <div className="text-right">
                                 <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">Sales Total</p>
-                                <h4 className="text-xl font-bold text-[var(--primary)]">Rs.{data.todaySales.toLocaleString()}</h4>
+                                <h4 className="text-xl font-bold text-[var(--primary)]">Rs.{(data?.todaySales || 0).toLocaleString()}</h4>
                             </div>
                         </div>
 
@@ -114,11 +114,11 @@ export default function SalesmanDashboard() {
                         <div className="grid grid-cols-2 gap-4 pt-2">
                             <div className="p-3 bg-emerald-50 rounded-md border border-emerald-100">
                                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tight mb-1">Visited</p>
-                                <p className="font-bold text-emerald-700">{data.visitedCustomers}</p>
+                                <p className="font-bold text-emerald-700">{data?.visitedCustomers || 0}</p>
                             </div>
                             <div className="p-3 bg-orange-50 rounded-md border border-orange-100">
                                 <p className="text-[10px] font-bold text-orange-600 uppercase tracking-tight mb-1">Remaining</p>
-                                <p className="font-bold text-orange-700">{data.pendingCustomers}</p>
+                                <p className="font-bold text-orange-700">{data?.pendingCustomers || 0}</p>
                             </div>
                         </div>
                     </div>
@@ -135,13 +135,13 @@ export default function SalesmanDashboard() {
                         </AppButton>
                     </div>
                     <div className="flex-1 overflow-y-auto max-h-[500px]">
-                        {data.pendingCustomersList && data.pendingCustomersList.length > 0 ? (
+                        {data?.pendingCustomersList && data.pendingCustomersList.length > 0 ? (
                             <div className="divide-y divide-[var(--border)]">
                                 {data.pendingCustomersList.map((customer) => (
                                     <div key={customer.customerId} className="p-4 px-6 flex items-center justify-between hover:bg-[var(--secondary)]/30 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 rounded bg-[var(--bg-app)] border border-[var(--border)] flex items-center justify-center font-bold text-[var(--primary)] text-sm">
-                                                {customer.customerName[0].toUpperCase()}
+                                                {(customer?.customerName?.[0] || '?').toUpperCase()}
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-sm text-[var(--text-main)]">{customer.customerName}</h4>
@@ -153,8 +153,8 @@ export default function SalesmanDashboard() {
                                         <div className="flex items-center gap-6">
                                             <div className="text-right hidden sm:block">
                                                 <p className="text-[9px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-0.5">Balance</p>
-                                                <p className={`font-bold text-sm tabular-nums ${customer.balance > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                                                    Rs.{customer.balance.toLocaleString()}
+                                                <p className={`font-bold text-sm tabular-nums ${(customer.balance || 0) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                                                    Rs.{(customer.balance || 0).toLocaleString()}
                                                 </p>
                                             </div>
                                             <Link to={`/invoices/create?customerId=${customer.customerId}`}>
@@ -166,9 +166,10 @@ export default function SalesmanDashboard() {
                                     </div>
                                 ))}
                             </div>
+
                         ) : (
                             <div className="p-20 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                                <CheckCircle2 size={40} className="text-[var(--text-muted)]"/>
+                                <CheckCircle size={40} className="text-[var(--text-muted)]"/>
                                 <p className="text-sm font-medium text-[var(--text-muted)]">No pending visits for today.</p>
                             </div>
                         )}

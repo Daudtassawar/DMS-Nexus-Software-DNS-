@@ -366,14 +366,28 @@ namespace DMS.API.Controllers
         [RequirePermission("Users.Edit")]
         public async Task<IActionResult> ResetPassword(string username, [FromBody] ResetPasswordRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
+                return BadRequest(new { Message = "New password cannot be empty." });
+
+            if (request.NewPassword.Length < 8)
+                return BadRequest(new { Message = "Password must be at least 8 characters long." });
+
             var user = await _userManager.FindByNameAsync(username);
-            if (user == null) return NotFound(new { Message = "User not found." });
+            if (user == null) return NotFound(new { Message = $"User '{username}' not found." });
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
             
-            if (!result.Succeeded) return BadRequest(new { Message = "Password reset failed." });
-            return Ok(new { Message = "Password reset successfully." });
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+                return BadRequest(new { Message = $"Password reset failed: {errors}" });
+            }
+
+            // Invalidate all existing sessions / JWTs for this user
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            return Ok(new { Message = $"Password for '{username}' reset successfully. All existing sessions have been invalidated." });
         }
 
         [HttpPost("{username}/role")]

@@ -192,16 +192,16 @@ const CustomerLedger = () => {
   const totalCredit = filteredLedger.filter(l => isCredit(l.transactionType)).reduce((sum, l) => sum + l.amount, 0);
 
   if (loading && !customer) return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] animate-fade-in">
+    <div className="flex flex-col items-center justify-center min-h-[400px] ">
       <div className="w-10 h-10 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Reconciling Ledger entries...</span>
     </div>
   );
 
   return (
-    <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+    <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
       {status.message && (
-          <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-xl shadow-xl font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/10 animate-slide-up ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+          <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-xl shadow-sm font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/10  ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
               {status.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}{status.message}
           </div>
       )}
@@ -267,7 +267,7 @@ const CustomerLedger = () => {
       {/* Undo Queue Alerts */}
       <div className="fixed bottom-10 right-10 z-[1000] flex flex-col gap-3">
         {pendingDeletes.map(pdId => (
-          <div key={pdId} className="bg-slate-900 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-5 animate-slide-up border border-white/5">
+          <div key={pdId} className="bg-slate-900 text-white px-6 py-4 rounded-lg shadow-sm flex items-center gap-5  border border-white/5">
             <div className="p-2 bg-red-500/20 text-red-400 rounded"><Trash2 size={20}/></div>
             <div className="flex-1">
               <p className="text-xs font-bold uppercase tracking-tight">Entry flagged for removal</p>
@@ -354,7 +354,7 @@ const CustomerLedger = () => {
 
       {/* Account Adjustment Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center p-6 animate-fade-in">
+        <div className="fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center p-6 ">
           <AppCard className="w-full max-w-xl border border-[var(--border)] shadow-md relative">
             <div className="flex items-center gap-4 mb-8">
               <div className="p-3 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg"><Calculator size={24}/></div>

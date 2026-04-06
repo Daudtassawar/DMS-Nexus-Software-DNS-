@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ShieldCheck, Plus, Edit, Trash2, X, Lock, CheckCircle2, ShieldAlert, Zap, Search, Info, Shield, Key } from 'lucide-react';
+import { ShieldCheck, Plus, Edit, Trash2, X, Lock, CheckCircle, ShieldAlert, Zap, Search, Info, Shield, Key } from 'lucide-react';
 import authService from '../services/authService';
 import AppTable from '../components/AppTable';
 import AppButton from '../components/AppButton';
@@ -106,7 +106,7 @@ const RolesManagement = () => {
     };
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
                 <div>

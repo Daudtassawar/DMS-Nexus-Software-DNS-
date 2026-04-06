@@ -3,9 +3,9 @@ import axios from 'axios';
 const BASE = '/api/v1/invoices';
 
 const invoiceService = {
-    getAll: async () => {
-        const res = await axios.get(BASE);
-        return res.data || [];
+    getAll: async (params = {}) => {
+        const res = await axios.get(BASE, { params });
+        return res.data;
     },
 
     getById: async (id) => {

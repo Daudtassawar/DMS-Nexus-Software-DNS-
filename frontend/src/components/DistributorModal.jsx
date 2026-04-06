@@ -57,7 +57,7 @@ export default function DistributorModal({ distributor, onSave, onClose }) {
                 )}
 
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                  <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                       <Truck size={14}/> Supply Identity
                   </h4>
                   <AppInput 

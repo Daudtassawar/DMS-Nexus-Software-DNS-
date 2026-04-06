@@ -18,23 +18,35 @@ export default function Customers() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
     const [modal, setModal] = useState(null);
     const [editTarget, setEditTarget] = useState(null);
     const [detailId, setDetailId] = useState(null);
     const [deleting, setDeleting] = useState(null);
 
     useEffect(() => {
-        const t = setTimeout(() => setDebouncedSearch(search), 350);
+        const t = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1); // Reset to page 1 on search
+        }, 400);
         return () => clearTimeout(t);
     }, [search]);
 
     const fetchCustomers = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await customerService.getAll(debouncedSearch);
-            setCustomers(data);
+            const d = await customerService.getAll({ 
+                search: debouncedSearch,
+                page,
+                pageSize: 20
+            });
+            setCustomers(d.items || []);
+            setTotalPages(d.totalPages || 1);
+            setTotalCount(d.totalCount || 0);
         } catch { setCustomers([]); } finally { setLoading(false); }
-    }, [debouncedSearch]);
+    }, [debouncedSearch, page]);
 
     useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
 
@@ -59,13 +71,14 @@ export default function Customers() {
     };
 
     // Stats
-    const totalCustomers = customers.length;
-    const totalOutstanding = customers.reduce((s, c) => s + (c.balance || 0), 0);
-    const overLimit = customers.filter(c => c.balance > c.creditLimit && c.creditLimit > 0).length;
-    const clearAccounts = customers.filter(c => c.balance === 0).length;
+    const totalCustomers = totalCount;
+    // Note: totalOutstanding and others would require a separate totals endpoint 
+    // for true accuracy across all pages, but for now we'll show page-level or 
+    // skip if not available.
+    const pageOutstanding = customers.reduce((s, c) => s + (c.balance || 0), 0);
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
                 <div>
@@ -98,8 +111,8 @@ export default function Customers() {
                 <AppCard className="border-t-4 border-t-red-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Receivables</p>
-                            <h4 className="text-2xl font-bold text-red-600 tabular-nums">{rs(totalOutstanding)}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Items in Page</p>
+                            <h4 className="text-2xl font-bold text-red-600 tabular-nums">{customers.length}</h4>
                         </div>
                         <div className="p-2 bg-red-50 text-red-600 rounded">
                             <DollarSign size={18}/>
@@ -109,8 +122,8 @@ export default function Customers() {
                 <AppCard className="border-t-4 border-t-amber-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Over Credit Limit</p>
-                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{overLimit}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pages</p>
+                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{totalPages}</h4>
                         </div>
                         <div className="p-2 bg-amber-50 text-amber-600 rounded">
                             <AlertTriangle size={18}/>
@@ -120,8 +133,8 @@ export default function Customers() {
                 <AppCard className="border-t-4 border-t-emerald-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Zero Balance</p>
-                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">{clearAccounts}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Page</p>
+                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">{page}</h4>
                         </div>
                         <div className="p-2 bg-emerald-50 text-emerald-600 rounded">
                             <CheckCircle size={18}/>
@@ -148,6 +161,11 @@ export default function Customers() {
                       headers={['Customer Name', 'Contact & Location', 'Credit Info', 'Balance', 'Actions']}
                       data={customers}
                       loading={loading}
+                      pagination={true}
+                      currentPage={page}
+                      totalPages={totalPages}
+                      totalCount={totalCount}
+                      onPageChange={(p) => setPage(p)}
                       renderRow={(c) => {
                           const isOverLimit = c.creditLimit > 0 && c.balance > c.creditLimit;
                           return (

@@ -10,6 +10,7 @@ using DMS.Domain.Entities;
 using DMS.Infrastructure.Authorization;
 using DMS.Infrastructure.Data;
 using DMS.Application.Interfaces;
+using DMS.Application.DTOs;
 
 namespace DMS.API.Controllers
 {
@@ -84,10 +85,38 @@ namespace DMS.API.Controllers
         // GET /api/v1/invoices
         [HttpGet]
         [RequirePermission("Invoices.View")]
-        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoices()
+        public async Task<ActionResult<PagedResult<InvoiceSummaryDTO>>> GetInvoices([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             GetIsolationFilters(out int? routeId, out int? salesmanId);
-            return Ok(await _invoiceService.GetAllInvoicesAsync(routeId, salesmanId));
+            var invoices = await _invoiceService.GetAllInvoicesAsync(routeId, salesmanId);
+            
+            var totalCount = invoices.Count();
+            var pagedInvoices = invoices.Skip((page - 1) * pageSize).Take(pageSize);
+
+            var items = pagedInvoices.Select(i => new InvoiceSummaryDTO
+            {
+                InvoiceId = i.InvoiceId,
+                InvoiceNumber = i.InvoiceNumber,
+                InvoiceDate = i.InvoiceDate,
+                CustomerId = i.CustomerId,
+                CustomerName = i.Customer?.CustomerName ?? string.Empty,
+                NetAmount = i.NetAmount,
+                PaidAmount = i.PaidAmount,
+                RemainingAmount = i.RemainingAmount,
+                PaymentStatus = i.PaymentStatus,
+                InvoiceType = i.InvoiceType
+            }).ToList();
+
+            var result = new PagedResult<InvoiceSummaryDTO>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return Ok(result);
         }
 
         // GET /api/v1/invoices/cumulative?startDate=2026-03-01&endDate=2026-03-28&salesmanId=1

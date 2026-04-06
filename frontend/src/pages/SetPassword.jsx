@@ -56,21 +56,21 @@ export default function SetPassword() {
                 </div>
 
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-black text-[var(--text-main)] tracking-tighter uppercase italic">Secure Init</h1>
-                    <p className="text-[11px] font-black text-[var(--text-muted)] mt-3 tracking-[0.3em] uppercase">Establish User Access Keys</p>
+                    <h1 className="text-3xl font-bold text-[var(--text-main)] tracking-tighter uppercase italic">Secure Init</h1>
+                    <p className="text-[11px] font-bold text-[var(--text-muted)] mt-3 tracking-[0.3em] uppercase">Establish User Access Keys</p>
                 </div>
 
                 {error && (
-                    <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3 animate-fade-in shadow-inner">
+                    <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3  shadow-inner">
                         <div className="min-w-[20px] pt-0.5"><ShieldCheck size={18} className="text-rose-500"/></div>
-                        <p className="text-rose-500 text-xs font-black uppercase tracking-widest leading-relaxed">{error}</p>
+                        <p className="text-rose-500 text-xs font-bold uppercase tracking-widest leading-relaxed">{error}</p>
                     </div>
                 )}
 
                 {success && (
-                    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-start gap-3 animate-fade-in shadow-inner">
+                    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-start gap-3  shadow-inner">
                         <div className="min-w-[20px] pt-0.5"><ShieldCheck size={18} className="text-emerald-500"/></div>
-                        <p className="text-emerald-500 text-xs font-black uppercase tracking-widest leading-relaxed">{success}</p>
+                        <p className="text-emerald-500 text-xs font-bold uppercase tracking-widest leading-relaxed">{success}</p>
                     </div>
                 )}
 
@@ -94,13 +94,13 @@ export default function SetPassword() {
                             placeholder="Re-enter password"
                         />
 
-                        <AppButton type="submit" className="w-full py-4 text-xs font-black uppercase tracking-[0.2em] !rounded-2xl shadow-xl shadow-primary/25 mt-2 transition-all hover:scale-[1.02]" disabled={loading}>
+                        <AppButton type="submit" className="w-full py-4 text-xs font-bold uppercase tracking-[0.2em] !rounded-2xl shadow-sm shadow-primary/25 mt-2 transition-all hover:scale-[1.02]" disabled={loading}>
                             {loading ? 'Committing...' : 'Establish Keys'}
                         </AppButton>
                     </form>
                 )}
             </div>
-            <div className="fixed bottom-8 text-center w-full z-0 text-[10px] uppercase tracking-[0.5em] font-black text-[var(--text-muted)] opacity-50 select-none">
+            <div className="fixed bottom-8 text-center w-full z-0 text-[10px] uppercase tracking-[0.5em] font-bold text-[var(--text-muted)] opacity-50 select-none">
                 Hamdaan Traders // Secured Authentication
             </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, RefreshCw, Activity, DollarSign, ListChecks, TrendingUp, Edit2, Trash2, X, ClipboardList, CreditCard, LayoutDashboard, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, RefreshCw, Activity, DollarSign, ListChecks, TrendingUp, Edit2, Trash2, X, ClipboardList, CreditCard, LayoutDashboard, CheckCircle, AlertCircle } from 'lucide-react';
 import dailyOperationsService from '../services/dailyOperationsService';
 import CashSummaryCard from '../components/CashSummaryCard';
 import DailyActivityForm from '../components/DailyActivityForm';
@@ -108,8 +108,8 @@ export default function DailyOperationsCenter() {
     return (
         <div className="space-y-6 pb-16 max-w-[1700px] mx-auto">
             {status.message && (
-                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-md shadow-lg font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/20 ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
-                    {status.type === 'success' ? <CheckCircle2 size={18}/> : <AlertCircle size={18}/>}{status.message}
+                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-md shadow-sm font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/20 ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+                    {status.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}{status.message}
                 </div>
             )}
 
@@ -252,7 +252,7 @@ export default function DailyOperationsCenter() {
             {/* Modals */}
             {editingActivity && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70">
-                    <form onSubmit={submitEditActivity} className="bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] max-w-md w-full mx-4 shadow-2xl relative">
+                    <form onSubmit={submitEditActivity} className="bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] max-w-md w-full mx-4 shadow-sm relative">
                         <button type="button" onClick={() => setEditingActivity(null)} className="absolute top-4 right-4 p-2 text-[var(--text-muted)] hover:text-[var(--text-main)]"><X size={20}/></button>
                         <h2 className="text-lg font-bold text-[var(--text-main)] mb-6 flex items-center gap-2">
                             <ClipboardList className="text-[var(--primary)]" size={20}/> Modify Activity Entry
@@ -277,7 +277,7 @@ export default function DailyOperationsCenter() {
 
             {editingExpense && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70">
-                    <form onSubmit={submitEditExpense} className="bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] max-w-md w-full mx-4 shadow-2xl relative">
+                    <form onSubmit={submitEditExpense} className="bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] max-w-md w-full mx-4 shadow-sm relative">
                         <button type="button" onClick={() => setEditingExpense(null)} className="absolute top-4 right-4 p-2 text-[var(--text-muted)] hover:text-[var(--text-main)]"><X size={20}/></button>
                         <h2 className="text-lg font-bold text-[var(--text-main)] mb-6 flex items-center gap-2">
                             <CreditCard className="text-red-500" size={20}/> Modify Expense Entry

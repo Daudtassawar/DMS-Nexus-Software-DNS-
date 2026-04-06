@@ -39,6 +39,9 @@ namespace DMS.Application.Services
                 invoice.InvoiceDate = DateTime.UtcNow;
                 invoice.InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{new Random().Next(1000, 9999)}";
                 
+                Console.WriteLine($"[EXPLICIT LOG] Starting Invoice Creation: {invoice.InvoiceNumber}");
+                Console.WriteLine($"[EXPLICIT LOG] Customer ID: {invoice.CustomerId} | Items count: {invoice.InvoiceItems?.Count ?? 0}");
+                
                 if (string.IsNullOrEmpty(invoice.InvoiceType))
                     invoice.InvoiceType = "Spot";
 
@@ -48,48 +51,58 @@ namespace DMS.Application.Services
 
                 foreach (var item in invoice.InvoiceItems)
                 {
-                    // 2. Validate stock (Only for Spot)
+                    // 2. Validate stock (Deduct for ALL invoices to reflect real availability)
                     var productStock = (await _stockRepository.GetByProductIdAsync(item.ProductId)).ToList();
                     int totalAvailable = productStock.Sum(s => s.Quantity);
-
-                    if (invoice.InvoiceType == "Spot" && totalAvailable < item.Quantity)
-                        throw new InvalidOperationException(
-                            $"Insufficient stock for Product ID {item.ProductId}. Available: {totalAvailable}, Requested: {item.Quantity}");
 
                     item.TotalPrice = item.Quantity * item.UnitPrice;
                     calculatedTotal += item.TotalPrice;
 
-                    // 3. Deduct stock — FIFO across warehouses (Only for Spot)
-                    if (invoice.InvoiceType == "Spot")
+                    Console.WriteLine($"[EXPLICIT LOG] Product ID: {item.ProductId} | Requested: {item.Quantity} | Available Total: {totalAvailable}");
+                    if (totalAvailable < item.Quantity)
                     {
-                        int remaining = item.Quantity;
-                        foreach (var stock in productStock.Where(s => s.Quantity > 0))
-                        {
-                            if (remaining <= 0) break;
-                            int deduct = Math.Min(stock.Quantity, remaining);
-                            stock.Quantity -= deduct;
-                            stock.LastUpdated = DateTime.UtcNow;
-                            _stockRepository.Update(stock);
-                            remaining -= deduct;
-
-                            // 4. Log stock transaction
-                            await _stockRepository.AddTransactionAsync(new StockTransaction
-                            {
-                                ProductId = item.ProductId,
-                                TransactionType = $"Out (Spot Invoice) - {stock.WarehouseLocation}",
-                                Quantity = deduct,
-                                Date = DateTime.UtcNow
-                            });
-                        }
+                         Console.WriteLine($"[EXPLICIT LOG] ERROR: Insufficient stock for {item.ProductId}.");
+                         throw new InvalidOperationException($"Insufficient stock for Product ID {item.ProductId}. Available: {totalAvailable}, Requested: {item.Quantity}");
                     }
+
+                    // 3. Deduct stock — FIFO across warehouses
+                    int remaining = item.Quantity;
+                    foreach (var stock in productStock.Where(s => s.Quantity > 0))
+                    {
+                        if (remaining <= 0) break;
+                        int deduct = Math.Min(stock.Quantity, remaining);
+                        Console.WriteLine($"[EXPLICIT LOG] Warehouse: {stock.WarehouseLocation} | Pre-Deduction Stock: {stock.Quantity} | Deducting: {deduct}");
+                        
+                        stock.Quantity -= deduct;
+                        stock.LastUpdated = DateTime.UtcNow;
+                        _stockRepository.Update(stock);
+                        remaining -= deduct;
+
+                        Console.WriteLine($"[EXPLICIT LOG] Post-Deduction Stock: {stock.Quantity} | Remaining for Item: {remaining}");
+
+                        // 4. Log stock transaction
+                        await _stockRepository.AddTransactionAsync(new StockTransaction
+                        {
+                            ProductId = item.ProductId,
+                            TransactionType = "OUT",
+                            Quantity = deduct,
+                            Reference = $"Invoice: {invoice.InvoiceNumber}",
+                            Date = DateTime.UtcNow
+                        });
+                    }
+                    
+                    if (remaining > 0)
+                        throw new InvalidOperationException($"Could not fully fulfill Product ID {item.ProductId}. Missing: {remaining}");
                 }
 
                 // 5. Calculate totals
                 invoice.TotalAmount = calculatedTotal;
                 invoice.NetAmount = Math.Max(0, invoice.TotalAmount - invoice.Discount);
                 
-                // Calculate Status & Balances
-                RecalculateStatus(invoice);
+                // Calculate Status & Balances (NOW SKIPPED FOR AUTO-CALCULATION REMOVAL)
+                // RecalculateStatus(invoice); 
+                invoice.PaymentStatus = "Unpaid"; // Default status for new invoice
+                invoice.RemainingAmount = invoice.NetAmount;
 
                 // 6. Update customer balance and returnables
                 var customer = await _customerRepository.GetByIdAsync(invoice.CustomerId);
@@ -130,9 +143,12 @@ namespace DMS.Application.Services
 
                 // 7. Save everything in one transaction
                 await _invoiceRepository.AddAsync(invoice);
-                await _invoiceRepository.SaveChangesAsync();
+                
+                // CRITICAL: Save all context changes (including stock updates)
+                await _dbContext.SaveChangesAsync(); 
 
                 await transaction.CommitAsync();
+                Console.WriteLine($"[EXPLICIT LOG] SUCCESS: Invoice {invoice.InvoiceNumber} created. All stock records and transactions committed.");
                 return invoice;
             }
             catch (Exception)
@@ -151,88 +167,10 @@ namespace DMS.Application.Services
             var invoice = await _invoiceRepository.GetByIdAsync(id);
             if (invoice == null) throw new InvalidOperationException("Invoice not found");
 
-            var oldStatus = invoice.PaymentStatus;
+            // Hard manual override
             invoice.PaymentStatus = newStatus;
+            
             _invoiceRepository.Update(invoice);
-
-            // Transition TO Paid
-            if (newStatus == "Paid" && oldStatus != "Paid")
-            {
-                var customer = await _customerRepository.GetByIdAsync(invoice.CustomerId);
-                if (customer != null)
-                {
-                    customer.Balance = Math.Max(0, customer.Balance - invoice.NetAmount);
-                    _customerRepository.Update(customer);
-                    await _customerRepository.SaveChangesAsync();
-                }
-
-                if (invoice.InvoiceType == "Delivery")
-                {
-                    foreach (var item in invoice.InvoiceItems)
-                    {
-                        var productStock = (await _stockRepository.GetByProductIdAsync(item.ProductId)).ToList();
-                        int remaining = item.Quantity;
-                        
-                        // Ensure enough stock exists before delivery
-                        int totalAvailable = productStock.Sum(s => s.Quantity);
-                        if (totalAvailable < remaining)
-                            throw new InvalidOperationException($"Insufficient stock to deliver Product ID {item.ProductId}. Available: {totalAvailable}, Requested: {remaining}");
-
-                        foreach (var stock in productStock.Where(s => s.Quantity > 0))
-                        {
-                            if (remaining <= 0) break;
-                            int deduct = Math.Min(stock.Quantity, remaining);
-                            stock.Quantity -= deduct;
-                            stock.LastUpdated = DateTime.UtcNow;
-                            _stockRepository.Update(stock);
-                            remaining -= deduct;
-
-                            await _stockRepository.AddTransactionAsync(new StockTransaction
-                            {
-                                ProductId = item.ProductId,
-                                TransactionType = $"Out (Status Update: {newStatus}) - {stock.WarehouseLocation}",
-                                Quantity = deduct,
-                                Date = DateTime.UtcNow
-                            });
-                        }
-                    }
-                }
-            }
-            // Transition FROM Paid
-            else if (oldStatus == "Paid" && newStatus != "Paid")
-            {
-                var customer = await _customerRepository.GetByIdAsync(invoice.CustomerId);
-                if (customer != null)
-                {
-                    customer.Balance += invoice.NetAmount;
-                    _customerRepository.Update(customer);
-                    await _customerRepository.SaveChangesAsync();
-                }
-
-                if (invoice.InvoiceType == "Delivery")
-                {
-                    foreach (var item in invoice.InvoiceItems)
-                    {
-                        var productStock = await _stockRepository.GetByProductIdAsync(item.ProductId);
-                        var targetStock = productStock.FirstOrDefault();
-                        if (targetStock != null)
-                        {
-                            targetStock.Quantity += item.Quantity;
-                            targetStock.LastUpdated = DateTime.UtcNow;
-                            _stockRepository.Update(targetStock);
-                        }
-
-                        await _stockRepository.AddTransactionAsync(new StockTransaction
-                        {
-                            ProductId = item.ProductId,
-                            TransactionType = $"In (Status Revert: {newStatus}) - {targetStock?.WarehouseLocation ?? "Default"}",
-                            Quantity = item.Quantity,
-                            Date = DateTime.UtcNow
-                        });
-                    }
-                }
-            }
-
             await _invoiceRepository.SaveChangesAsync();
         }
 
@@ -244,30 +182,26 @@ namespace DMS.Application.Services
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
-                // 1. Revert Old Stock Deductions
-                bool wasSpot = existing.InvoiceType == "Spot";
-                bool wasPaidDelivery = existing.InvoiceType == "Delivery" && existing.PaymentStatus == "Paid";
-                if (wasSpot || wasPaidDelivery)
+                // 1. Revert Old Stock Deductions (Always revert as all types now deduct at creation)
+                foreach (var item in existing.InvoiceItems)
                 {
-                    foreach (var item in existing.InvoiceItems)
+                    var stock = await _stockRepository.GetByProductIdAsync(item.ProductId);
+                    var targetStock = stock.FirstOrDefault();
+                    if (targetStock != null)
                     {
-                        var stock = await _stockRepository.GetByProductIdAsync(item.ProductId);
-                        var targetStock = stock.FirstOrDefault();
-                        if (targetStock != null)
-                        {
-                            targetStock.Quantity += item.Quantity;
-                            targetStock.LastUpdated = DateTime.UtcNow;
-                            _stockRepository.Update(targetStock);
-                        }
-
-                        await _stockRepository.AddTransactionAsync(new StockTransaction
-                        {
-                            ProductId = item.ProductId,
-                            TransactionType = $"In (Update Revert) - {targetStock?.WarehouseLocation ?? "Default"}",
-                            Quantity = item.Quantity,
-                            Date = DateTime.UtcNow
-                        });
+                        targetStock.Quantity += item.Quantity;
+                        targetStock.LastUpdated = DateTime.UtcNow;
+                        _stockRepository.Update(targetStock);
                     }
+
+                    await _stockRepository.AddTransactionAsync(new StockTransaction
+                    {
+                        ProductId = item.ProductId,
+                        TransactionType = "IN",
+                        Quantity = item.Quantity,
+                        Reference = $"Update Revert: {existing.InvoiceNumber}",
+                        Date = DateTime.UtcNow
+                    });
                 }
 
                 // 2. Revert Old Customer Balance and Returnables Change
@@ -306,41 +240,36 @@ namespace DMS.Application.Services
 
                 decimal calculatedTotal = 0;
 
-                // 4. Apply New Items & Stock Deductions
-                bool deductStock = existing.InvoiceType == "Spot" || (existing.InvoiceType == "Delivery" && existing.PaymentStatus == "Paid");
-
                 foreach (var item in updatedInvoice.InvoiceItems)
                 {
                     var productStock = (await _stockRepository.GetByProductIdAsync(item.ProductId)).ToList();
                     int totalAvailable = productStock.Sum(s => s.Quantity);
 
-                    if (deductStock && totalAvailable < item.Quantity)
+                    if (totalAvailable < item.Quantity)
                         throw new InvalidOperationException($"Insufficient stock for Product ID {item.ProductId}. Available: {totalAvailable}, Requested: {item.Quantity}");
 
                     item.TotalPrice = item.Quantity * item.UnitPrice;
                     calculatedTotal += item.TotalPrice;
 
-                    // FIFO deduction
-                    if (deductStock)
+                    // FIFO deduction (Always deduct)
+                    int remaining = item.Quantity;
+                    foreach (var stock in productStock.Where(s => s.Quantity > 0))
                     {
-                        int remaining = item.Quantity;
-                        foreach (var stock in productStock.Where(s => s.Quantity > 0))
-                        {
-                            if (remaining <= 0) break;
-                            int deduct = Math.Min(stock.Quantity, remaining);
-                            stock.Quantity -= deduct;
-                            stock.LastUpdated = DateTime.UtcNow;
-                            _stockRepository.Update(stock);
-                            remaining -= deduct;
+                        if (remaining <= 0) break;
+                        int deduct = Math.Min(stock.Quantity, remaining);
+                        stock.Quantity -= deduct;
+                        stock.LastUpdated = DateTime.UtcNow;
+                        _stockRepository.Update(stock);
+                        remaining -= deduct;
 
-                            await _stockRepository.AddTransactionAsync(new StockTransaction
-                            {
-                                ProductId = item.ProductId,
-                                TransactionType = $"Out (Update) - {stock.WarehouseLocation}",
-                                Quantity = deduct,
-                                Date = DateTime.UtcNow
-                            });
-                        }
+                        await _stockRepository.AddTransactionAsync(new StockTransaction
+                        {
+                            ProductId = item.ProductId,
+                            TransactionType = "OUT",
+                            Quantity = deduct,
+                            Reference = $"Update: {existing.InvoiceNumber}",
+                            Date = DateTime.UtcNow
+                        });
                     }
                     existing.InvoiceItems.Add(item);
                 }
@@ -398,30 +327,26 @@ namespace DMS.Application.Services
             var invoice = await _invoiceRepository.GetByIdAsync(id);
             if (invoice == null) return false;
 
-            // 1. Restore Stock
-            bool wasSpot = invoice.InvoiceType == "Spot";
-            bool wasPaidDelivery = invoice.InvoiceType == "Delivery" && invoice.PaymentStatus == "Paid";
-            if (wasSpot || wasPaidDelivery)
+            // 1. Restore Stock (Always restore as all types now deduct at creation)
+            foreach (var item in invoice.InvoiceItems)
             {
-                foreach (var item in invoice.InvoiceItems)
+                var stock = await _stockRepository.GetByProductIdAsync(item.ProductId);
+                var targetStock = stock.FirstOrDefault();
+                if (targetStock != null)
                 {
-                    var stock = await _stockRepository.GetByProductIdAsync(item.ProductId);
-                    var targetStock = stock.FirstOrDefault();
-                    if (targetStock != null)
-                    {
-                        targetStock.Quantity += item.Quantity;
-                        targetStock.LastUpdated = DateTime.UtcNow;
-                        _stockRepository.Update(targetStock);
-                    }
-
-                    await _stockRepository.AddTransactionAsync(new StockTransaction
-                    {
-                        ProductId = item.ProductId,
-                        TransactionType = $"In (Delete Restore) - {targetStock?.WarehouseLocation ?? "Default"}",
-                        Quantity = item.Quantity,
-                        Date = DateTime.UtcNow
-                    });
+                    targetStock.Quantity += item.Quantity;
+                    targetStock.LastUpdated = DateTime.UtcNow;
+                    _stockRepository.Update(targetStock);
                 }
+
+                await _stockRepository.AddTransactionAsync(new StockTransaction
+                {
+                    ProductId = item.ProductId,
+                    TransactionType = "IN",
+                    Quantity = item.Quantity,
+                    Reference = $"Delete Restore: {invoice.InvoiceNumber}",
+                    Date = DateTime.UtcNow
+                });
             }
 
             // 2. Restore customer balance and returnables
@@ -456,16 +381,10 @@ namespace DMS.Application.Services
             await _invoiceRepository.SaveChangesAsync();
             return true;
         }
-        private void RecalculateStatus(Invoice invoice)
+        public void RecalculateStatus(Invoice invoice)
         {
+            // Manual status control only - RecalculateStatus no longer overwrites PaymentStatus
             invoice.RemainingAmount = Math.Max(0, invoice.NetAmount - invoice.PaidAmount);
-            
-            if (invoice.PaidAmount <= 0) 
-                invoice.PaymentStatus = "Unpaid";
-            else if (invoice.PaidAmount < invoice.NetAmount) 
-                invoice.PaymentStatus = "Partial";
-            else 
-                invoice.PaymentStatus = "Paid";
         }
     }
 }

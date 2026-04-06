@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DMS.Application.Interfaces;
+using DMS.Infrastructure.Authorization;
 
 namespace DMS.API.Controllers
 {
@@ -28,13 +29,15 @@ namespace DMS.API.Controllers
         }
 
         [HttpGet("profit-loss")]
+        [Authorize]
+        [RequirePermission("Accounting.View")]
         public async Task<IActionResult> GetProfitLoss([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
 
             var invoices = await _context.Invoices
-                .Where(i => i.InvoiceDate >= start && i.InvoiceDate <= end)
+                .Where(i => i.InvoiceDate >= start && i.InvoiceDate <= end && i.PaymentStatus != "Cancelled")
                 .Include(i => i.InvoiceItems)
                 .ThenInclude(ii => ii.Product)
                 .ToListAsync();
@@ -59,13 +62,16 @@ namespace DMS.API.Controllers
         }
 
         [HttpGet("cash-flow")]
+        [Authorize]
+        [RequirePermission("Accounting.View")]
         public async Task<IActionResult> GetCashFlow([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
 
             decimal cashIn = await _context.Payments
-                .Where(p => p.PaymentDate >= start && p.PaymentDate <= end)
+                .Include(p => p.Invoice)
+                .Where(p => p.PaymentDate >= start && p.PaymentDate <= end && p.Invoice.PaymentStatus != "Cancelled")
                 .SumAsync(p => p.AmountPaid);
 
             decimal dailyExp = await _context.DailyExpenses
@@ -85,6 +91,8 @@ namespace DMS.API.Controllers
         }
 
         [HttpGet("balance-sheet")]
+        [Authorize]
+        [RequirePermission("Accounting.View")]
         public async Task<IActionResult> GetBalanceSheet()
         {
             // Asset Calculation
@@ -125,6 +133,8 @@ namespace DMS.API.Controllers
         }
 
         [HttpGet("customer-ledger/{customerId}")]
+        [Authorize]
+        [RequirePermission("Accounting.View")]
         public async Task<IActionResult> GetCustomerLedger(int customerId)
         {
             try

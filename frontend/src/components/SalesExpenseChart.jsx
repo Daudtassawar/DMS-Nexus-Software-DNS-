@@ -10,7 +10,7 @@ export default function SalesExpenseChart({ sales, expenses }) {
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-[var(--bg-card)] border border-[var(--border)] p-3 rounded shadow-lg">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] p-3 rounded shadow-sm">
                     <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">{payload[0].name}</p>
                     <p className="text-sm font-bold text-[var(--text-main)]">Rs. {payload[0].value.toLocaleString()}</p>
                 </div>

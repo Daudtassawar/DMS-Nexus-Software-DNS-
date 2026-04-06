@@ -7,7 +7,7 @@ import AppTable from '../components/AppTable';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
 import RequirePermission from '../components/RequirePermission';
-import { Search, Plus, Package, Tag, AlertCircle, Edit3, Trash2, Download, Filter, RefreshCw, Box, Barcode } from 'lucide-react';
+import { Search, Plus, Package, Tag, AlertCircle, AlertTriangle, Edit3, Trash2, Download, Filter, RefreshCw, Box, Barcode } from 'lucide-react';
 
 const CATEGORIES = ['All', 'Soft Drink', 'Juice', 'Water', 'Energy Drink', 'Dairy', 'Snacks', 'Other'];
 
@@ -15,17 +15,36 @@ export default function Products() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [category, setCategory] = useState('All');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
     const [modalOpen, setModalOpen] = useState(false);
     const [editProduct, setEditProduct] = useState(null);
     const [importing, setImporting] = useState(false);
     const importRef = useRef();
 
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setDebouncedSearch(search);
+            setPage(1); // Reset to page 1 on search
+        }, 400);
+        return () => clearTimeout(t);
+    }, [search]);
+
     const fetchProducts = async () => {
         setLoading(true);
         try { 
-            const d = await productService.getAll(); 
-            setProducts(Array.isArray(d) ? d : []); 
+            const d = await productService.getAll({ 
+                page, 
+                pageSize: 20, 
+                search: debouncedSearch, 
+                category: category === 'All' ? null : category 
+            }); 
+            setProducts(d.items || []); 
+            setTotalPages(d.totalPages || 1);
+            setTotalCount(d.totalCount || 0);
         } catch { 
             console.error('Failed to fetch products');
         } finally { 
@@ -33,13 +52,9 @@ export default function Products() {
         }
     };
 
-    useEffect(() => { fetchProducts(); }, []);
+    useEffect(() => { fetchProducts(); }, [page, debouncedSearch, category]);
 
-    const displayed = products.filter(p => {
-        const m = !search || [p.productName, p.brand, p.barcode].some(v => v?.toLowerCase().includes(search.toLowerCase()));
-        const c = category === 'All' || p.category === category;
-        return m && c;
-    });
+    const displayed = products; // Data is already filtered by server
 
     const handleDelete = async (p) => {
         if (!window.confirm(`Are you sure you want to delete ${p.productName}? This action cannot be undone.`)) return;
@@ -89,7 +104,7 @@ export default function Products() {
     };
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
                 <div>
@@ -121,7 +136,7 @@ export default function Products() {
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Active Products</p>
-                            <h4 className="text-2xl font-bold text-slate-900">{products.length}</h4>
+                            <h4 className="text-2xl font-bold text-slate-900">{totalCount}</h4>
                         </div>
                         <div className="p-2 bg-blue-50 text-blue-600 rounded">
                             <Box size={18}/>
@@ -132,7 +147,7 @@ export default function Products() {
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Categories</p>
-                            <h4 className="text-2xl font-bold text-emerald-600">{[...new Set(products.map(p => p.category).filter(Boolean))].length}</h4>
+                            <h4 className="text-2xl font-bold text-emerald-600">{CATEGORIES.length - 1}</h4>
                         </div>
                         <div className="p-2 bg-emerald-50 text-emerald-600 rounded">
                             <Tag size={18}/>
@@ -142,8 +157,8 @@ export default function Products() {
                 <AppCard className="border-t-4 border-t-red-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Low Stock Alerts</p>
-                            <h4 className="text-2xl font-bold text-red-600">{products.filter(p => p.stock < 10).length}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Items in Page</p>
+                            <h4 className="text-2xl font-bold text-red-600">{products.length}</h4>
                         </div>
                         <div className="p-2 bg-red-50 text-red-600 rounded">
                             <AlertTriangle size={18}/>
@@ -153,8 +168,8 @@ export default function Products() {
                 <AppCard className="border-t-4 border-t-amber-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Missing Data</p>
-                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{products.filter(p => !p.brand || !p.barcode).length}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pages</p>
+                            <h4 className="text-2xl font-bold text-amber-600 tabular-nums">{totalPages}</h4>
                         </div>
                         <div className="p-2 bg-amber-50 text-amber-600 rounded">
                             <AlertCircle size={18}/>
@@ -164,8 +179,8 @@ export default function Products() {
                 <AppCard className="border-t-4 border-t-indigo-500 shadow-sm">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Filtered Results</p>
-                            <h4 className="text-2xl font-bold text-indigo-600 tabular-nums">{displayed.length}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Page Number</p>
+                            <h4 className="text-2xl font-bold text-indigo-600 tabular-nums">{page}</h4>
                         </div>
                         <div className="p-2 bg-indigo-50 text-indigo-600 rounded">
                             <Filter size={18}/>
@@ -192,7 +207,10 @@ export default function Products() {
                            </div>
                            <select 
                                 value={category} 
-                                onChange={e => setCategory(e.target.value)}
+                                onChange={e => {
+                                    setCategory(e.target.value);
+                                    setPage(1); // Reset to page 1 on category change
+                                }}
                                 className="w-full pl-10 pr-6 py-2.5 bg-[var(--bg-app)] border border-[var(--border)] rounded-md text-xs font-semibold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all appearance-none cursor-pointer"
                             >
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c === 'All' ? 'ALL CATEGORIES' : c.toUpperCase()}</option>)}
@@ -206,6 +224,11 @@ export default function Products() {
                       headers={['Product / Brand', 'Identity', 'Inventory Info', 'Pricing', 'Actions']}
                       data={displayed}
                       loading={loading}
+                      pagination={true}
+                      currentPage={page}
+                      totalPages={totalPages}
+                      totalCount={totalCount}
+                      onPageChange={(p) => setPage(p)}
                       renderRow={(p) => (
                           <>
                                 <td className="px-6 py-4">

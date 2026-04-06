@@ -91,9 +91,9 @@ export default function Users() {
     const pendingCount = users.filter(u => u.status === 'Pending').length;
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {toast.msg && (
-                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-xl shadow-xl font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/10 animate-slide-up ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+                <div className={`toast-notification ${toast.type === 'success' ? 'success' : 'error'}`}>
                     {toast.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}{toast.msg}
                 </div>
             )}
@@ -181,7 +181,7 @@ export default function Users() {
                                 </button>
                                 
                                 {openDropdown === user.userName && (
-                                    <div className="absolute bottom-full right-0 mb-2 w-52 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden py-1">
+                                    <div className="absolute bottom-full right-0 mb-2 w-52 bg-white border border-slate-200 rounded-lg shadow-sm z-50 overflow-hidden py-1">
                                         <button onClick={() => openResetModal(user.userName)} className="w-full px-4 py-2 hover:bg-slate-50 text-[10px] font-bold text-slate-600 uppercase flex items-center gap-3">
                                             <Key size={14} className="text-slate-400"/> Change Password
                                         </button>

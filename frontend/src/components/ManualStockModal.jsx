@@ -71,7 +71,7 @@ export default function ManualStockModal({ onClose, onSuccess }) {
 
                 {/* Step 1: Selection */}
                 <div className="space-y-3">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">01. Source Product</h4>
+                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">01. Source Product</h4>
                     {!selectedProduct ? (
                         <div className="space-y-4">
                             <div className="relative">
@@ -95,32 +95,32 @@ export default function ManualStockModal({ onClose, onSuccess }) {
                                             <div className="w-8 h-8 rounded-lg bg-[var(--secondary)] flex items-center justify-center"><Package size={14} className="text-[var(--text-muted)]"/></div>
                                             <div>
                                                 <div className="font-bold text-sm">{p.productName}</div>
-                                                <div className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-tighter">{p.barcode || 'NO BARCODE'}</div>
+                                                <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-tighter">{p.barcode || 'NO BARCODE'}</div>
                                             </div>
                                         </div>
-                                        <div className="text-[10px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">CHOOSE</div>
+                                        <div className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">CHOOSE</div>
                                     </div>
                                 ))}
                                 {filteredProducts.length > 10 && <p className="text-center text-[10px] font-bold text-[var(--text-muted)] italic py-2">Keep typing to narrow results...</p>}
                             </div>
                         </div>
                     ) : (
-                        <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between animate-slide-in">
+                        <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between ">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-primary text-white rounded-xl shadow-lg shadow-primary/20"><Package size={20}/></div>
+                                <div className="p-3 bg-primary text-white rounded-xl shadow-sm shadow-primary/20"><Package size={20}/></div>
                                 <div>
-                                    <div className="font-black text-primary">{selectedProduct.productName}</div>
+                                    <div className="font-bold text-primary">{selectedProduct.productName}</div>
                                     <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{selectedProduct.barcode || 'SYSTEM-REF'}</div>
                                 </div>
                             </div>
-                            <button type="button" onClick={() => setSelectedProduct(null)} className="text-[10px] font-black text-rose-500 hover:underline uppercase tracking-widest">Change</button>
+                            <button type="button" onClick={() => setSelectedProduct(null)} className="text-[10px] font-bold text-rose-500 hover:underline uppercase tracking-widest">Change</button>
                         </div>
                     )}
                 </div>
 
                 {/* Step 2: Batch Data */}
                 <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">02. Arrival Logistics</h4>
+                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">02. Arrival Logistics</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <AppInput label="Units Received" type="number" min="1" placeholder="0" value={qty} onChange={e => setQty(e.target.value)} required />
                         <div className="flex flex-col gap-1.5">

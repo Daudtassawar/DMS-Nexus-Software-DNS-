@@ -3,7 +3,7 @@ import {
     Package, FileText, Wallet2, 
     TrendingUp, Activity, Box, DollarSign,
     RefreshCcw, TrendingDown,
-    Database, CheckCircle2, History, BarChart3, Users, LucideIcon
+    Database, CheckCircle, History, BarChart3, Users
 } from 'lucide-react';
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -81,10 +81,11 @@ export default function Dashboard() {
         </div>
     );
 
-    const { totals, charts, activity } = data;
+    // Provide default objects to prevent destructuring of null/undefined
+    const { totals = {}, charts = {}, activity = {} } = data || {};
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
                 <div>
@@ -105,21 +106,22 @@ export default function Dashboard() {
             {/* Metrics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 <RequirePermission permission="Reports.View">
-                    <MetricCard title="Today's Sales" val={`Rs.${totals.todaySales.toLocaleString()}`} icon={Wallet2} trend={12} color="#3b82f6" />
+                    <MetricCard title="Today's Sales" val={`Rs.${(totals?.todaySales || 0).toLocaleString()}`} icon={Wallet2} trend={12} color="#3b82f6" />
                 </RequirePermission>
                 <RequirePermission permission="Invoices.View">
-                    <MetricCard title="Daily Invoices" val={totals.todayInvoices} icon={FileText} color="#8b5cf6" trend={3.8} />
+                    <MetricCard title="Daily Invoices" val={totals?.todayInvoices || 0} icon={FileText} color="#8b5cf6" trend={3.8} />
                 </RequirePermission>
                 <RequirePermission permission="Stock.View">
-                    <MetricCard title="Low Stock Items" val={totals.lowStock} icon={Box} color="#f97316" trend={-2} />
+                    <MetricCard title="Low Stock Items" val={totals?.lowStock || 0} icon={Box} color="#f97316" trend={-2} />
                 </RequirePermission>
                 <RequirePermission permission="Customers.View">
-                    <MetricCard title="Outstanding Receivables" val={`Rs.${totals.outstandingBalance.toLocaleString()}`} icon={DollarSign} color="#ef4444" />
+                    <MetricCard title="Outstanding Receivables" val={`Rs.${(totals?.outstandingBalance || 0).toLocaleString()}`} icon={DollarSign} color="#ef4444" />
                 </RequirePermission>
                 <RequirePermission permission="Products.View">
-                    <MetricCard title="Total Inventory" val={totals.totalProducts} icon={Package} color="#10b981" />
+                    <MetricCard title="Total Inventory" val={totals?.totalProducts || 0} icon={Package} color="#10b981" />
                 </RequirePermission>
             </div>
+
 
             {/* Charts Row */}
             <RequirePermission permission="Reports.View">
@@ -134,7 +136,7 @@ export default function Dashboard() {
                         <div className="p-6">
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={charts.monthlyTrend}>
+                                    <AreaChart data={charts?.monthlyTrend || []}>
                                         <defs>
                                             <linearGradient id="dashboardSales" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
@@ -160,12 +162,12 @@ export default function Dashboard() {
                         <div className="p-6">
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={charts.topProducts} layout="vertical">
+                                    <BarChart data={charts?.topProducts || []} layout="vertical">
                                         <XAxis type="number" hide />
                                         <YAxis dataKey="name" type="category" fontSize={10} width={80} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
                                         <RechartsTooltip content={<ChartTooltip/>} cursor={{ fill: '#f8fafc' }} />
                                         <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
-                                            {charts.topProducts.map((entry, index) => (
+                                            {(charts?.topProducts || []).map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />
                                             ))}
                                         </Bar>
@@ -188,11 +190,11 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="divide-y divide-[var(--border)]">
-                            {activity.recentInvoices.map((inv) => (
+                            {(activity?.recentInvoices || []).map((inv) => (
                                 <div key={inv.invoiceId} className="flex justify-between items-center p-4 hover:bg-[var(--secondary)] transition-colors cursor-pointer">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-md bg-[var(--secondary)] flex items-center justify-center font-bold text-xs text-[var(--text-main)] border border-[var(--border)]">
-                                          #{inv.invoiceId.toString().padStart(4, '0')}
+                                          #{(inv.invoiceId || 0).toString().padStart(4, '0')}
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm text-[var(--text-main)] mb-0.5">{inv.customerName}</p>
@@ -225,11 +227,11 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div className="divide-y divide-[var(--border)]">
-                            {activity.recentStock.slice(0, 7).map((stk) => (
+                            {(activity?.recentStock || []).slice(0, 7).map((stk) => (
                                 <div key={stk.transactionId} className="flex justify-between items-center p-4 hover:bg-[var(--secondary)] transition-colors cursor-pointer">
                                     <div className="flex items-center gap-4">
-                                        <div className={`p-2 rounded-md ${stk.transactionType.includes('In') ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
-                                          {stk.transactionType.includes('In') ? <TrendingUp size={16}/> : <TrendingDown size={16}/>}
+                                        <div className={`p-2 rounded-md ${(stk.transactionType || '').includes('In') ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                                          {(stk.transactionType || '').includes('In') ? <TrendingUp size={16}/> : <TrendingDown size={16}/>}
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm text-[var(--text-main)] mb-0.5">{stk.productName}</p>

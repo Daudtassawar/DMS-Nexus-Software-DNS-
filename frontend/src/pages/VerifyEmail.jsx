@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import authService from '../services/authService';
-import { CheckCircle2, XCircle, Loader2, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
 import AppButton from '../components/AppButton';
 
 export default function VerifyEmail() {
@@ -36,7 +36,7 @@ export default function VerifyEmail() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] font-sans p-6">
             <div className="w-full max-w-[440px]">
-                <div className="bg-[var(--bg-card)] p-8 md:p-12 rounded-lg border border-[var(--border)] shadow-xl text-center">
+                <div className="bg-[var(--bg-card)] p-8 md:p-12 rounded-lg border border-[var(--border)] shadow-sm text-center">
                     
                     <div className="mb-10 flex flex-col items-center">
                         <div className="w-20 h-20 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mb-6 border border-[var(--primary)]/20 shadow-inner">
@@ -57,13 +57,13 @@ export default function VerifyEmail() {
                         {status === 'success' && (
                             <div className="py-2 space-y-6">
                                 <div className="flex flex-col items-center text-emerald-500">
-                                    <CheckCircle2 size={64} strokeWidth={1.5} />
+                                    <CheckCircle size={64} strokeWidth={1.5} />
                                     <h2 className="text-lg font-bold uppercase tracking-wide mt-4">Verification Complete</h2>
                                 </div>
                                 <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-md">
                                     <p className="text-xs font-bold text-emerald-800 uppercase leading-relaxed">{message}</p>
                                 </div>
-                                <AppButton className="w-full justify-center py-4 rounded-md shadow-lg" as={Link} to="/login">
+                                <AppButton className="w-full justify-center py-4 rounded-md shadow-sm" as={Link} to="/login">
                                     Access Domain <ArrowRight className="ml-2" size={18} />
                                 </AppButton>
                             </div>

@@ -87,7 +87,7 @@ export default function SalesmanModal({ isOpen, onClose, salesman, onSave }) {
                 )}
 
                 <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                         <User size={14}/> Identity & Territory
                     </h4>
                     <AppInput 
@@ -129,7 +129,7 @@ export default function SalesmanModal({ isOpen, onClose, salesman, onSave }) {
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] flex items-center gap-2">
                         <Target size={14}/> Performance Objectives
                     </h4>
                     <div className="grid grid-cols-2 gap-4">

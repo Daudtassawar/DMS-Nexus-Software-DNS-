@@ -4,7 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hamdaan Traders</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script>console.log("[DEBUG] index.html: Inline script execution");</script>
+    <script>
+      window.addEventListener("error", function(e) { console.log("GLOBAL_ERROR:", e.message, e.filename, e.lineno, e.error?.stack); });
+      window.addEventListener("unhandledrejection", function(e) { console.log("GLOBAL_REJECTION:", e.reason); });
+    </script>
   </head>
   <body>
     <div id="root"></div>

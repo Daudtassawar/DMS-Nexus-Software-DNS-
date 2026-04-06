@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+builder.Services.AddMemoryCache();
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {
@@ -128,6 +136,7 @@ builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<DailyOperationsService>();
 builder.Services.AddScoped<AIContextAssistantService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // Company Ledger Services
 builder.Services.AddScoped<ICompanyService, CompanyService>();
@@ -426,6 +435,8 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("AllowAll");
+
+app.UseResponseCompression();
 
 app.UseHttpsRedirection();
 

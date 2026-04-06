@@ -81,7 +81,7 @@ namespace DMS.Application.Services
         }
 
         // Add Stock (Purchase/Manual Entry/Returns)
-        public async Task<Stock> AddStockAsync(int productId, int quantity, string warehouseLocation, string? batchNumber = null, DateTime? expiryDate = null)
+        public async Task<Stock> AddStockAsync(int productId, int quantity, string warehouseLocation, string? batchNumber = null, DateTime? expiryDate = null, string? reference = null)
         {
             if(quantity <= 0) throw new ArgumentException("Quantity must be greater than 0");
 
@@ -117,8 +117,9 @@ namespace DMS.Application.Services
             await _stockRepository.AddTransactionAsync(new StockTransaction
             {
                 ProductId = productId,
-                TransactionType = "In",
+                TransactionType = "IN",
                 Quantity = quantity,
+                Reference = reference ?? "Manual Entry",
                 Date = DateTime.UtcNow
             });
 
@@ -144,7 +145,7 @@ namespace DMS.Application.Services
             await _stockRepository.AddTransactionAsync(new StockTransaction
             {
                 ProductId = productId,
-                TransactionType = $"Out - {reason}",
+                TransactionType = "OUT",
                 Quantity = quantity,
                 Date = DateTime.UtcNow
             });

@@ -55,9 +55,9 @@ export default function Salesmen() {
     const totalTargets = salesmen.reduce((s, x) => s + x.monthlyTarget, 0);
 
     return (
-        <div className="space-y-6 max-w-[1700px] mx-auto animate-fade-in pb-20">
+        <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
             {status.message && (
-                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-xl shadow-xl font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/10 animate-slide-up ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+                <div className={`fixed bottom-10 right-10 z-[1000] px-6 py-4 rounded-xl shadow-sm font-bold text-xs uppercase tracking-wider flex items-center gap-3 text-white border border-white/10  ${status.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
                     {status.type === 'success' ? <CheckCircle size={18}/> : <AlertCircle size={18}/>}{status.message}
                 </div>
             )}

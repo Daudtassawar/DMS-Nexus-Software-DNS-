@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import * as xlsx from 'xlsx';
-import { Download, FileText, Calendar, TrendingUp, Package, DollarSign, AlertTriangle, Layers, PieChart as PieIcon, RefreshCcw, CheckCircle2, Info, ChevronRight, FileSpreadsheet } from 'lucide-react';
+import { Download, FileText, Calendar, TrendingUp, Package, DollarSign, AlertTriangle, Layers, PieChart as PieIcon, RefreshCcw, CheckCircle, Info, ChevronRight, FileSpreadsheet } from 'lucide-react';
 import reportService from '../services/reportService';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
@@ -79,11 +79,11 @@ export default function Reports() {
     const ChartTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-slate-900 text-white p-3 rounded-lg shadow-xl border border-slate-700">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                <div className="bg-[var(--bg-card)] text-[var(--text-main)] p-3 rounded-md shadow-md border border-[var(--border)]">
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">
                         {payload[0].payload.date || payload[0].payload.month || payload[0].payload.productName}
                     </p>
-                    <p className="text-sm font-bold text-white">
+                    <p className="text-sm font-bold text-[var(--text-main)]">
                         Value: Rs. {payload[0].value.toLocaleString()}
                     </p>
                 </div>
@@ -146,7 +146,7 @@ export default function Reports() {
                                 }
                             `}>
                             {tab} Report
-                            {activeTab === tab ? <CheckCircle2 size={16}/> : <ChevronRight size={16} className="opacity-30"/>}
+                            {activeTab === tab ? <CheckCircle size={16}/> : <ChevronRight size={16} className="opacity-30"/>}
                         </button>
                     ))}
                     
