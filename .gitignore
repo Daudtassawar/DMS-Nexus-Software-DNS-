@@ -14,3 +14,44 @@ obj/
 *.suo
 *.sqlite3
 *.db
+
+# Large Binaries
+*.exe
+*.msi
+*.zip
+
+# Android & iOS Local Configs
+android/local.properties
+android/.gradle/
+android/app/build/
+ios/App/App/public/
+ios/App/Pods/
+
+# Temporary / Test Data
+*log.txt
+*output.txt
+*.csv
+*.pdf
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!capacitor.config.json
+!plugin.json
+!invite_test.json
+!login_test.json
+!set_password_test.json
+# (Allowing those specific test JSONs if they are important, or I can ignore all root JSONs)
+/invite_test.json
+/login_test.json
+/set_password_test.json
+/test_products.csv
+/test.csv
+/invoice one.pdf
+/cloudflared.exe
+/DockerDesktopInstaller.exe
+/build_log.txt
+/build_log_2.txt
+/build_output.txt
+/tunnel.log
+/tunnel_err.log
