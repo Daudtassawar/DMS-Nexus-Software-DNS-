@@ -1,6 +1,0 @@
-ProductName,Brand,Category,Barcode,PurchasePrice,SalePrice,Unit,MinStockLevel
-Test Cola,Beverages,Soft Drink,1001001,50.00,75.00,Bottle,100
-Test Water,Beverages,Water,,20.00,30.00,Bottle,50
-Test Chips,Snacks,Snacks,1001002,30.00,50.00,Pack,200
-Test Duplicate,Snacks,Snacks,1001002,15.00,25.00,Pack,50
-Test Empty Barcode 2,Snacks,Snacks,,10.00,20.00,Pack,100
