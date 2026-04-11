@@ -239,8 +239,8 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className={`font-bold text-base tabular-nums ${stk.transactionType.includes('In') ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {stk.transactionType.includes('In') ? '+' : '-'}{stk.quantity}
+                                        <p className={`font-bold text-base tabular-nums ${(stk.transactionType || '').includes('In') ? 'text-emerald-600' : 'text-red-600'}`}>
+                                            {(stk.transactionType || '').includes('In') ? '+' : '-'}{stk.quantity}
                                         </p>
                                         <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mt-0.5">Stock Change</p>
                                     </div>

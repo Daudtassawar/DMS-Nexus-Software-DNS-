@@ -1,9 +1,18 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import axios from 'axios'
 import App from './App.jsx'
 import './index.css'
 
-console.log("[DEBUG] main.jsx: Script entered");
+/**
+ * CONFIGURATION:
+ * Using your computer's local IP (192.168.8.35) so your phone can talk to the backend.
+ * Make sure your phone is connected to the same Wi-Fi.
+ */
+const API_BASE_URL = 'http://192.168.8.35:5000';
+axios.defaults.baseURL = API_BASE_URL;
+
+console.log(`[DEBUG] main.jsx: API Base URL set to ${axios.defaults.baseURL}`);
 
 // Apply saved theme safely
 try {
@@ -82,13 +91,11 @@ class ErrorBoundary extends React.Component {
 }
 
 try {
-    console.log("[DEBUG] main.jsx: Attempting to find root element");
     const rootElement = document.getElementById('root');
     if (!rootElement) {
         throw new Error("Could not find root element with id 'root'");
     }
     
-    console.log("[DEBUG] main.jsx: Calling ReactDOM.render");
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
         <ErrorBoundary>
@@ -96,11 +103,9 @@ try {
         </ErrorBoundary>
       </React.StrictMode>,
     );
-    console.log("[DEBUG] main.jsx: ReactDOM.render call completed");
     console.log("App Initialization Successful");
 } catch (e) {
     console.error('Final App Mounting Failed:', e);
-    // Fallback if React fails to mount at all
     document.body.innerHTML = `
         <div style="padding: 40px; font-family: sans-serif; text-align: center;">
             <h1 style="color: #dc2626;">Critical System Load Failure</h1>

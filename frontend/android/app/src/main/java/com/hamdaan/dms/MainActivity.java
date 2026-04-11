@@ -1,4 +1,4 @@
-package com.dms.app;
+package com.hamdaan.dms;
 
 import com.getcapacitor.BridgeActivity;
 
