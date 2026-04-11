@@ -1,57 +1,30 @@
+# Folders to ignore
 node_modules/
 dist/
 build/
-.env
-.env.*
-!.env.example
-.DS_Store
-*.log
-coverage/
-.vs/
 bin/
 obj/
-*.user
-*.suo
-*.sqlite3
-*.db
+Antigravity/
+.vs/
+.idea/
 
-# Large Binaries
+# Files to ignore
+.env
+.env.*
+*.log
 *.exe
 *.msi
 *.zip
+*.pdf
+*.csv
+*.sqlite3
+*.db
+*.user
+*.suo
 
-# Android & iOS Local Configs
-android/local.properties
+# Android & iOS specific
 android/.gradle/
 android/app/build/
 ios/App/App/public/
 ios/App/Pods/
-
-# Temporary / Test Data
-*log.txt
-*output.txt
-*.csv
-*.pdf
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!capacitor.config.json
-!plugin.json
-!invite_test.json
-!login_test.json
-!set_password_test.json
-# (Allowing those specific test JSONs if they are important, or I can ignore all root JSONs)
-/invite_test.json
-/login_test.json
-/set_password_test.json
-/test_products.csv
-/test.csv
-/invoice one.pdf
-/cloudflared.exe
-/DockerDesktopInstaller.exe
-/build_log.txt
-/build_log_2.txt
-/build_output.txt
-/tunnel.log
-/tunnel_err.log
+local.properties
