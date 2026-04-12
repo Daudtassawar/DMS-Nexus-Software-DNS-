@@ -99,35 +99,39 @@ app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1");
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-// Health Check (Verifies DB Connection and shows Outbound IP)
+// Health Check (Deep Network Diagnostic)
 app.MapGet("/health", async (ApplicationDbContext context) => {
-    var outboundIp = "Unknown";
+    var diagnostic = new Dictionary<string, object>();
+    diagnostic["Status"] = "Alive";
+    diagnostic["Timestamp"] = DateTime.UtcNow;
+
+    // 1. Check Outbound IP
     try {
         using var client = new System.Net.Http.HttpClient();
-        outboundIp = await client.GetStringAsync("https://api.ipify.org");
-    } catch { }
+        diagnostic["OutboundIP"] = await client.GetStringAsync("https://api.ipify.org");
+    } catch { diagnostic["OutboundIP"] = "Failed to detect"; }
 
+    // 2. Check if Port 1433 is even open to Render
+    try {
+        using var tcpClient = new System.Net.Sockets.TcpClient();
+        var connectTask = tcpClient.ConnectAsync("db47599.public.databaseasp.net", 1433);
+        var completedTask = await Task.WhenAny(connectTask, Task.Delay(5000));
+        diagnostic["Port1433_Accessible"] = completedTask == connectTask && tcpClient.Connected;
+    } catch (Exception ex) { diagnostic["Port1433_Error"] = ex.Message; }
+
+    // 3. Try Actual DB Connection
     try {
         using var command = context.Database.GetDbConnection().CreateCommand();
         command.CommandText = "SELECT 1";
         await context.Database.OpenConnectionAsync();
         await command.ExecuteScalarAsync();
-        return Results.Ok(new {
-            Status = "Alive",
-            Database = "Connected",
-            OutboundIP = outboundIp,
-            Timestamp = DateTime.UtcNow
-        });
+        diagnostic["Database"] = "Connected";
     } catch (Exception ex) {
-        return Results.Ok(new {
-            Status = "Alive",
-            Database = "Disconnected",
-            OutboundIP = outboundIp,
-            Error = ex.Message,
-            InnerError = ex.InnerException?.Message,
-            Timestamp = DateTime.UtcNow
-        });
+        diagnostic["Database"] = "Disconnected";
+        diagnostic["DB_Error"] = ex.Message;
     }
+
+    return Results.Ok(diagnostic);
 });
 app.MapControllers();
 
