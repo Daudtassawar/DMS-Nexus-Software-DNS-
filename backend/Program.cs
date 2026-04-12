@@ -59,8 +59,7 @@ builder.Services.AddAuthentication(x => {
     };
 });
 
-// Register ALL Repositories & Services
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// Register ACTUAL Repositories & Services from your project
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
@@ -68,7 +67,6 @@ builder.Services.AddScoped<IDistributorRepository, DistributorRepository>();
 builder.Services.AddScoped<ISalesmanRepository, SalesmanRepository>();
 builder.Services.AddScoped<IStockRepository, StockRepository>();
 
-builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISalesmanService, SalesmanService>();
