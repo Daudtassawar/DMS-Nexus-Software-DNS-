@@ -99,8 +99,14 @@ app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1");
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-// Health Check (Verifies DB Connection with specific error)
+// Health Check (Verifies DB Connection and shows Outbound IP)
 app.MapGet("/health", async (ApplicationDbContext context) => {
+    var outboundIp = "Unknown";
+    try {
+        using var client = new System.Net.Http.HttpClient();
+        outboundIp = await client.GetStringAsync("https://api.ipify.org");
+    } catch { }
+
     try {
         using var command = context.Database.GetDbConnection().CreateCommand();
         command.CommandText = "SELECT 1";
@@ -109,12 +115,14 @@ app.MapGet("/health", async (ApplicationDbContext context) => {
         return Results.Ok(new {
             Status = "Alive",
             Database = "Connected",
+            OutboundIP = outboundIp,
             Timestamp = DateTime.UtcNow
         });
     } catch (Exception ex) {
         return Results.Ok(new {
             Status = "Alive",
             Database = "Disconnected",
+            OutboundIP = outboundIp,
             Error = ex.Message,
             InnerError = ex.InnerException?.Message,
             Timestamp = DateTime.UtcNow
