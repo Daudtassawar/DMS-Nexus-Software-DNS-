@@ -445,9 +445,12 @@ namespace DMS.API.Controllers
 
         private string GenerateJwtToken(AppUser user, string role, List<string> permissions)
         {
-            var jwtSettings = _configuration.GetSection("Jwt");
-            var keyString = jwtSettings["Key"] ?? "superSecretKey123!456@789#VeryLongSecret";
-            var key = Encoding.ASCII.GetBytes(keyString);
+            // HARDCODED SYNC: Must match Program.cs exactly to prevent 401 Unauthorized
+            var keyString = "VerySecureSecretKey123!456@789#VeryLongSecret";
+            var issuer = "DMS_SYSTEM";
+            var audience = "DMS_CLIENT";
+
+            var key = Encoding.UTF8.GetBytes(keyString);
 
             var claims = new List<Claim>
             {
@@ -472,8 +475,8 @@ namespace DMS.API.Controllers
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(8),
-                Issuer = jwtSettings["Issuer"],
-                Audience = jwtSettings["Audience"],
+                Issuer = issuer,
+                Audience = audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
