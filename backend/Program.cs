@@ -83,7 +83,15 @@ var app = builder.Build();
 _ = Task.Run(async () => {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    try { await RoleSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider); } catch { }
+    try {
+        // This will create all tables (Users, Roles, etc.) if they don't exist
+        await context.Database.MigrateAsync();
+
+        // This will create the 'admin' user
+        await RoleSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider);
+    } catch (Exception ex) {
+        Console.WriteLine($"DB Initialization Error: {ex.Message}");
+    }
 });
 
 app.UseSwagger();
