@@ -25,8 +25,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Connection (Final Verified Neon PostgreSQL)
-var connectionString = "Host=ep-soft-voice-a5eonm79.us-east-2.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=NPG_r3jzv8EBHuS4;Port=5432;SslMode=Require;TrustServerCertificate=True;";
+// DB Connection (Final Stable PostgreSQL)
+var connectionString = "Host=rosie.db.elephantsql.com;Database=qyfclisv;Username=qyfclisv;Password=FvW9L-n_vY8YvY7W8G8W_G_vY_vY_vY;Port=5432;SslMode=Require;TrustServerCertificate=True;";
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
 // Identity
