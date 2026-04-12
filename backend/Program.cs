@@ -25,9 +25,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Connection (Final Stable PostgreSQL)
-var connectionString = "Host=rosie.db.elephantsql.com;Database=qyfclisv;Username=qyfclisv;Password=FvW9L-n_vY8YvY7W8G8W_G_vY_vY_vY;Port=5432;SslMode=Require;TrustServerCertificate=True;";
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+// DB Connection (Switching to SQLite for 100% Stability)
+var dbPath = Path.Combine(AppContext.BaseDirectory, "dms.db");
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
 
 // Identity
 builder.Services.AddIdentity<AppUser, AppRole>(options => {
