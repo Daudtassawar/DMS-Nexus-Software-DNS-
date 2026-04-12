@@ -21,6 +21,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Http;
 
+using Microsoft.AspNetCore.HttpOverrides;
+
 var root = Directory.GetCurrentDirectory();
 var dotenv = Path.Combine(root, ".env");
 if (File.Exists(dotenv))
@@ -44,6 +46,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -437,6 +445,8 @@ else
 }
 
 app.UseRateLimiter();
+
+app.UseForwardedHeaders();
 
 app.Use(async (context, next) =>
 {
