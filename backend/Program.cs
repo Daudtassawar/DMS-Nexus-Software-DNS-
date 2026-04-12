@@ -331,39 +331,34 @@ using (var scope = app.Services.CreateScope())
                     ALTER TABLE Invoices ADD CONSTRAINT FK_Invoices_Vehicles FOREIGN KEY (VehicleId) REFERENCES Vehicles(VehicleId);
                 END
                 
+                -- Fix AuditLogs Table
                 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AuditLogs' and xtype='U')
                 BEGIN
                     CREATE TABLE AuditLogs (
                         Id INT IDENTITY(1,1) PRIMARY KEY,
                         UserId NVARCHAR(MAX) NOT NULL,
-                        UserName NVARCHAR(MAX) NOT NULL,
+                        UserName NVARCHAR(MAX) NOT NULL DEFAULT 'ANONYMOUS',
                         Action NVARCHAR(MAX) NOT NULL,
-                        Module NVARCHAR(MAX) NOT NULL,
+                        Module NVARCHAR(MAX) NOT NULL DEFAULT 'System',
                         RecordId NVARCHAR(MAX) NULL,
                         Description NVARCHAR(MAX) NULL,
                         Timestamp DATETIME2 NOT NULL,
                         IPAddress NVARCHAR(MAX) NULL
                     );
                 END
-
-                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'UserName' AND Object_ID = Object_ID(N'AuditLogs'))
+                ELSE
                 BEGIN
-                    ALTER TABLE AuditLogs ADD UserName NVARCHAR(MAX) NOT NULL DEFAULT '';
-                END
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'UserName' AND Object_ID = Object_ID(N'AuditLogs'))
+                        ALTER TABLE AuditLogs ADD UserName NVARCHAR(MAX) NOT NULL DEFAULT 'ANONYMOUS';
 
-                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'Module' AND Object_ID = Object_ID(N'AuditLogs'))
-                BEGIN
-                    ALTER TABLE AuditLogs ADD Module NVARCHAR(MAX) NOT NULL DEFAULT '';
-                END
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'Module' AND Object_ID = Object_ID(N'AuditLogs'))
+                        ALTER TABLE AuditLogs ADD Module NVARCHAR(MAX) NOT NULL DEFAULT 'System';
 
-                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RecordId' AND Object_ID = Object_ID(N'AuditLogs'))
-                BEGIN
-                    ALTER TABLE AuditLogs ADD RecordId NVARCHAR(MAX) NULL;
-                END
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RecordId' AND Object_ID = Object_ID(N'AuditLogs'))
+                        ALTER TABLE AuditLogs ADD RecordId NVARCHAR(MAX) NULL;
 
-                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'Description' AND Object_ID = Object_ID(N'AuditLogs'))
-                BEGIN
-                    ALTER TABLE AuditLogs ADD Description NVARCHAR(MAX) NULL;
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'Description' AND Object_ID = Object_ID(N'AuditLogs'))
+                        ALTER TABLE AuditLogs ADD Description NVARCHAR(MAX) NULL;
                 END
 
                 IF COL_LENGTH('Users', 'EmployeeId') IS NULL

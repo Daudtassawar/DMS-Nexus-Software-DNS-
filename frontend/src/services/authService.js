@@ -2,7 +2,8 @@ import axios from 'axios';
 console.log("[DEBUG] authService.js: Module evaluation started");
 
 // API URL Base
-const API_URL = '/api/v1/auth';
+const API_BASE = 'https://dms-nexus-software-dns.onrender.com';
+const API_URL = `${API_BASE}/api/v1/auth`;
 
 const login = async (username, password) => {
     const response = await axios.post(`${API_URL}/login`, { username, password });
@@ -29,7 +30,7 @@ const register = async (userData) => {
 };
 
 const createUser = async (userData) => {
-    const response = await axios.post('/api/v1/users/create', userData);
+    const response = await axios.post(`${API_BASE}/api/v1/users/create`, userData);
     return response.data;
 };
 
