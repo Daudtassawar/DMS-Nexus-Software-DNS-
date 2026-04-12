@@ -99,17 +99,26 @@ app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1");
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-// Health Check (Verifies DB Connection)
+// Health Check (Verifies DB Connection with specific error)
 app.MapGet("/health", async (ApplicationDbContext context) => {
     try {
-        var canConnect = await context.Database.CanConnectAsync();
+        using var command = context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = "SELECT 1";
+        await context.Database.OpenConnectionAsync();
+        await command.ExecuteScalarAsync();
         return Results.Ok(new {
             Status = "Alive",
-            Database = canConnect ? "Connected" : "Disconnected",
+            Database = "Connected",
             Timestamp = DateTime.UtcNow
         });
     } catch (Exception ex) {
-        return Results.Problem($"Database Error: {ex.Message}");
+        return Results.Ok(new {
+            Status = "Alive",
+            Database = "Disconnected",
+            Error = ex.Message,
+            InnerError = ex.InnerException?.Message,
+            Timestamp = DateTime.UtcNow
+        });
     }
 });
 app.MapControllers();
