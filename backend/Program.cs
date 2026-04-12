@@ -25,8 +25,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Connection (Standard Supabase Connection String)
-var connectionString = "Host=aws-0-us-east-1.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.fngnctvylmsyoxfnhlwa;Password=DMS_System_2024!;SslMode=Require;TrustServerCertificate=True;";
+// DB Connection (Switching to stable Neon PostgreSQL)
+var connectionString = "Host=ep-blue-sky-a5o051f0.us-east-2.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_M6V2XmYIjtfa;Port=5432;SslMode=Require;TrustServerCertificate=True;Pooling=true;";
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
 // Identity
