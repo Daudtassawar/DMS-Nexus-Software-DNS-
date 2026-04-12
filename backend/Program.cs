@@ -97,11 +97,11 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProv
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // Configure JWT Authentication
-var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["Jwt:Key"] ?? "superSecretKey123!456@789#VeryLongSecret";
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"];
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? builder.Configuration["Jwt:Audience"];
+var jwtKey = "VerySecureSecretKey123!456@789#VeryLongSecret";
+var jwtIssuer = "DMS_SYSTEM";
+var jwtAudience = "DMS_CLIENT";
 
-var key = Encoding.ASCII.GetBytes(jwtKey);
+var key = Encoding.UTF8.GetBytes(jwtKey);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -116,11 +116,11 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
+        ValidateIssuer = true,
         ValidIssuer = jwtIssuer,
-        ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
+        ValidateAudience = true,
         ValidAudience = jwtAudience,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.FromMinutes(5) // Allow 5 minutes difference in server/client time
     };
 });
 
