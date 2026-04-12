@@ -69,7 +69,8 @@ namespace DMS.API.Middleware
                     }
                     catch (Exception ex)
                     {
-                        // Don't fail the request due to logging failure
+                        // SILENT ERROR: Don't fail the request due to logging failure
+                        // This prevents the "Sudden Logout"
                         Console.WriteLine($"Audit logging failed: {ex.Message}");
                     }
                 }
