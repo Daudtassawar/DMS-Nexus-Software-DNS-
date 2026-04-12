@@ -331,7 +331,19 @@ using (var scope = app.Services.CreateScope())
                     ALTER TABLE Invoices ADD CONSTRAINT FK_Invoices_Vehicles FOREIGN KEY (VehicleId) REFERENCES Vehicles(VehicleId);
                 END
                 
-                -- Fix AuditLogs Table
+// Database Initialization (Wrapped in Task.Run to prevent startup hang)
+_ = Task.Run(async () =>
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<ApplicationDbContext>();
+
+            // Atomic Table/Column Generation
+            await context.Database.ExecuteSqlRawAsync(@"
+                -- Ensure AuditLogs Table exists with correct columns
                 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AuditLogs' and xtype='U')
                 BEGIN
                     CREATE TABLE AuditLogs (
@@ -388,32 +400,15 @@ using (var scope = app.Services.CreateScope())
                 context.Companies.Add(new DMS.Domain.Entities.Company { Name = "Gourmet Plant", CreatedAt = DateTime.UtcNow });
                 await context.SaveChangesAsync();
             }
-        } 
-        catch (Exception sqlEx) 
-        {
-            Console.WriteLine($"[DB INIT ERROR]: {sqlEx.Message}");
-        }
 
-        // Apply migrations ONLY if needed
-        try 
-        {
-            // We'll skip MigrateAsync for now if the table logic above is doing the heavy lifting
-            // to avoid the "Migration history already has entry" crash on Render.
-            // await context.Database.MigrateAsync();
+            await RoleSeeder.SeedRolesAndAdminAsync(services);
         } 
-        catch (Exception migEx) 
+        catch (Exception ex)
         {
-            Console.WriteLine($"[MIGRATION SKIP]: {migEx.Message}");
+            Console.WriteLine($"[DB BACKGROUND INIT ERROR]: {ex.Message}");
         }
-
-        await RoleSeeder.SeedRolesAndAdminAsync(services);
     }
-    catch (Exception ex)
-    {
-        // Handle seeder error
-        Console.WriteLine($"Error seeding roles: {ex.Message}");
-    }
-}
+});
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
