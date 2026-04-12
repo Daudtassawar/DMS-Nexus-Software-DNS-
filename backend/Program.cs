@@ -323,6 +323,21 @@ using (var scope = app.Services.CreateScope())
                     ALTER TABLE Invoices ADD CONSTRAINT FK_Invoices_Vehicles FOREIGN KEY (VehicleId) REFERENCES Vehicles(VehicleId);
                 END
                 
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AuditLogs' and xtype='U')
+                BEGIN
+                    CREATE TABLE AuditLogs (
+                        Id INT IDENTITY(1,1) PRIMARY KEY,
+                        UserId NVARCHAR(MAX) NOT NULL,
+                        UserName NVARCHAR(MAX) NOT NULL,
+                        Action NVARCHAR(MAX) NOT NULL,
+                        Module NVARCHAR(MAX) NOT NULL,
+                        RecordId NVARCHAR(MAX) NULL,
+                        Description NVARCHAR(MAX) NULL,
+                        Timestamp DATETIME2 NOT NULL,
+                        IPAddress NVARCHAR(MAX) NULL
+                    );
+                END
+
                 IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'UserName' AND Object_ID = Object_ID(N'AuditLogs'))
                 BEGIN
                     ALTER TABLE AuditLogs ADD UserName NVARCHAR(MAX) NOT NULL DEFAULT '';
@@ -397,7 +412,11 @@ using (var scope = app.Services.CreateScope())
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1"));
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1");
+    c.RoutePrefix = "swagger"; // Ensure it's at /swagger
+});
 
 if (app.Environment.IsDevelopment())
 {
