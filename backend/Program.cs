@@ -25,8 +25,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Connection
-var connectionString = "Server=db47599.public.databaseasp.net;Database=db47599;User Id=db47599;Password=dF-9j@4r6Dk%;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;";
+// DB Connection (Trying Encrypt=False to fix Error 40)
+var connectionString = "Server=db47599.public.databaseasp.net;Database=db47599;User Id=db47599;Password=dF-9j@4r6Dk%;Encrypt=False;TrustServerCertificate=True;MultipleActiveResultSets=True;";
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
 // Identity
