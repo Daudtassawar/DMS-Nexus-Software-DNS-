@@ -323,30 +323,24 @@ using (var scope = app.Services.CreateScope())
                     ALTER TABLE Invoices ADD CONSTRAINT FK_Invoices_Vehicles FOREIGN KEY (VehicleId) REFERENCES Vehicles(VehicleId);
                 END
                 
-                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RouteId' AND Object_ID = Object_ID(N'Customers'))
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'UserName' AND Object_ID = Object_ID(N'AuditLogs'))
                 BEGIN
-                    ALTER TABLE Customers ADD RouteId INT NULL;
-                    ALTER TABLE Customers ADD CONSTRAINT FK_Customers_Routes FOREIGN KEY (RouteId) REFERENCES Routes(RouteId);
+                    ALTER TABLE AuditLogs ADD UserName NVARCHAR(MAX) NOT NULL DEFAULT '';
                 END
 
-                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RunningBalance' AND Object_ID = Object_ID(N'CompanyLedgers'))
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'Module' AND Object_ID = Object_ID(N'AuditLogs'))
                 BEGIN
-                    ALTER TABLE CompanyLedgers ADD RunningBalance DECIMAL(18,2) NOT NULL DEFAULT 0;
+                    ALTER TABLE AuditLogs ADD Module NVARCHAR(MAX) NOT NULL DEFAULT '';
                 END
 
-                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AuditLogs' and xtype='U')
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'RecordId' AND Object_ID = Object_ID(N'AuditLogs'))
                 BEGIN
-                    CREATE TABLE AuditLogs (
-                        Id INT IDENTITY(1,1) PRIMARY KEY,
-                        UserId NVARCHAR(MAX) NOT NULL,
-                        UserName NVARCHAR(MAX) NOT NULL,
-                        Action NVARCHAR(MAX) NOT NULL,
-                        Module NVARCHAR(MAX) NOT NULL,
-                        RecordId NVARCHAR(MAX) NULL,
-                        Description NVARCHAR(MAX) NULL,
-                        Timestamp DATETIME2 NOT NULL,
-                        IPAddress NVARCHAR(MAX) NULL
-                    );
+                    ALTER TABLE AuditLogs ADD RecordId NVARCHAR(MAX) NULL;
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'Description' AND Object_ID = Object_ID(N'AuditLogs'))
+                BEGIN
+                    ALTER TABLE AuditLogs ADD Description NVARCHAR(MAX) NULL;
                 END
 
                 IF COL_LENGTH('Users', 'EmployeeId') IS NULL
@@ -448,4 +442,5 @@ app.UseMiddleware<DMS.API.Middleware.AuditMiddleware>();
 
 app.MapControllers();
 
-app.Run("http://0.0.0.0:5000");
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Run($"http://0.0.0.0:{port}");

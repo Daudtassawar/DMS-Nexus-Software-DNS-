@@ -6,10 +6,9 @@ import './index.css'
 
 /**
  * CONFIGURATION:
- * Using your computer's local IP (192.168.8.35) so your phone can talk to the backend.
- * Make sure your phone is connected to the same Wi-Fi.
+ * Public Render URL for the backend API.
  */
-const API_BASE_URL = 'http://192.168.8.35:5000';
+const API_BASE_URL = 'https://dms-nexus-software-dns.onrender.com';
 axios.defaults.baseURL = API_BASE_URL;
 
 console.log(`[DEBUG] main.jsx: API Base URL set to ${axios.defaults.baseURL}`);
