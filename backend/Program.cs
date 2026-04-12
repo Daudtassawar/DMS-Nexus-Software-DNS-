@@ -25,9 +25,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Connection (Exact match to MonsterASP Screenshot)
-var connectionString = "Server=db47599.public.databaseasp.net;Database=db47599;User Id=db47599;Password=dF-9j@4r6Dk%;Encrypt=True;TrustServerCertificate=True;Connection Timeout=60;";
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+// DB Connection (Switching to PostgreSQL on Supabase)
+var connectionString = "Host=aws-0-us-east-1.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.fngnctvylmsyoxfnhlwa;Password=DMS_System_2024!;Pooling=true;BinaryOptions='-c target_session_attrs=read-write'";
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
 // Identity
 builder.Services.AddIdentity<AppUser, AppRole>(options => {
@@ -99,33 +99,26 @@ app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1");
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-// Health Check (Deep Network Diagnostic)
+// Health Check (Deep Network Diagnostic V2.0 - PostgreSQL)
 app.MapGet("/health", async (ApplicationDbContext context) => {
     var diagnostic = new Dictionary<string, object>();
+    diagnostic["Version"] = "2.0-Postgres";
     diagnostic["Status"] = "Alive";
     diagnostic["Timestamp"] = DateTime.UtcNow;
 
-    // 1. Check Outbound IP
+    // 1. Outbound IP Detection
     try {
         using var client = new System.Net.Http.HttpClient();
         diagnostic["OutboundIP"] = await client.GetStringAsync("https://api.ipify.org");
-    } catch { diagnostic["OutboundIP"] = "Failed to detect"; }
+    } catch { }
 
-    // 2. Check if Port 1433 is even open to Render
-    try {
-        using var tcpClient = new System.Net.Sockets.TcpClient();
-        var connectTask = tcpClient.ConnectAsync("db47599.public.databaseasp.net", 1433);
-        var completedTask = await Task.WhenAny(connectTask, Task.Delay(5000));
-        diagnostic["Port1433_Accessible"] = completedTask == connectTask && tcpClient.Connected;
-    } catch (Exception ex) { diagnostic["Port1433_Error"] = ex.Message; }
-
-    // 3. Try Actual DB Connection
+    // 2. PostgreSQL Connection Test
     try {
         using var command = context.Database.GetDbConnection().CreateCommand();
         command.CommandText = "SELECT 1";
         await context.Database.OpenConnectionAsync();
         await command.ExecuteScalarAsync();
-        diagnostic["Database"] = "Connected";
+        diagnostic["Database"] = "Connected (PostgreSQL)";
     } catch (Exception ex) {
         diagnostic["Database"] = "Disconnected";
         diagnostic["DB_Error"] = ex.Message;
