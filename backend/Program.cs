@@ -458,6 +458,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Simple Health Check (No DB required)
+app.MapGet("/health", () => Results.Ok(new { Status = "Alive", Timestamp = DateTime.UtcNow }));
+
 // Audit logging middleware - should be AFTER authentication/authorization
 app.UseMiddleware<DMS.API.Middleware.AuditMiddleware>();
 
