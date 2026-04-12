@@ -391,17 +391,19 @@ using (var scope = app.Services.CreateScope())
         } 
         catch (Exception sqlEx) 
         {
-            Console.WriteLine($"Error executing raw SQL table generation: {sqlEx.Message}");
+            Console.WriteLine($"[DB INIT ERROR]: {sqlEx.Message}");
         }
 
-        // Apply pending migrations automatically on startup
+        // Apply migrations ONLY if needed
         try 
         {
-            await context.Database.MigrateAsync(); 
+            // We'll skip MigrateAsync for now if the table logic above is doing the heavy lifting
+            // to avoid the "Migration history already has entry" crash on Render.
+            // await context.Database.MigrateAsync();
         } 
         catch (Exception migEx) 
         {
-            Console.WriteLine($"Error running EF Migrations (non-fatal): {migEx.Message}");
+            Console.WriteLine($"[MIGRATION SKIP]: {migEx.Message}");
         }
 
         await RoleSeeder.SeedRolesAndAdminAsync(services);
