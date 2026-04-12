@@ -25,8 +25,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Connection (Explicit Port 1433 and Encrypt=True as per MonsterASP UI)
-var connectionString = "Server=db47599.public.databaseasp.net,1433;Database=db47599;User Id=db47599;Password=dF-9j@4r6Dk%;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30;";
+// DB Connection (Trying both Public and Internal hostnames)
+var connectionString = "Server=db47599.databaseasp.net;Database=db47599;User Id=db47599;Password=dF-9j@4r6Dk%;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30;";
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
 // Identity
