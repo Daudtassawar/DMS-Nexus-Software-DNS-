@@ -72,6 +72,9 @@ builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISalesmanService, SalesmanService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
+// FIX: Register missing Email Service to prevent AuthController crash
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
