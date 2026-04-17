@@ -104,8 +104,10 @@ _ = Task.Run(async () => {
         // This will create all tables (Users, Roles, etc.) if they don't exist
         await context.Database.MigrateAsync();
 
-        // This will create the 'admin' user
+        // This will create the 'admin' user AND all default roles/permissions
         await RoleSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider);
+
+        Console.WriteLine("DB Migration and Admin Seeding Completed Successfully.");
     } catch (Exception ex) {
         Console.WriteLine($"DB Initialization Error: {ex.Message}");
     }
