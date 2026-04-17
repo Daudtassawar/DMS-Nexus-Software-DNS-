@@ -224,12 +224,12 @@ namespace DMS.Infrastructure.Data
             {
                 var testProduct = new Product
                 {
-                    Name = "Welcome Product",
-                    Description = "Initial system product",
-                    Price = 100,
-                    StockQuantity = 50,
+                    ProductName = "Welcome Product",
+                    SalePrice = 100,
+                    PurchasePrice = 80,
+                    Unit = "Pc",
                     Category = "General",
-                    IsActive = true
+                    CreatedDate = DateTime.UtcNow
                 };
                 dbContext.Products.Add(testProduct);
             }
@@ -238,10 +238,9 @@ namespace DMS.Infrastructure.Data
             {
                 var testCustomer = new Customer
                 {
-                    Name = "First Customer",
+                    CustomerName = "First Customer",
                     Address = "DMS HQ",
-                    Phone = "000-0000",
-                    IsActive = true
+                    Phone = "000-0000"
                 };
                 dbContext.Customers.Add(testCustomer);
             }
