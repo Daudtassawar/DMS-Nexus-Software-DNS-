@@ -218,6 +218,35 @@ namespace DMS.Infrastructure.Data
                     }
                 }
             }
+
+            // 6. Seed Initial Data for Dashboard Stability
+            if (!await dbContext.Products.AnyAsync())
+            {
+                var testProduct = new Product
+                {
+                    Name = "Welcome Product",
+                    Description = "Initial system product",
+                    Price = 100,
+                    StockQuantity = 50,
+                    Category = "General",
+                    IsActive = true
+                };
+                dbContext.Products.Add(testProduct);
+            }
+
+            if (!await dbContext.Customers.AnyAsync())
+            {
+                var testCustomer = new Customer
+                {
+                    Name = "First Customer",
+                    Address = "DMS HQ",
+                    Phone = "000-0000",
+                    IsActive = true
+                };
+                dbContext.Customers.Add(testCustomer);
+            }
+
+            await dbContext.SaveChangesAsync();
         }
     }
 }
