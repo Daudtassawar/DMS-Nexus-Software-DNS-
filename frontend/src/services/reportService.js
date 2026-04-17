@@ -43,6 +43,11 @@ const reportService = {
     getInventory: async () => {
         const res = await axios.get(`${BASE}/inventory`);
         return res.data;
+    },
+    
+    getSalesmanAnalysis: async (range) => {
+        const res = await axios.get(`${BASE}/salesman-analysis`, { params: { range } });
+        return res.data;
     }
 };
 

@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { formatCurrency } from './currencyUtils';
 
 export const ExportService = {
   /**
@@ -40,7 +41,7 @@ export const ExportService = {
       body: data.map(row => columns.map(c => {
           let val = row[c.key];
           if (val === null || val === undefined) return '-';
-          if (typeof val === 'number' && c.isCurrency) return `Rs. ${val.toLocaleString()}`;
+          if (typeof val === 'number' && c.isCurrency) return formatCurrency(val);
           return val;
       })),
       theme: 'grid',

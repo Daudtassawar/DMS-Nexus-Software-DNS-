@@ -122,8 +122,15 @@ namespace DMS.API.Controllers
             if (User.IsInRole("Salesman"))
             {
                 GetIsolationFilters(out int? routeId, out int? salesmanId);
-                if (routeId.HasValue) customer.RouteId = routeId.Value;
-                if (salesmanId.HasValue) customer.SalesmanId = salesmanId.Value;
+                
+                if (!salesmanId.HasValue)
+                    return BadRequest(new { message = "Unauthorized: Salesman ID not found in security context." });
+                
+                customer.SalesmanId = salesmanId.Value;
+                
+                // If the salesman has a specific route, they can ONLY add customers to that route
+                if (routeId.HasValue)
+                    customer.RouteId = routeId.Value;
             }
 
             var created = await _customerService.CreateCustomerAsync(customer);

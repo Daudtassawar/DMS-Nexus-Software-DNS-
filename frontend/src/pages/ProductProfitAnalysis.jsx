@@ -4,6 +4,7 @@ import {
     Package, TrendingUp, TrendingDown, Target, Zap, 
     ArrowUpRight, ArrowDownRight, Layers, LayoutList, Search
 } from 'lucide-react';
+import { formatCurrency } from '../utils/currencyUtils';
 
 const ProductProfitAnalysis = () => {
     const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ const ProductProfitAnalysis = () => {
                     <div>
                         <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1 italic">Highest Profit Contribution</p>
                         <h3 className="text-xl font-bold text-white italic truncate max-w-[200px]">{products[0]?.productName}</h3>
-                        <p className="text-[10px] font-bold text-emerald-400 mt-1 uppercase italic">+Rs. {products[0]?.profit?.toLocaleString()} Profit</p>
+                        <p className="text-[10px] font-bold text-emerald-400 mt-1 uppercase italic">+ {formatCurrency(products[0]?.profit, false)} Profit</p>
                     </div>
                     <div className="p-4 bg-emerald-500/20 text-emerald-500 rounded-full animate-pulse">
                         <TrendingUp size={30} />
@@ -64,7 +65,7 @@ const ProductProfitAnalysis = () => {
                     <div>
                         <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-1 italic">Least Profit Contribution</p>
                         <h3 className="text-xl font-bold text-white italic truncate max-w-[200px]">{products[products.length-1]?.productName}</h3>
-                        <p className="text-[10px] font-bold text-rose-400 mt-1 uppercase italic">Rs. {products[products.length-1]?.profit?.toLocaleString()} Profit</p>
+                        <p className="text-[10px] font-bold text-rose-400 mt-1 uppercase italic">{formatCurrency(products[products.length-1]?.profit, false)} Profit</p>
                     </div>
                     <div className="p-4 bg-rose-500/20 text-rose-500 rounded-full">
                         <TrendingDown size={30} />
@@ -128,11 +129,11 @@ const ProductProfitAnalysis = () => {
                                             <span className="text-[9px] font-bold text-slate-600 uppercase">Units</span>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-6 text-sm font-bold text-white italic tracking-tighter">Rs. {item.revenue?.toLocaleString()}</td>
-                                    <td className="px-8 py-6 text-sm font-bold text-rose-500/80 italic tracking-tighter">-Rs. {item.cost?.toLocaleString()}</td>
+                                    <td className="px-8 py-6 text-sm font-bold text-white italic tracking-tighter">{formatCurrency(item.revenue)}</td>
+                                    <td className="px-8 py-6 text-sm font-bold text-rose-500/80 italic tracking-tighter">- {formatCurrency(item.cost)}</td>
                                     <td className="px-8 py-6">
                                         <div className={`px-4 py-2 rounded-xl text-xs font-bold italic tracking-tighter inline-block ${item.profit >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                                            Rs. {item.profit?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                                            {formatCurrency(item.profit, true)}
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">

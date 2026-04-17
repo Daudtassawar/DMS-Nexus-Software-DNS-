@@ -41,9 +41,22 @@ namespace DMS.Infrastructure.Data
         public DbSet<DMS.Domain.Entities.Route> Routes { get; set; } = null!;
         public DbSet<Vehicle> Vehicles { get; set; } = null!;
 
+        public DbSet<SystemSetting> SystemSettings { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Seed System Setting
+            modelBuilder.Entity<SystemSetting>().HasData(new SystemSetting
+            {
+                Id = 1,
+                CompanyName = "Hamdaan Traders",
+                PhoneNumber = "+92 300 8843939",
+                Address = "Sillanwali, Sargodha Road, Sargodha, Pakistan",
+                Email = "contact@hamdaantraders.com",
+                LastUpdated = DateTime.Parse("2026-04-14")
+            });
 
             // Rename Identity tables to be more user-friendly as requested
             modelBuilder.Entity<AppUser>().ToTable("Users");
@@ -105,6 +118,24 @@ namespace DMS.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(cl => cl.CreatedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Stock>()
+                .HasIndex(s => new { s.ProductId, s.WarehouseLocation })
+                .IsUnique();
+
+            modelBuilder.Entity<Customer>()
+                .HasIndex(c => c.Phone)
+                .IsUnique();
+
+            modelBuilder.Entity<Customer>()
+                .HasIndex(c => new { c.CustomerName, c.Area })
+                .IsUnique();
+
+            modelBuilder.Entity<Stock>()
+                .HasOne(s => s.Product)
+                .WithMany(p => p.Stocks)
+                .HasForeignKey(s => s.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<DailyActivity>().HasKey(a => a.ActivityId);
             modelBuilder.Entity<DailyExpense>().HasKey(e => e.ExpenseId);

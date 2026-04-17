@@ -14,14 +14,27 @@ namespace DMS.Application.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly ICustomerLedgerService _ledgerService;
         private readonly Infrastructure.Data.ApplicationDbContext _dbContext;
+        private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
 
-        public InvoiceService(IInvoiceRepository invoiceRepository, IStockRepository stockRepository, ICustomerRepository customerRepository, ICustomerLedgerService ledgerService, Infrastructure.Data.ApplicationDbContext dbContext)
+        public InvoiceService(
+            IInvoiceRepository invoiceRepository, 
+            IStockRepository stockRepository, 
+            ICustomerRepository customerRepository, 
+            ICustomerLedgerService ledgerService, 
+            Infrastructure.Data.ApplicationDbContext dbContext,
+            Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
         {
             _invoiceRepository = invoiceRepository;
             _stockRepository = stockRepository;
             _customerRepository = customerRepository;
             _ledgerService = ledgerService;
             _dbContext = dbContext;
+            _cache = cache;
+        }
+
+        private void InvalidateDashboardCache()
+        {
+            _cache.Remove("dashboard_metrics");
         }
 
         public async Task<IEnumerable<Invoice>> GetAllInvoicesAsync(int? routeId = null, int? salesmanId = null)
@@ -148,6 +161,7 @@ namespace DMS.Application.Services
                 await _dbContext.SaveChangesAsync(); 
 
                 await transaction.CommitAsync();
+                InvalidateDashboardCache();
                 Console.WriteLine($"[EXPLICIT LOG] SUCCESS: Invoice {invoice.InvoiceNumber} created. All stock records and transactions committed.");
                 return invoice;
             }
@@ -172,6 +186,7 @@ namespace DMS.Application.Services
             
             _invoiceRepository.Update(invoice);
             await _invoiceRepository.SaveChangesAsync();
+            InvalidateDashboardCache();
         }
 
         public async Task<Invoice?> UpdateInvoiceAsync(int id, Invoice updatedInvoice)
@@ -313,6 +328,7 @@ namespace DMS.Application.Services
                 await _invoiceRepository.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+                InvalidateDashboardCache();
                 return existing;
             }
             catch (Exception)
@@ -379,6 +395,7 @@ namespace DMS.Application.Services
 
             _invoiceRepository.Delete(invoice);
             await _invoiceRepository.SaveChangesAsync();
+            InvalidateDashboardCache();
             return true;
         }
         public void RecalculateStatus(Invoice invoice)

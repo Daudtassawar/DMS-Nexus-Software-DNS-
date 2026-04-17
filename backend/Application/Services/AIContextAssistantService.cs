@@ -55,14 +55,14 @@ namespace DMS.Application.Services
         private async Task<string> GetLowStockSummary()
         {
             var lowStock = await _context.Products
-                .Include(p => p.Stock)
-                .Where(p => p.Stock != null && p.Stock.Quantity < 10)
+                .Include(p => p.Stocks)
+                .Where(p => p.Stocks.Sum(s => s.Quantity) < 10)
                 .Take(5)
                 .ToListAsync();
 
             if (!lowStock.Any()) return "Great news! All products are well-stocked.";
 
-            var items = string.Join(", ", lowStock.Select(p => $"{p.ProductName} ({p.Stock?.Quantity ?? 0} left)"));
+            var items = string.Join(", ", lowStock.Select(p => $"{p.ProductName} ({p.Stocks.Sum(s => s.Quantity)} left)"));
             return $"Warning: The following items are low in stock: {items}.";
         }
 

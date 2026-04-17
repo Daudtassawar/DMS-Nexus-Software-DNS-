@@ -7,24 +7,26 @@ const SidebarItem = ({ icon: Icon, label, route, isActive, isCollapsed, onClick 
       to={route}
       onClick={onClick}
       className={`
-        flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-all duration-150 group relative
-        text-sm font-medium
+        flex items-center gap-3 px-4 py-3 mx-2 rounded-xl transition-all duration-300 group relative overflow-hidden
+        text-[11px] font-black uppercase tracking-widest
         ${isActive 
-          ? 'bg-[var(--primary)] text-white' 
-          : 'text-[var(--text-muted)] hover:bg-[var(--secondary)] hover:text-[var(--text-main)]'}
+          ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--ring)]' 
+          : 'text-[var(--text-muted)] hover:bg-[var(--bg-app)] hover:text-[var(--text-main)]'}
       `}
     >
-      <div className={`shrink-0 ${isActive ? 'text-white' : 'group-hover:text-[var(--text-main)]'}`}>
+      <div className={`shrink-0 transition-transform duration-300 relative z-10 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
         <Icon size={18} />
       </div>
       
       {!isCollapsed && (
-        <span className="truncate whitespace-nowrap">
+        <span className="truncate whitespace-nowrap relative z-10 transition-colors duration-300">
           {label}
         </span>
       )}
 
-      {/* Removed absolute active indicator line for a cleaner block solid look */}
+      {isActive && (
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary)] to-amber-400 opacity-100"></div>
+      )}
     </Link>
   );
 };

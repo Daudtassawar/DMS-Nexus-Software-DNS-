@@ -29,6 +29,9 @@ var builder = WebApplication.CreateBuilder(args);
 var dbPath = Path.Combine(AppContext.BaseDirectory, "dms.db");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
 
+// Memory Cache support
+builder.Services.AddMemoryCache();
+
 // Identity
 builder.Services.AddIdentity<AppUser, AppRole>(options => {
     options.Password.RequireDigit = false;
@@ -66,14 +69,25 @@ builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<IDistributorRepository, DistributorRepository>();
 builder.Services.AddScoped<ISalesmanRepository, SalesmanRepository>();
 builder.Services.AddScoped<IStockRepository, StockRepository>();
+builder.Services.AddScoped<IDailyOperationsRepository, DailyOperationsRepository>();
 
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IDistributorService, DistributorService>();
 builder.Services.AddScoped<ISalesmanService, SalesmanService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ICustomerLedgerService, CustomerLedgerService>();
+builder.Services.AddScoped<ICompanyLedgerService, CompanyLedgerService>();
+builder.Services.AddScoped<DailyOperationsService>();
 
 // FIX: Register missing Email Service to prevent AuthController crash
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<StockService>();
+builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<IFinancialService, FinancialService>();
+builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
 builder.Services.AddEndpointsApiExplorer();

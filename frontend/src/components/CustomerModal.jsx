@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import salesmanService from '../services/salesmanService';
+import authService from '../services/authService';
 import AppModal from './AppModal';
 import AppInput from './AppInput';
 import AppButton from './AppButton';
@@ -13,9 +14,15 @@ export default function CustomerModal({ customer, onSave, onClose }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
+    const currentUser = authService.getCurrentUser();
+    const isSalesman = currentUser?.user?.role === 'Salesman' || currentUser?.user?.Role === 'Salesman';
+    const profileSalesmanId = currentUser?.user?.salesmanId || currentUser?.user?.SalesmanId;
+
     useEffect(() => {
-        salesmanService.getSalesmen().then(data => setSalesmen(data || [])).catch(() => {});
-    }, []);
+        if (!isSalesman) {
+            salesmanService.getSalesmen().then(data => setSalesmen(data || [])).catch(() => {});
+        }
+    }, [isSalesman]);
 
     useEffect(() => {
         if (customer) {
@@ -27,8 +34,10 @@ export default function CustomerModal({ customer, onSave, onClose }) {
                 creditLimit: customer.creditLimit?.toString() || '0',
                 salesmanId: customer.salesmanId || '',
             });
+        } else if (isSalesman && profileSalesmanId) {
+            setForm(f => ({ ...f, salesmanId: profileSalesmanId }));
         }
-    }, [customer]);
+    }, [customer, isSalesman, profileSalesmanId]);
 
     const handleChange = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
@@ -100,19 +109,26 @@ export default function CustomerModal({ customer, onSave, onClose }) {
                   <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
                       <MapPin size={14}/> Logistics
                   </h4>
-                   <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-semibold text-[var(--text-main)]">Assigned Salesman</label>
-                        <select 
-                            value={form.salesmanId} 
-                            onChange={handleChange('salesmanId')}
-                            className="w-full px-4 py-2.5 bg-[var(--bg-app)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)]"
-                        >
-                            <option value="">No Salesman Assigned</option>
-                            {salesmen.map(s => (
-                                <option key={s.salesmanId} value={s.salesmanId}>{s.name} ({s.area || 'General'})</option>
-                            ))}
-                        </select>
-                    </div>
+                   {!isSalesman ? (
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-[var(--text-main)]">Assigned Salesman</label>
+                            <select 
+                                value={form.salesmanId} 
+                                onChange={handleChange('salesmanId')}
+                                className="w-full px-4 py-2.5 bg-[var(--bg-app)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)]"
+                            >
+                                <option value="">No Salesman Assigned</option>
+                                {salesmen.map(s => (
+                                    <option key={s.salesmanId} value={s.salesmanId}>{s.name} ({s.area || 'General'})</option>
+                                ))}
+                            </select>
+                        </div>
+                   ) : (
+                        <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-lg">
+                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Assigned Salesman</p>
+                            <p className="text-sm font-bold text-blue-900">{currentUser?.user?.fullName || 'Self'}</p>
+                        </div>
+                   )}
                     <AppInput 
                         label="Full Address" 
                         placeholder="Street, Building, landmark..." 

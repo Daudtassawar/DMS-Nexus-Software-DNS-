@@ -28,10 +28,12 @@ namespace DMS.API.Controllers
             [FromQuery] string? userId,
             [FromQuery] string? module,
             [FromQuery] DateTime? fromDate,
-            [FromQuery] DateTime? toDate)
+            [FromQuery] DateTime? toDate,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var logs = await _auditLogService.GetLogsAsync(userId, module, fromDate, toDate);
-            return Ok(logs);
+            var result = await _auditLogService.GetLogsAsync(userId, module, fromDate, toDate, pageNumber, pageSize);
+            return Ok(result);
         }
     }
 }

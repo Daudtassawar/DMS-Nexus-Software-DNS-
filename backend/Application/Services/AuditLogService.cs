@@ -7,6 +7,8 @@ using DMS.Application.Interfaces;
 using DMS.Domain.Entities;
 using DMS.Infrastructure.Data;
 
+using DMS.Application.DTOs;
+
 namespace DMS.Application.Services
 {
     public class AuditLogService : IAuditLogService
@@ -54,7 +56,7 @@ namespace DMS.Application.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<AuditLog>> GetLogsAsync(string? userId, string? module, DateTime? fromDate, DateTime? toDate)
+        public async Task<PagedResult<AuditLog>> GetLogsAsync(string? userId, string? module, DateTime? fromDate, DateTime? toDate, int pageNumber = 1, int pageSize = 20)
         {
             var query = _context.AuditLogs.AsQueryable();
 
@@ -65,15 +67,26 @@ namespace DMS.Application.Services
                 query = query.Where(a => a.Module == module);
 
             if (fromDate.HasValue)
-                query = query.Where(a => a.Timestamp >= fromDate.Value);
+                query = query.Where(a => a.Timestamp >= fromDate.Value.Date);
 
             if (toDate.HasValue)
-                query = query.Where(a => a.Timestamp <= toDate.Value.AddDays(1));
+                query = query.Where(a => a.Timestamp <= toDate.Value.Date.AddDays(1).AddTicks(-1));
 
-            return await query
+            var totalCount = await query.CountAsync();
+            var logs = await query
                 .OrderByDescending(a => a.Timestamp)
-                .Take(500)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return new PagedResult<AuditLog>
+            {
+                Items = logs,
+                TotalCount = totalCount,
+                Page = pageNumber,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
     }
 }

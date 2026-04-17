@@ -6,6 +6,8 @@ import AppButton from '../components/AppButton';
 import { generateProfessionalInvoicePDF } from '../utils/pdfGenerator';
 import AppBadge from '../components/AppBadge';
 import paymentService from '../services/paymentService';
+import { formatCurrency } from '../utils/currencyUtils';
+import systemSettingsService from '../services/systemSettingsService';
 
 const STATUS_CONFIG = {
     Paid:      { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', icon: <CheckCircle size={14}/> },
@@ -24,6 +26,7 @@ export default function InvoiceDetail() {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentAmount, setPaymentAmount] = useState('');
     const [payments, setPayments] = useState([]);
+    const [companySettings, setCompanySettings] = useState(null);
 
     useEffect(() => {
         fetchInvoice();
@@ -35,6 +38,11 @@ export default function InvoiceDetail() {
             setInvoice(data);
             const pyts = await paymentService.getByInvoiceId(id);
             setPayments(pyts);
+            
+            // Also fetch settings for professional header
+            const settings = await systemSettingsService.getSettings();
+            setCompanySettings(settings);
+
             setLoading(false);
         } catch (err) {
             setLoading(false);
@@ -80,7 +88,7 @@ export default function InvoiceDetail() {
 
     const handleDownloadPDF = () => {
         if (invoice) {
-            generateProfessionalInvoicePDF(invoice);
+            generateProfessionalInvoicePDF(invoice, companySettings);
         }
     };
 
@@ -135,12 +143,13 @@ export default function InvoiceDetail() {
                 <div className="p-8 border-b border-[var(--border)]">
                     <div className="flex justify-between items-start">
                         <div className="space-y-4">
-                            <div className="w-12 h-12 bg-[var(--primary)] text-white rounded flex items-center justify-center font-bold text-2xl">
-                                H
+                            <div className="w-12 h-12 bg-[var(--primary)] text-white rounded flex items-center justify-center font-bold text-2xl uppercase">
+                                {companySettings?.companyName?.charAt(0) || 'D'}
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-[var(--text-main)]">Hamdaan Traders</h3>
-                                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Distribution Management System</p>
+                                <h3 className="text-xl font-bold text-[var(--text-main)]">{companySettings?.companyName || 'DMS Nexus'}</h3>
+                                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{companySettings?.address || 'Distribution Management System'}</p>
+                                <p className="text-[10px] text-[var(--text-muted)]">{companySettings?.phone}</p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -201,12 +210,12 @@ export default function InvoiceDetail() {
                                     <td className="px-8 py-4">
                                         <p className="font-bold text-sm text-[var(--text-main)]">{item.product?.productName || 'Line Item'}</p>
                                     </td>
-                                    <td className="px-8 py-4 text-center text-sm font-medium text-[var(--text-muted)]">Rs. {item.unitPrice.toLocaleString()}</td>
+                                    <td className="px-8 py-4 text-center text-sm font-medium text-[var(--text-muted)]">{formatCurrency(item.unitPrice)}</td>
                                     <td className="px-8 py-4 text-center font-bold text-sm text-[var(--text-main)]">{item.quantity}</td>
                                     <td className="px-8 py-4 text-center">
                                         <span className="text-xs font-semibold text-slate-500">{item.returnedQuantity || 0}</span>
                                     </td>
-                                    <td className="px-8 py-4 text-right font-bold text-sm text-[var(--text-main)]">Rs. {item.totalPrice.toLocaleString()}</td>
+                                    <td className="px-8 py-4 text-right font-bold text-sm text-[var(--text-main)]">{formatCurrency(item.totalPrice)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -225,28 +234,28 @@ export default function InvoiceDetail() {
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                                 <span className="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">Subtotal</span>
-                                <span className="font-bold">Rs. {invoice.totalAmount?.toLocaleString()}</span>
+                                <span className="font-bold">{formatCurrency(invoice.totalAmount)}</span>
                             </div>
                             <div className="flex justify-between text-sm text-red-500">
                                 <span className="font-semibold uppercase tracking-wider text-[10px]">Discount</span>
-                                <span className="font-bold">- Rs. {invoice.discount?.toLocaleString()}</span>
+                                <span className="font-bold">- {formatCurrency(invoice.discount)}</span>
                             </div>
                         </div>
                         <div className="pt-4 border-t border-[var(--text-main)]">
                             <div className="flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest mb-1">Total Payable</p>
-                                    <p className="text-3xl font-bold text-[var(--text-main)]">Rs. {invoice.netAmount?.toLocaleString()}</p>
+                                    <p className="text-3xl font-bold text-[var(--text-main)]">{formatCurrency(invoice.netAmount)}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-[var(--border)]">
                                 <div>
                                     <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Paid</p>
-                                    <p className="text-lg font-bold text-emerald-600 tabular-nums">Rs. {(invoice.paidAmount || 0).toLocaleString()}</p>
+                                    <p className="text-lg font-bold text-emerald-600 tabular-nums">{formatCurrency(invoice.paidAmount)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">Due</p>
-                                    <p className="text-lg font-bold text-red-600 tabular-nums">Rs. {(invoice.remainingAmount || 0).toLocaleString()}</p>
+                                    <p className="text-lg font-bold text-red-600 tabular-nums">{formatCurrency(invoice.remainingAmount)}</p>
                                 </div>
                             </div>
                         </div>
@@ -263,7 +272,7 @@ export default function InvoiceDetail() {
                                     {payments.map(p => (
                                         <div key={p.paymentId} className="flex justify-between text-xs py-1 border-b border-slate-100 last:border-0 italic">
                                             <span>{new Date(p.paymentDate).toLocaleDateString()}</span>
-                                            <span className="font-bold">Rs. {p.amountPaid.toLocaleString()} ({p.paymentMethod})</span>
+                                            <span className="font-bold">{formatCurrency(p.amountPaid)} ({p.paymentMethod})</span>
                                         </div>
                                     ))}
                                 </div>

@@ -14,6 +14,7 @@ import RequirePermission from '../components/RequirePermission';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppBadge from '../components/AppBadge';
+import { formatCurrency } from '../utils/currencyUtils';
 
 const MetricCard = ({ title, val, icon: Icon, trend, color = 'var(--primary)' }) => (
   <AppCard className="border-l-4 shadow-sm group" style={{ borderLeftColor: color }}>
@@ -38,12 +39,23 @@ const MetricCard = ({ title, val, icon: Icon, trend, color = 'var(--primary)' })
 export default function Dashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [salesmanData, setSalesmanData] = useState([]);
+    const [salesmanRange, setSalesmanRange] = useState('daily');
+    const [salesmanLoading, setSalesmanLoading] = useState(false);
 
     useEffect(() => {
+        setLoading(true);
         reportService.getDashboard()
             .then(res => { setData(res); setLoading(false); })
             .catch(err => { console.error(err); setLoading(false); });
     }, []);
+
+    useEffect(() => {
+        setSalesmanLoading(true);
+        reportService.getSalesmanAnalysis(salesmanRange)
+            .then(res => { setSalesmanData(res); setSalesmanLoading(false); })
+            .catch(err => { console.error(err); setSalesmanLoading(false); });
+    }, [salesmanRange]);
 
     const ChartTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
@@ -53,7 +65,7 @@ export default function Dashboard() {
                         {payload[0].payload.month || payload[0].payload.name}
                     </p>
                     <p className="text-sm font-bold text-[var(--text-main)]">
-                        Rs. {payload[0].value.toLocaleString()}
+                        {formatCurrency(payload[0].value, false)}
                     </p>
                 </div>
             );
@@ -103,81 +115,120 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Metrics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 <RequirePermission permission="Reports.View">
-                    <MetricCard title="Today's Sales" val={`Rs.${(totals?.todaySales || 0).toLocaleString()}`} icon={Wallet2} trend={12} color="#3b82f6" />
+                    <MetricCard title="Today's Sales" val={formatCurrency(totals?.todaySales, false)} icon={TrendingUp} color="#3b82f6" trend={0} />
+                </RequirePermission>
+                <RequirePermission permission="Reports.View">
+                    <MetricCard title="Today's Collection" val={formatCurrency(totals?.todayPaid, false)} icon={Wallet2} color="#10b981" />
+                </RequirePermission>
+                <RequirePermission permission="Reports.View">
+                    <MetricCard title="Pending Amount" val={formatCurrency(totals?.todayPending, false)} icon={Activity} color="#f59e0b" />
                 </RequirePermission>
                 <RequirePermission permission="Invoices.View">
-                    <MetricCard title="Daily Invoices" val={totals?.todayInvoices || 0} icon={FileText} color="#8b5cf6" trend={3.8} />
+                    <MetricCard title="Daily Invoices" val={totals?.todayInvoices || 0} icon={FileText} color="#8b5cf6" />
                 </RequirePermission>
                 <RequirePermission permission="Stock.View">
-                    <MetricCard title="Low Stock Items" val={totals?.lowStock || 0} icon={Box} color="#f97316" trend={-2} />
-                </RequirePermission>
-                <RequirePermission permission="Customers.View">
-                    <MetricCard title="Outstanding Receivables" val={`Rs.${(totals?.outstandingBalance || 0).toLocaleString()}`} icon={DollarSign} color="#ef4444" />
-                </RequirePermission>
-                <RequirePermission permission="Products.View">
-                    <MetricCard title="Total Inventory" val={totals?.totalProducts || 0} icon={Package} color="#10b981" />
+                    <MetricCard title="Stock Alerts" val={(totals?.lowStockCount || 0) + (totals?.outOfStockCount || 0)} icon={Box} color="#ef4444" />
                 </RequirePermission>
             </div>
 
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                {/* Salesman Performance Section */}
+                <AppCard p0 className="shadow-sm border border-[var(--border)] overflow-hidden flex flex-col">
+                    <div className="p-6 border-b border-[var(--border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 className="text-sm font-bold text-[var(--text-main)]">Salesman Performance</h3>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5">Ranking by net revenue contribution.</p>
+                        </div>
+                        <div className="flex bg-[var(--secondary)] p-1 rounded-lg border border-[var(--border)]">
+                            {['daily', 'weekly', 'monthly'].map((r) => (
+                                <button 
+                                    key={r}
+                                    onClick={() => setSalesmanRange(r)}
+                                    className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${salesmanRange === r ? 'bg-white text-[var(--primary)] shadow-sm border border-[var(--border)]' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+                                >
+                                    {r}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-auto max-h-[400px]">
+                        {salesmanLoading ? (
+                            <div className="p-12 text-center space-y-3">
+                                <div className="w-8 h-8 border-2 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin mx-auto"></div>
+                                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Updating data...</p>
+                            </div>
+                        ) : salesmanData.length > 0 ? (
+                            <div className="p-6 space-y-6">
+                                {salesmanData.map((s, idx) => {
+                                    const maxSales = Math.max(...salesmanData.map(x => x.totalSales), 1);
+                                    const percentage = (s.totalSales / maxSales) * 100;
+                                    return (
+                                        <div key={idx} className="group">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-[var(--secondary)] border border-[var(--border)] flex items-center justify-center text-[10px] font-black text-[var(--text-muted)] group-hover:bg-[var(--primary)] group-hover:text-white transition-colors">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-[var(--text-main)]">{s.salesmanName}</p>
+                                                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">{s.orderCount} Orders completed</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold text-[var(--text-main)] tabular-nums">{formatCurrency(s.totalSales, false)}</p>
+                                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-0.5">Post-Discount</p>
+                                                </div>
+                                            </div>
+                                            <div className="w-full bg-[var(--secondary)] h-1.5 rounded-full overflow-hidden border border-[var(--border)]">
+                                                <div 
+                                                    className="h-full bg-[var(--primary)] rounded-full transition-all duration-1000" 
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center">
+                                <Users className="mx-auto text-[var(--border)] mb-4" size={40}/>
+                                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">No transaction data recorded for this period</p>
+                            </div>
+                        )}
+                    </div>
+                </AppCard>
 
-            {/* Charts Row */}
-            <RequirePermission permission="Reports.View">
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <AppCard p0 className="xl:col-span-2 shadow-sm border border-[var(--border)] overflow-hidden">
-                        <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
-                            <div>
-                                <h3 className="text-sm font-bold text-[var(--text-main)]">Monthly Revenue Trend</h3>
-                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Comparative analysis of sales volume over time.</p>
-                            </div>
+                <AppCard p0 className="xl:col-span-2 shadow-sm border border-[var(--border)] overflow-hidden">
+                    <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
+                        <div>
+                            <h3 className="text-sm font-bold text-[var(--text-main)]">Revenue Momentum</h3>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5">Historical analysis of net sales volume.</p>
                         </div>
-                        <div className="p-6">
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={charts?.monthlyTrend || []}>
-                                        <defs>
-                                            <linearGradient id="dashboardSales" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis dataKey="month" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-                                        <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} tickFormatter={(val) => `Rs.${val/1000}k`} />
-                                        <RechartsTooltip content={<ChartTooltip />} />
-                                        <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#dashboardSales)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
+                    </div>
+                    <div className="p-6">
+                        <div className="h-[340px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={charts?.monthlyTrend || []}>
+                                    <defs>
+                                        <linearGradient id="dashboardSales" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="month" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                                    <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} tickFormatter={(val) => `Rs.${val/1000}k`} />
+                                    <RechartsTooltip content={<ChartTooltip />} />
+                                    <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#dashboardSales)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
                         </div>
-                    </AppCard>
+                    </div>
+                </AppCard>
+            </div>
 
-                    <AppCard p0 className="shadow-sm border border-[var(--border)] overflow-hidden">
-                        <div className="p-6 border-b border-[var(--border)]">
-                                <h3 className="text-sm font-bold text-[var(--text-main)]">Top Selling Categories</h3>
-                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Distribution of sales across main sectors.</p>
-                        </div>
-                        <div className="p-6">
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={charts?.topProducts || []} layout="vertical">
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="name" type="category" fontSize={10} width={80} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-                                        <RechartsTooltip content={<ChartTooltip/>} cursor={{ fill: '#f8fafc' }} />
-                                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
-                                            {(charts?.topProducts || []).map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 5]} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </AppCard>
-                </div>
-            </RequirePermission>
 
             {/* Activities Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -185,8 +236,8 @@ export default function Dashboard() {
                     <AppCard p0 className="shadow-sm border border-[var(--border)] overflow-hidden">
                         <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
                             <div>
-                                <h3 className="text-sm font-bold text-[var(--text-main)]">Recent Invoices</h3>
-                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Latest transactions from all field representatives.</p>
+                                <h3 className="text-sm font-bold text-[var(--text-main)]">Recent Business Flow</h3>
+                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Latest field transactions and order status.</p>
                             </div>
                         </div>
                         <div className="divide-y divide-[var(--border)]">
@@ -202,7 +253,7 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-bold text-sm text-[var(--text-main)] tabular-nums">Rs.{(inv.netAmount || 0).toLocaleString()}</p>
+                                        <p className="font-bold text-sm text-[var(--text-main)] tabular-nums">{formatCurrency(inv.netAmount, false)}</p>
                                         <div className="mt-1">
                                           <AppBadge variant={inv.paymentStatus === 'Paid' ? 'success' : 'warning'} size="sm" className="rounded px-2">
                                             {inv.paymentStatus}

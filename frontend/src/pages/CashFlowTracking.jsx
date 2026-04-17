@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
+import { formatCurrency, CURRENCY_SYMBOL } from '../utils/currencyUtils';
 
 const CashFlowTracking = () => {
     const [loading, setLoading] = useState(true);
@@ -90,7 +91,7 @@ const CashFlowTracking = () => {
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Cash Inflow</p>
-                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">Rs. {(data?.cashInflow || 0).toLocaleString()}</h4>
+                            <h4 className="text-2xl font-bold text-emerald-600 tabular-nums">{formatCurrency(data?.cashInflow || 0, false)}</h4>
                             <p className="text-xs text-slate-500 mt-1">Collections received</p>
                         </div>
                         <div className="p-2 bg-emerald-50 text-emerald-600 rounded"><ArrowDownLeft size={20}/></div>
@@ -100,7 +101,7 @@ const CashFlowTracking = () => {
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Cash Outflow</p>
-                            <h4 className="text-2xl font-bold text-red-600 tabular-nums">Rs. {(data?.cashOutflow || 0).toLocaleString()}</h4>
+                            <h4 className="text-2xl font-bold text-red-600 tabular-nums">{formatCurrency(data?.cashOutflow || 0, false)}</h4>
                             <p className="text-xs text-slate-500 mt-1">Operating &amp; vendor costs</p>
                         </div>
                         <div className="p-2 bg-red-50 text-red-600 rounded"><ArrowUpRight size={20}/></div>
@@ -111,7 +112,7 @@ const CashFlowTracking = () => {
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Net Cash Flow</p>
                             <h4 className={`text-2xl font-bold tabular-nums ${isPositive ? 'text-blue-600' : 'text-amber-600'}`}>
-                                Rs. {(data?.netCashFlow || 0).toLocaleString()}
+                                {formatCurrency(data?.netCashFlow || 0, false)}
                             </h4>
                             <p className="text-xs text-slate-500 mt-1">{isPositive ? 'Positive cash position' : 'Negative cash position'}</p>
                         </div>
@@ -137,7 +138,7 @@ const CashFlowTracking = () => {
                                 <YAxis stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}K`}/>
                                 <Tooltip 
                                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}
-                                    formatter={(value) => [`Rs. ${value.toLocaleString()}`, '']}
+                                    formatter={(value) => [formatCurrency(value), '']}
                                 />
                                 <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={80}>
                                     {chartData.map((entry, index) => (

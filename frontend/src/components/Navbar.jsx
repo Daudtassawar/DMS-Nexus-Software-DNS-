@@ -39,7 +39,7 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen, isMobile }) => {
     const [readIds, setReadIds] = useState(getReadIds());
     const notifRef = useRef(null);
 
-    // ── Scroll hide/show behavior ─────────────────────────────────────
+    // ── Scroll behavior ──────────────────────────────────────────────
     const [visible, setVisible] = useState(true);
     const lastScrollY = useRef(0);
     useEffect(() => {
@@ -52,7 +52,7 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen, isMobile }) => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // ── Fetch notifications from backend ─────────────────────────────
+    // ── Notifications ────────────────────────────────────────────────
     const fetchNotifications = async () => {
         setNotifLoading(true);
         try {
@@ -69,7 +69,6 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen, isMobile }) => {
         return () => clearInterval(interval);
     }, []);
 
-    // ── Close notif dropdown when clicking outside ────────────────────
     useEffect(() => {
         const handler = (e) => {
             if (notifRef.current && !notifRef.current.contains(e.target)) {
@@ -95,74 +94,74 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen, isMobile }) => {
 
     return (
         <header
-            className="h-16 bg-[var(--bg-card)] border-b border-[var(--border)] px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm transition-transform duration-300"
+            className="h-16 bg-[var(--bg-card)] bg-opacity-80 border-b border-[var(--border)] px-4 md:px-6 flex items-center justify-between sticky top-0 z-40 shadow-sm transition-all duration-300 backdrop-blur-md"
             style={{ transform: visible ? 'translateY(0)' : 'translateY(-100%)' }}
         >
-            {/* Left: toggle + search */}
-            <div className="flex items-center gap-3">
+            {/* Left Section */}
+            <div className="flex items-center gap-4">
                 <button
                     onClick={onToggleSidebar}
-                    className="p-2 rounded-md border border-[var(--border)] hover:bg-[var(--secondary)] transition-all text-[var(--text-main)]"
-                    aria-label="Toggle sidebar"
+                    className="p-2.5 rounded-xl border border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all bg-[var(--bg-app)] active:scale-90"
+                    aria-label="Toggle Navigation"
                 >
-                    {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+                    {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
                 </button>
 
-                <div className="hidden lg:flex items-center gap-2 border border-[var(--border)] px-3 py-1.5 rounded-md w-64 bg-[var(--bg-app)] focus-within:ring-2 focus-within:ring-[var(--ring)] focus-within:border-[var(--primary)] transition-all">
-                    <Search size={14} className="text-[var(--text-muted)] shrink-0" />
+                <div className="hidden lg:flex items-center gap-3 border border-[var(--border)] px-4 py-2 rounded-xl w-72 bg-[var(--bg-app)] focus-within:ring-2 focus-within:ring-[var(--ring)] focus-within:border-[var(--primary)] transition-all group">
+                    <Search size={16} className="text-[var(--text-muted)] group-focus-within:text-[var(--primary)] transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search..."
-                        className="bg-transparent text-sm outline-none w-full text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
+                        placeholder="Search system..."
+                        className="bg-transparent text-sm outline-none w-full text-[var(--text-main)] placeholder:text-[var(--text-muted)] font-medium"
                     />
                 </div>
             </div>
 
-            {/* Right: notifications + theme + user */}
-            <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            {/* Right Section */}
+            <div className="flex items-center gap-2 md:gap-4 shrink-0">
 
-                {/* Bell Notifications */}
                 <div className="relative" ref={notifRef}>
                     <button
                         onClick={() => setIsNotifOpen(prev => !prev)}
-                        className={`relative p-2 rounded-md border transition-all ${isNotifOpen ? 'border-[var(--primary)] bg-[var(--secondary)] text-[var(--primary)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--secondary)]'}`}
-                        aria-label="Notifications"
+                        className={`relative p-2.5 rounded-xl border transition-all active:scale-95 ${isNotifOpen ? 'border-[var(--primary)] bg-[var(--primary)] bg-opacity-10 text-[var(--primary)] ring-4 ring-[var(--ring)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--secondary)]'}`}
+                        aria-label="System Notifications"
                     >
-                        <Bell size={18} />
+                        <Bell size={20} />
                         {unreadCount > 0 && (
-                            <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none border border-[var(--bg-card)]">
+                            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-[var(--primary)] text-white text-[10px] font-black rounded-lg flex items-center justify-center px-1 border-2 border-[var(--bg-card)] shadow-lg shadow-[var(--ring)]">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
                     </button>
 
                     {isNotifOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-80 bg-[var(--bg-card)] border border-[var(--border)] rounded-md shadow-md z-[100] overflow-hidden">
-                            {/* Header */}
-                            <div className="px-4 py-3 border-b border-[var(--border)] flex justify-between items-center bg-[var(--secondary)]">
-                                <div className="flex items-center gap-2">
-                                    <Bell size={14} className="text-[var(--primary)]" />
-                                    <span className="text-xs font-bold text-[var(--text-main)] uppercase tracking-wider">Notifications</span>
+                        <div className="absolute top-full right-0 mt-3 w-80 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl z-[100] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                            {/* Dropdown Content Same as before but with better styles */}
+                            <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-app)]">
+                                <div className="flex items-center gap-2.5">
+                                    <Bell size={16} className="text-[var(--primary)]" />
+                                    <span className="text-xs font-black text-[var(--text-main)] uppercase tracking-widest">Alerts</span>
                                     {unreadCount > 0 && (
-                                        <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
+                                        <span className="bg-[var(--primary)] text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadCount}</span>
                                     )}
                                 </div>
                                 {unreadCount > 0 && (
-                                    <button onClick={handleMarkAllRead} className="text-[10px] font-bold text-[var(--primary)] hover:underline uppercase tracking-wider">
-                                        Mark all read
+                                    <button onClick={handleMarkAllRead} className="text-[10px] font-black text-[var(--primary)] hover:underline uppercase tracking-widest">
+                                        Clear All
                                     </button>
                                 )}
                             </div>
 
-                            {/* List */}
-                            <div className="max-h-72 overflow-y-auto divide-y divide-[var(--border)]">
+                            <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border)]">
                                 {notifLoading && (
-                                    <div className="p-6 text-center text-xs text-[var(--text-muted)]">Loading alerts...</div>
+                                    <div className="p-8 text-center text-xs text-[var(--text-muted)] font-bold animate-pulse uppercase tracking-widest">Synchronizing...</div>
                                 )}
                                 {!notifLoading && notifications.length === 0 && (
-                                    <div className="p-6 text-center">
-                                        <CheckCircle size={24} className="text-emerald-500 mx-auto mb-2" />
-                                        <p className="text-xs font-bold text-[var(--text-muted)]">All clear — no alerts</p>
+                                    <div className="p-10 text-center">
+                                        <div className="w-12 h-12 bg-emerald-500 bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <CheckCircle size={24} className="text-emerald-500" />
+                                        </div>
+                                        <p className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">System Clear</p>
                                     </div>
                                 )}
                                 {!notifLoading && (notifications || []).map(n => {
@@ -172,26 +171,25 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen, isMobile }) => {
                                         <div
                                             key={n.id}
                                             onClick={() => handleMarkOne(n.id)}
-                                            className={`flex gap-3 p-3 cursor-pointer transition-colors hover:bg-[var(--secondary)] ${isRead ? 'opacity-60' : ''}`}
+                                            className={`flex gap-4 p-4 cursor-pointer transition-all hover:bg-[var(--bg-app)] ${isRead ? 'opacity-40 grayscale' : 'hover:translate-x-1'}`}
                                         >
-                                            <div className="mt-0.5 shrink-0">{notifIcon(n.type)}</div>
+                                            <div className="mt-1 shrink-0 bg-[var(--secondary)] p-2 rounded-lg">{notifIcon(n.type)}</div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-[var(--text-main)] leading-tight">{n.title}</p>
-                                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-tight line-clamp-2">{n.message}</p>
+                                                <p className="text-xs font-black text-[var(--text-main)] leading-tight uppercase tracking-tight">{n.title}</p>
+                                                <p className="text-[11px] text-[var(--text-muted)] mt-1.5 leading-relaxed font-medium line-clamp-2">{n.message}</p>
                                             </div>
-                                            {!isRead && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0" />}
+                                            {!isRead && <div className="w-2 h-2 rounded-full bg-[var(--primary)] mt-2 shrink-0 shadow-[0_0_8px_var(--primary)]" />}
                                         </div>
                                     );
                                 })}
                             </div>
 
-                            {/* Footer */}
-                            <div className="px-4 py-2 border-t border-[var(--border)] bg-[var(--secondary)] text-center">
+                            <div className="px-5 py-3 border-t border-[var(--border)] bg-[var(--bg-app)] text-center">
                                 <button
                                     onClick={() => { fetchNotifications(); }}
-                                    className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider hover:underline"
+                                    className="text-[10px] font-black text-[var(--primary)] uppercase tracking-[0.2em] hover:opacity-70 transition-opacity"
                                 >
-                                    Refresh
+                                    Force Refresh
                                 </button>
                             </div>
                         </div>
@@ -202,21 +200,24 @@ const Navbar = ({ onToggleSidebar, isSidebarOpen, isMobile }) => {
                     <ThemeToggle />
                 </div>
 
-                {/* User info */}
-                <div className="flex items-center gap-2 border-l border-[var(--border)] pl-3 h-8">
+                {/* User Profile */}
+                <div className="flex items-center gap-3 border-l border-[var(--border)] pl-4 h-10">
                     <div className="hidden md:flex flex-col items-end">
-                        <span className="text-sm font-semibold text-[var(--text-main)] leading-none">{user?.fullName || user?.userName || 'User'}</span>
-                        <span className="text-[10px] text-[var(--primary)] font-bold uppercase tracking-wider mt-0.5">{user?.role || 'System'}</span>
+                        <span className="text-sm font-black text-[var(--text-main)] leading-none tracking-tight">{user?.fullName || user?.userName || 'System Guest'}</span>
+                        <span className="text-[9px] text-[var(--primary)] font-black uppercase tracking-[0.2em] mt-1">{user?.role || 'Guest'} Account</span>
                     </div>
-                    <div className="w-8 h-8 rounded-md bg-[var(--secondary)] text-[var(--primary)] flex items-center justify-center font-bold border border-[var(--border)] text-sm shrink-0">
-                        {(user?.userName || user?.UserName || 'U').charAt(0).toUpperCase()}
+                    <div className="relative group">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[var(--primary)] to-amber-300 text-white flex items-center justify-center font-black border-2 border-[var(--bg-card)] shadow-lg shadow-[var(--ring)] text-sm shrink-0 interactive overflow-hidden">
+                            <span className="relative z-10 transition-transform group-hover:scale-110">{(user?.userName || user?.UserName || 'U').charAt(0).toUpperCase()}</span>
+                            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                        </div>
                     </div>
                     <button
                         onClick={() => authService.logout()}
-                        className="p-1.5 text-[var(--text-muted)] hover:bg-red-50 hover:text-red-500 rounded-md transition-all"
-                        title="Logout"
+                        className="p-2 text-[var(--text-muted)] hover:bg-red-500 hover:bg-opacity-10 hover:text-red-500 rounded-xl transition-all active:scale-95"
+                        title="Secure Logout"
                     >
-                        <LogOut size={16} />
+                        <LogOut size={20} />
                     </button>
                 </div>
             </div>

@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppBadge from '../components/AppBadge';
+import { formatCurrency } from '../utils/currencyUtils';
 
 const MetricCard = ({ title, val, icon: Icon, color = 'var(--primary)' }) => (
   <AppCard className="border-t-4 shadow-sm group" style={{ borderTopColor: color }}>
@@ -86,7 +87,7 @@ export default function SalesmanDashboard() {
                 <MetricCard title="Customers Visited" val={`${data?.visitedCustomers || 0} / ${data?.totalCustomers || 0}`} icon={CheckCircle} color="#10b981" />
                 <MetricCard title="Pending Visits" val={data?.pendingCustomers || 0} icon={Clock} color="#f97316" />
                 <MetricCard title="Today's Orders" val={data?.todayOrders || 0} icon={FileText} color="#3b82f6" />
-                <MetricCard title="Cash Collected" val={`Rs.${(data?.todayCashCollected || 0).toLocaleString()}`} icon={DollarSign} color="#8b5cf6" />
+                <MetricCard title="Cash Collected" val={formatCurrency(data?.todayCashCollected, false)} icon={DollarSign} color="#8b5cf6" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -100,7 +101,7 @@ export default function SalesmanDashboard() {
                             </div>
                             <div className="text-right">
                                 <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">Sales Total</p>
-                                <h4 className="text-xl font-bold text-[var(--primary)]">Rs.{(data?.todaySales || 0).toLocaleString()}</h4>
+                                <h4 className="text-xl font-bold text-[var(--primary)]">{formatCurrency(data?.todaySales, false)}</h4>
                             </div>
                         </div>
 
@@ -154,7 +155,7 @@ export default function SalesmanDashboard() {
                                             <div className="text-right hidden sm:block">
                                                 <p className="text-[9px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-0.5">Balance</p>
                                                 <p className={`font-bold text-sm tabular-nums ${(customer.balance || 0) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                                                    Rs.{(customer.balance || 0).toLocaleString()}
+                                                    {formatCurrency(customer.balance, false)}
                                                 </p>
                                             </div>
                                             <Link to={`/invoices/create?customerId=${customer.customerId}`}>

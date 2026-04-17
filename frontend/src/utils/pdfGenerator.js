@@ -1,8 +1,17 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { formatCurrency } from './currencyUtils';
 
-export const generateProfessionalInvoicePDF = (invoice) => {
+export const generateProfessionalInvoicePDF = (invoice, settings) => {
     if (!invoice) return;
+
+    // Fallback settings if not provided
+    const company = settings || {
+      companyName: "Hamdaan Traders",
+      address: "Sillanwali, Sargodha Road, Sargodha, Pakistan",
+      phone: "+92 300 8843939",
+      email: "contact@hamdaantraders.com"
+    };
 
     const doc = new jsPDF('print', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -24,14 +33,19 @@ export const generateProfessionalInvoicePDF = (invoice) => {
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
     doc.setFont("helvetica", "bold");
-    doc.text("Hamdaan Traders", margin, margin + 10);
+    doc.text(company.companyName, margin, margin + 10);
     
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);
     doc.setFont("helvetica", "normal");
-    doc.text("123 Operations Way", margin, margin + 16);
-    doc.text("contact@hamdaantraders.com", margin, margin + 22);
-    doc.text("+1 (555) 019-2831", margin, margin + 28);
+    
+    // Split address if too long
+    const splitCompanyAddress = doc.splitTextToSize(company.address, 70);
+    doc.text(splitCompanyAddress, margin, margin + 16);
+    
+    const addressHeight = (splitCompanyAddress.length * 5); // Rough estimate
+    doc.text(company.email, margin, margin + 18 + addressHeight);
+    doc.text(company.phone, margin, margin + 24 + addressHeight);
 
     doc.line(margin, margin + 35, pageWidth - margin, margin + 35); // Horizontal line
 
@@ -73,9 +87,9 @@ export const generateProfessionalInvoicePDF = (invoice) => {
             const rowData = [
                 item.product?.productName || 'General Item',
                 `${item.quantity} PCS`,
-                `Rs. ${item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                formatCurrency(item.unitPrice),
                 (item.returnedQuantity || 0).toString(),
-                `Rs. ${item.totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                formatCurrency(item.totalPrice)
             ];
             tableRows.push(rowData);
         });
@@ -106,12 +120,12 @@ export const generateProfessionalInvoicePDF = (invoice) => {
     doc.setTextColor(100, 116, 139);
     doc.text("Subtotal:", summaryX, finalY);
     doc.setTextColor(15, 23, 42);
-    doc.text(`Rs. ${invoice.totalAmount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, finalY, { align: "right" });
+    doc.text(formatCurrency(invoice.totalAmount), pageWidth - margin, finalY, { align: "right" });
 
     doc.setTextColor(100, 116, 139);
     doc.text("Discount:", summaryX, finalY + 8);
     doc.setTextColor(225, 29, 72); // rose-600
-    doc.text(`- Rs. ${invoice.discount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, finalY + 8, { align: "right" });
+    doc.text(`- ${formatCurrency(invoice.discount)}`, pageWidth - margin, finalY + 8, { align: "right" });
 
     // Thick line before total
     doc.setLineWidth(0.5);
@@ -121,7 +135,7 @@ export const generateProfessionalInvoicePDF = (invoice) => {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
     doc.text("Net Total:", summaryX, finalY + 20);
-    doc.text(`Rs. ${invoice.netAmount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, finalY + 20, { align: "right" });
+    doc.text(formatCurrency(invoice.netAmount), pageWidth - margin, finalY + 20, { align: "right" });
 
     // --- Notes ---
     if (invoice.notes) {

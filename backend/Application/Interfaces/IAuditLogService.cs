@@ -1,6 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using DMS.Application.DTOs;
+using DMS.Domain.Entities;
 
 namespace DMS.Application.Interfaces
 {
@@ -8,6 +7,6 @@ namespace DMS.Application.Interfaces
     {
         Task LogActionAsync(string userId, string action, string? ipAddress = null);
         Task LogActionAsync(string userId, string userName, string action, string module, string? description = null, string? recordId = null, string? ipAddress = null);
-        Task<List<DMS.Domain.Entities.AuditLog>> GetLogsAsync(string? userId, string? module, DateTime? fromDate, DateTime? toDate);
+        Task<PagedResult<AuditLog>> GetLogsAsync(string? userId, string? module, DateTime? fromDate, DateTime? toDate, int pageNumber = 1, int pageSize = 20);
     }
 }

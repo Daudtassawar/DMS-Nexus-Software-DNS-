@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Landmark, Wallet, Briefcase, Calculator, PieChart, ShieldCheck, Activity } from 'lucide-react';
 import AppCard from '../components/AppCard';
 import AppBadge from '../components/AppBadge';
+import { formatCurrency } from '../utils/currencyUtils';
 
 const BalanceSheet = () => {
     const [loading, setLoading] = useState(true);
@@ -28,8 +29,6 @@ const BalanceSheet = () => {
         </div>
     );
 
-    const fmt = (v) => (v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
-
     return (
         <div className="space-y-6  pb-20 max-w-[1400px] mx-auto">
             {/* Header */}
@@ -42,7 +41,7 @@ const BalanceSheet = () => {
                 </div>
                 <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg text-center min-w-[180px]">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Owner's Equity</p>
-                    <h2 className="text-2xl font-bold text-slate-900 tabular-nums">Rs. {fmt(data?.equity)}</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 tabular-nums">{formatCurrency(data?.equity)}</h2>
                 </div>
             </div>
 
@@ -66,7 +65,7 @@ const BalanceSheet = () => {
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Liquid capital</p>
                                 </div>
                             </div>
-                            <span className="text-base font-bold text-emerald-600 tabular-nums">Rs. {fmt(data?.assets?.cash)}</span>
+                            <span className="text-base font-bold text-emerald-600 tabular-nums">{formatCurrency(data?.assets?.cash)}</span>
                         </div>
                         {/* Inventory */}
                         <div className="flex justify-between items-center py-4">
@@ -79,12 +78,12 @@ const BalanceSheet = () => {
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Stock at purchase cost</p>
                                 </div>
                             </div>
-                            <span className="text-base font-bold text-blue-600 tabular-nums">Rs. {fmt(data?.assets?.inventory)}</span>
+                            <span className="text-base font-bold text-blue-600 tabular-nums">{formatCurrency(data?.assets?.inventory)}</span>
                         </div>
                         {/* Total Assets */}
                         <div className="flex justify-between items-center pt-4">
                             <p className="text-sm font-bold text-slate-900 uppercase tracking-wider">Total Assets</p>
-                            <h2 className="text-xl font-bold text-emerald-600 tabular-nums">Rs. {fmt(data?.assets?.total)}</h2>
+                            <h2 className="text-xl font-bold text-emerald-600 tabular-nums">{formatCurrency(data?.assets?.total)}</h2>
                         </div>
                     </AppCard>
                 </div>
@@ -108,7 +107,7 @@ const BalanceSheet = () => {
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Pending supplier dues</p>
                                 </div>
                             </div>
-                            <span className="text-base font-bold text-red-600 tabular-nums">Rs. {fmt(data?.liabilities?.accountsPayable)}</span>
+                            <span className="text-base font-bold text-red-600 tabular-nums">{formatCurrency(data?.liabilities?.accountsPayable)}</span>
                         </div>
                         {/* Accrued Taxes */}
                         <div className="flex justify-between items-center py-4 opacity-50">
@@ -121,12 +120,12 @@ const BalanceSheet = () => {
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Reserved for settlement</p>
                                 </div>
                             </div>
-                            <span className="text-base font-bold text-slate-500 tabular-nums">Rs. 0.00</span>
+                            <span className="text-base font-bold text-slate-500 tabular-nums">{formatCurrency(0)}</span>
                         </div>
                         {/* Total Liabilities */}
                         <div className="flex justify-between items-center pt-4">
                             <p className="text-sm font-bold text-slate-900 uppercase tracking-wider">Total Liabilities</p>
-                            <h2 className="text-xl font-bold text-red-600 tabular-nums">Rs. {fmt(data?.liabilities?.total)}</h2>
+                            <h2 className="text-xl font-bold text-red-600 tabular-nums">{formatCurrency(data?.liabilities?.total)}</h2>
                         </div>
                     </AppCard>
 

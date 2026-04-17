@@ -5,17 +5,26 @@ using System.Threading.Tasks;
 using DMS.Application.Interfaces;
 using DMS.Domain.Entities;
 
+using Microsoft.Extensions.Caching.Memory;
+
 namespace DMS.Application.Services
 {
     public class StockService
     {
         private readonly IStockRepository _stockRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IMemoryCache _cache;
 
-        public StockService(IStockRepository stockRepository, IProductRepository productRepository)
+        public StockService(IStockRepository stockRepository, IProductRepository productRepository, IMemoryCache cache)
         {
             _stockRepository = stockRepository;
             _productRepository = productRepository;
+            _cache = cache;
+        }
+
+        private void ClearCache()
+        {
+            _cache.Remove("products_all");
         }
 
         // Returns aggregated stock for ALL products with low stock / expiry flags
@@ -124,6 +133,7 @@ namespace DMS.Application.Services
             });
 
             await _stockRepository.SaveChangesAsync();
+            ClearCache();
             return stock;
         }
 
@@ -151,6 +161,7 @@ namespace DMS.Application.Services
             });
 
             await _stockRepository.SaveChangesAsync();
+            ClearCache();
             return stock;
         }
 
@@ -188,6 +199,7 @@ namespace DMS.Application.Services
             }
 
             await _stockRepository.SaveChangesAsync();
+            ClearCache();
             return stock;
         }
 
@@ -231,6 +243,7 @@ namespace DMS.Application.Services
             });
 
             await _stockRepository.SaveChangesAsync();
+            ClearCache();
         }
     }
 }

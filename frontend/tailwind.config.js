@@ -18,12 +18,20 @@ export default {
         border: 'var(--border)',
       },
       borderRadius: {
+        'DEFAULT': 'var(--radius)',
+        'sm': 'var(--radius-sm)',
+        'lg': 'var(--radius-lg)',
         'xl': '0.75rem',
         '2xl': '1rem',
       },
+      boxShadow: {
+        'sm': 'var(--shadow-sm)',
+        'DEFAULT': 'var(--shadow)',
+        'md': 'var(--shadow-md)',
+        'lg': 'var(--shadow-lg)',
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
       }
     },
   },

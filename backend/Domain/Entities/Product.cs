@@ -21,7 +21,7 @@ namespace DMS.Domain.Entities
         public int? DistributorId { get; set; }
         public Distributor? Distributor { get; set; }
 
-        public Stock? Stock { get; set; }
+        public ICollection<Stock> Stocks { get; set; } = new List<Stock>();
         public ICollection<StockTransaction> StockTransactions { get; set; } = new List<StockTransaction>();
         public ICollection<InvoiceItem> InvoiceItems { get; set; } = new List<InvoiceItem>();
     }

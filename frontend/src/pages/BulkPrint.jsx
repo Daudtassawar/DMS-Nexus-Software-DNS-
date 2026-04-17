@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Printer, Search, Calendar, RefreshCcw, FileText, User, Hash, Barcode, Truck, RotateCcw } from 'lucide-react';
+import { formatCurrency } from '../utils/currencyUtils';
+import systemSettingsService from '../services/systemSettingsService';
 
 const BulkPrint = () => {
     const navigate = useNavigate();
@@ -16,11 +18,16 @@ const BulkPrint = () => {
     const [vehicles, setVehicles] = useState([]);
     const [customerGroups, setCustomerGroups] = useState([]);
     const [generated, setGenerated] = useState(false);
+    const [companySettings, setCompanySettings] = useState(null);
 
     useEffect(() => {
         axios.get('/api/v1/Salesmen').then(res => setSalesmen(res.data || [])).catch(() => {});
         axios.get('/api/v1/Routes').then(res => setRoutes(res.data || [])).catch(() => {});
         axios.get('/api/v1/Vehicles').then(res => setVehicles(res.data || [])).catch(() => {});
+        
+        // Fetch company settings
+        systemSettingsService.getSettings().then(setCompanySettings).catch(() => {});
+
         const today = new Date().toISOString().split('T')[0];
         setStartDate(today);
         setEndDate(today);
@@ -156,7 +163,7 @@ const BulkPrint = () => {
                                             <p className="text-sm font-bold mt-2 text-black m-0 tracking-wide uppercase">CUMULATIVE DELIVERY SHEET</p>
                                         </div>
                                         <div className="text-right">
-                                            <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">Hamdaan Traders</h1>
+                                            <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">{companySettings?.companyName || 'Hamdaan Traders'}</h1>
                                             <div className="mt-3">
                                                 <p className="text-sm text-black m-0"><span className="font-bold">Date Range:</span> {startDate ? new Date(startDate).toLocaleDateString() : 'All'} to {endDate ? new Date(endDate).toLocaleDateString() : 'All'}</p>
                                                 <p className="text-sm text-black m-0"><span className="font-bold">Total Invoices:</span> {customerGroups.reduce((acc, g) => acc + g.invoices.length, 0)}</p>
@@ -228,12 +235,12 @@ const BulkPrint = () => {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">Hamdaan Traders</h1>
+                                            <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">{companySettings?.companyName}</h1>
                                             <p className="text-sm text-gray-800 font-bold m-0 mt-1 uppercase tracking-wide">Distributors & General Order Suppliers</p>
-                                            <div className="mt-3">
-                                                <p className="text-sm text-gray-800 m-0">123 Logistics Way, Suite A</p>
-                                                <p className="text-sm text-gray-800 m-0">contact@hamdaantraders.com</p>
-                                                <p className="text-sm text-gray-800 m-0 font-medium">+1 (555) 123-4567</p>
+                                            <div className="mt-3 text-right">
+                                                <div className="text-sm text-gray-800 m-0 whitespace-pre-line">{companySettings?.address}</div>
+                                                <p className="text-sm text-gray-800 m-0">{companySettings?.email}</p>
+                                                <p className="text-sm text-gray-800 m-0 font-medium">{companySettings?.phone}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -275,8 +282,8 @@ const BulkPrint = () => {
                                                     <td className="p-3 border-r-2 border-black text-sm text-center text-gray-700">-</td>
                                                     <td className="p-3 border-r-2 border-black text-sm text-center text-gray-700">-</td>
                                                     <td className="p-3 border-r-2 border-black text-sm text-center font-bold">{item.quantity}</td>
-                                                    <td className="p-3 border-r-2 border-black text-sm text-right">Rs. {Number(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                    <td className="p-3 text-sm text-right font-bold w-32">Rs. {Number(item.totalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="p-3 border-r-2 border-black text-sm text-right">{formatCurrency(item.unitPrice)}</td>
+                                                    <td className="p-3 text-sm text-right font-bold w-32">{formatCurrency(item.totalPrice)}</td>
                                                 </tr>
                                             ))}
                                             {/* Empty rows to fill space if few items */}
@@ -300,15 +307,15 @@ const BulkPrint = () => {
                                         <div className="w-80">
                                             <div className="flex justify-between py-2 border-b border-black">
                                                 <span className="text-sm font-bold text-black uppercase">Subtotal:</span>
-                                                <span className="text-sm font-bold text-black">Rs. {Number(subtotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                <span className="text-sm font-bold text-black">{formatCurrency(subtotal)}</span>
                                             </div>
                                             <div className="flex justify-between py-2 border-b border-black">
                                                 <span className="text-sm font-bold text-black uppercase">Discount:</span>
-                                                <span className="text-sm font-bold text-black">Rs. {Number(inv.discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                <span className="text-sm font-bold text-black">{formatCurrency(inv.discount || 0)}</span>
                                             </div>
                                             <div className="flex justify-between py-3 border-b-4 border-black border-double mt-1 bg-gray-50 px-2" style={{ backgroundColor: '#f9fafb', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                                                 <span className="text-xl font-bold uppercase text-black">Net Total:</span>
-                                                <span className="text-xl font-bold text-black">Rs. {Number(inv.netAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                <span className="text-xl font-bold text-black">{formatCurrency(inv.netAmount || 0)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -320,7 +327,7 @@ const BulkPrint = () => {
                                             <ol className="text-xs text-gray-800 m-0 pl-4 list-decimal space-y-1 font-medium">
                                                 <li>Goods once sold will not be taken back.</li>
                                                 <li>All claims must be made within 3 days of delivery.</li>
-                                                <li>Make all checks payable to Hamdaan Traders.</li>
+                                                <li>Make all checks payable to {companySettings?.companyName}.</li>
                                             </ol>
                                             <p className="text-sm text-black font-bold italic mt-4">Thank you for your business!</p>
                                         </div>
@@ -363,12 +370,12 @@ const BulkPrint = () => {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">Hamdaan Traders</h1>
+                                        <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">{companySettings?.companyName}</h1>
                                         <p className="text-sm text-gray-800 font-bold m-0 mt-1 uppercase tracking-wide">Distributors & General Order Suppliers</p>
-                                        <div className="mt-3">
-                                            <p className="text-sm text-gray-800 m-0">123 Logistics Way, Suite A</p>
-                                            <p className="text-sm text-gray-800 m-0">contact@hamdaantraders.com</p>
-                                            <p className="text-sm text-gray-800 m-0 font-medium">+1 (555) 123-4567</p>
+                                        <div className="mt-3 text-right">
+                                            <p className="text-sm text-gray-800 m-0">{companySettings?.address}</p>
+                                            <p className="text-sm text-gray-800 m-0">{companySettings?.email}</p>
+                                            <p className="text-sm text-gray-800 m-0 font-medium">{companySettings?.phone}</p>
                                         </div>
                                     </div>
                                 </div>

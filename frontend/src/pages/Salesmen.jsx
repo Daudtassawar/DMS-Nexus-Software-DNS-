@@ -7,6 +7,7 @@ import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppBadge from '../components/AppBadge';
+import { formatCurrency } from '../utils/currencyUtils';
 
 export default function Salesmen() {
     const [salesmen, setSalesmen] = useState([]);
@@ -106,7 +107,7 @@ export default function Salesmen() {
                         </div>
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total Sales Target</p>
-                            <h4 className="text-xl font-bold text-slate-900">Rs. {totalTargets.toLocaleString()}</h4>
+                            <h4 className="text-xl font-bold text-slate-900">{formatCurrency(totalTargets, false)}</h4>
                         </div>
                     </div>
                 </AppCard>
@@ -143,7 +144,7 @@ export default function Salesmen() {
                                 </div>
                             </td>
                             <td className="px-6 py-4">
-                                <h4 className="text-base font-bold text-slate-900 tabular-nums">Rs. {s.monthlyTarget.toLocaleString()}</h4>
+                                <h4 className="text-base font-bold text-slate-900 tabular-nums">{formatCurrency(s.monthlyTarget)}</h4>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Monthly Target</p>
                             </td>
                             <td className="px-6 py-4">

@@ -20,24 +20,30 @@ namespace DMS.Application.Services
             var today = System.DateTime.UtcNow.Date;
             
             // 1. Basic Metrics
-            var todayInvoices = await _context.Invoices
-                .Include(i => i.InvoiceItems)
-                .Where(i => i.InvoiceDate.Date == today && i.PaymentStatus != "Cancelled")
-                .ToListAsync();
+            var todayInvoicesQuery = _context.Invoices
+                .Where(i => i.InvoiceDate.Date == today && i.PaymentStatus != "Cancelled");
 
-            var todaySales = todayInvoices.Sum(i => i.TotalAmount);
-            var todayStockOut = todayInvoices.SelectMany(i => i.InvoiceItems).Sum(ii => ii.Quantity);
-            var todayCount = todayInvoices.Count;
+            var todaySales = await todayInvoicesQuery.SumAsync(i => i.NetAmount); 
+            var todayStockOut = await todayInvoicesQuery
+                .SelectMany(i => i.InvoiceItems)
+                .SumAsync(ii => ii.Quantity);
+            var todayCount = await todayInvoicesQuery.CountAsync();
+            
+            var todayPaid = await _context.Payments
+                .Include(p => p.Invoice)
+                .Where(p => p.PaymentDate.Date == today && p.Invoice.PaymentStatus != "Cancelled")
+                .SumAsync(p => p.AmountPaid);
+
             var totalProducts = await _context.Products.CountAsync();
             var totalOutstanding = await _context.Customers.SumAsync(c => c.Balance);
 
             // Calculate low stock and out of stock details
             var productsWithStock = await _context.Products
-                .Include(p => p.Stock)
+                .Include(p => p.Stocks)
                 .Select(p => new {
                     p.ProductName,
                     p.MinStockLevel,
-                    Quantity = _context.Stock.Where(s => s.ProductId == p.ProductId).Sum(s => s.Quantity)
+                    Quantity = p.Stocks.Sum(s => s.Quantity)
                 })
                 .ToListAsync();
 
@@ -59,7 +65,7 @@ namespace DMS.Application.Services
                 .Select(g => new { 
                     Year = g.Key.Year, 
                     Month = g.Key.Month, 
-                    Total = g.Sum(i => i.TotalAmount) 
+                    Total = g.Sum(i => i.NetAmount) 
                 })
                 .ToListAsync();
 
@@ -73,6 +79,8 @@ namespace DMS.Application.Services
 
             // 3. Top Selling Products (Top 5)
             var topProducts = await _context.InvoiceItems
+                .Include(it => it.Invoice)
+                .Where(it => it.Invoice.PaymentStatus != "Cancelled")
                 .GroupBy(i => i.Product.ProductName)
                 .Select(g => new { 
                     Name = g.Key, 
@@ -82,14 +90,14 @@ namespace DMS.Application.Services
                 .Take(5)
                 .ToListAsync();
 
-            // 4. Sales by Salesman
+            // 4. Sales by Salesman (Overall)
             var rawSalesman = await _context.Invoices
                 .Where(i => i.PaymentStatus != "Cancelled")
-                .Select(i => new { SalesmanName = i.Salesman != null ? i.Salesman.Name : "Direct/System", i.TotalAmount })
+                .Select(i => new { SalesmanName = i.Salesman != null ? i.Salesman.Name : "Direct/System", i.NetAmount })
                 .GroupBy(i => i.SalesmanName)
                 .Select(g => new { 
                     Name = g.Key, 
-                    Value = g.Sum(i => i.TotalAmount) 
+                    Value = g.Sum(i => i.NetAmount) 
                 })
                 .OrderByDescending(s => s.Value)
                 .Take(5)
@@ -105,12 +113,14 @@ namespace DMS.Application.Services
             // 5. Recent Activity
             var recentInvoices = await _context.Invoices
                 .Include(i => i.Customer)
+                .Include(i => i.Salesman)
                 .OrderByDescending(i => i.InvoiceDate)
-                .Take(5)
+                .Take(7)
                 .Select(i => new {
                     i.InvoiceId,
                     i.InvoiceNumber,
                     CustomerName = i.Customer.CustomerName,
+                    SalesmanName = i.Salesman != null ? i.Salesman.Name : "System",
                     i.NetAmount,
                     i.PaymentStatus,
                     i.InvoiceDate
@@ -120,7 +130,7 @@ namespace DMS.Application.Services
             var recentStock = await _context.StockTransactions
                 .Include(t => t.Product)
                 .OrderByDescending(t => t.Date)
-                .Take(5)
+                .Take(7)
                 .Select(t => new {
                     t.TransactionId,
                     ProductName = t.Product.ProductName,
@@ -133,6 +143,8 @@ namespace DMS.Application.Services
             return new { 
                 Totals = new {
                     TodaySales = todaySales,
+                    TodayPaid = todayPaid,
+                    TodayPending = Math.Max(0, todaySales - todayPaid),
                     TodayStockOut = todayStockOut,
                     TodayInvoices = todayCount,
                     TotalProducts = totalProducts,
@@ -158,30 +170,33 @@ namespace DMS.Application.Services
 
         public async Task<object> GetSalesAnalyticsAsync(System.DateTime? startDate, System.DateTime? endDate)
         {
-            var query = _context.Invoices.AsQueryable();
-            if (startDate.HasValue) query = query.Where(i => i.InvoiceDate >= startDate.Value);
-            if (endDate.HasValue) query = query.Where(i => i.InvoiceDate <= endDate.Value);
+            var query = _context.Invoices
+                .Where(i => i.PaymentStatus != "Cancelled")
+                .AsQueryable();
+            
+            if (startDate.HasValue) query = query.Where(i => i.InvoiceDate >= startDate.Value.Date);
+            if (endDate.HasValue) query = query.Where(i => i.InvoiceDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
 
             var invoices = await query
                 .Include(i => i.Salesman)
-                .Select(i => new { i.InvoiceDate, i.TotalAmount, i.SalesmanId, SalesmanName = i.Salesman.Name })
+                .Select(i => new { i.InvoiceDate, i.NetAmount, i.SalesmanId, SalesmanName = i.Salesman != null ? i.Salesman.Name : "Direct/System" })
                 .ToListAsync();
 
             var dailySales = invoices
                 .GroupBy(i => i.InvoiceDate.Date)
-                .Select(g => new { Date = g.Key.ToString("yyyy-MM-dd"), Total = g.Sum(i => i.TotalAmount) })
+                .Select(g => new { Date = g.Key.ToString("yyyy-MM-dd"), Total = g.Sum(i => i.NetAmount) })
                 .OrderBy(d => d.Date)
                 .ToList();
 
             var monthlySales = invoices
                 .GroupBy(i => new { i.InvoiceDate.Year, i.InvoiceDate.Month })
-                .Select(g => new { Month = $"{g.Key.Year}-{g.Key.Month:D2}", Total = g.Sum(i => i.TotalAmount) })
+                .Select(g => new { Month = $"{g.Key.Year}-{g.Key.Month:D2}", Total = g.Sum(i => i.NetAmount) })
                 .OrderBy(m => m.Month)
                 .ToList();
 
             var salesmanSales = invoices
                 .GroupBy(i => new { i.SalesmanId, i.SalesmanName })
-                .Select(g => new { SalesmanName = g.Key.SalesmanName, TotalSales = g.Sum(i => i.TotalAmount) })
+                .Select(g => new { SalesmanName = g.Key.SalesmanName, TotalSales = g.Sum(i => i.NetAmount) })
                 .OrderByDescending(s => s.TotalSales)
                 .ToList();
 
@@ -190,9 +205,11 @@ namespace DMS.Application.Services
 
         public async Task<object> GetProductPerformanceAsync(System.DateTime? startDate, System.DateTime? endDate)
         {
-            var query = _context.InvoiceItems.AsQueryable();
-            if (startDate.HasValue) query = query.Where(i => i.Invoice.InvoiceDate >= startDate.Value);
-            if (endDate.HasValue) query = query.Where(i => i.Invoice.InvoiceDate <= endDate.Value);
+            var query = _context.InvoiceItems
+                .Where(i => i.Invoice.PaymentStatus != "Cancelled")
+                .AsQueryable();
+            if (startDate.HasValue) query = query.Where(i => i.Invoice.InvoiceDate >= startDate.Value.Date);
+            if (endDate.HasValue) query = query.Where(i => i.Invoice.InvoiceDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
 
             var performance = await query
                 .GroupBy(i => new { i.ProductId, i.Product.ProductName })
@@ -215,12 +232,12 @@ namespace DMS.Application.Services
             var invoicesQuery = _context.Invoices.AsQueryable();
 
             if (startDate.HasValue) {
-                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate >= startDate.Value && i.Invoice.PaymentStatus != "Cancelled");
-                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate >= startDate.Value && i.PaymentStatus != "Cancelled");
+                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate >= startDate.Value.Date);
+                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate >= startDate.Value.Date);
             }
             if (endDate.HasValue) {
-                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate <= endDate.Value && i.Invoice.PaymentStatus != "Cancelled");
-                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate <= endDate.Value && i.PaymentStatus != "Cancelled");
+                invoiceItemsQuery = invoiceItemsQuery.Where(i => i.Invoice.InvoiceDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
+                invoicesQuery = invoicesQuery.Where(i => i.InvoiceDate <= endDate.Value.Date.AddDays(1).AddTicks(-1));
             }
 
             // Also ensure default query handles non-cancelled
@@ -241,10 +258,12 @@ namespace DMS.Application.Services
 
             var outstandingPayments = await invoicesQuery
                 .Where(i => i.PaymentStatus != "Paid")
+                .Include(i => i.Customer)
+                .Include(i => i.Payments)
                 .Select(i => new {
                     i.InvoiceNumber,
-                    CustomerName = i.Customer.CustomerName,
-                    TotalAmount = i.TotalAmount,
+                    CustomerName = i.Customer != null ? i.Customer.CustomerName : "Direct",
+                    TotalAmount = i.NetAmount,
                     AmountPaid = i.Payments.Sum(p => p.AmountPaid)
                 })
                 .ToListAsync();
@@ -299,6 +318,45 @@ namespace DMS.Application.Services
                 InventorySummary = inventorySummary, 
                 LowStockReport = lowStockReport 
             };
+        }
+        public async Task<object> GetSalesManAnalysisAsync(string range)
+        {
+            var today = System.DateTime.UtcNow.Date;
+            System.DateTime start;
+
+            switch (range?.ToLower())
+            {
+                case "daily":
+                    start = today;
+                    break;
+                case "weekly":
+                    start = today.AddDays(-6); // Last 7 days including today
+                    break;
+                case "monthly":
+                    start = new System.DateTime(today.Year, today.Month, 1);
+                    break;
+                default:
+                    start = today;
+                    break;
+            }
+
+            var invoices = await _context.Invoices
+                .Include(i => i.Salesman)
+                .Where(i => i.InvoiceDate >= start && i.PaymentStatus != "Cancelled")
+                .ToListAsync();
+
+            var result = invoices
+                .GroupBy(i => new { i.SalesmanId, Name = i.Salesman != null ? i.Salesman.Name : "Direct/System" })
+                .Select(g => new
+                {
+                    SalesmanName = g.Key.Name,
+                    TotalSales = g.Sum(i => i.NetAmount),
+                    OrderCount = g.Count()
+                })
+                .OrderByDescending(x => x.TotalSales)
+                .ToList();
+
+            return result;
         }
     }
 }

@@ -20,12 +20,17 @@ namespace DMS.API.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ICustomerLedgerService _customerLedgerService;
         private readonly ICompanyLedgerService _companyLedgerService;
+        private readonly IFinancialService _financialService;
 
-        public AccountingController(ApplicationDbContext context, ICustomerLedgerService customerLedgerService, ICompanyLedgerService companyLedgerService)
+        public AccountingController(ApplicationDbContext context, 
+            ICustomerLedgerService customerLedgerService, 
+            ICompanyLedgerService companyLedgerService,
+            IFinancialService financialService)
         {
             _context = context;
             _customerLedgerService = customerLedgerService;
             _companyLedgerService = companyLedgerService;
+            _financialService = financialService;
         }
 
         [HttpGet("profit-loss")]
@@ -36,29 +41,8 @@ namespace DMS.API.Controllers
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
 
-            var invoices = await _context.Invoices
-                .Where(i => i.InvoiceDate >= start && i.InvoiceDate <= end && i.PaymentStatus != "Cancelled")
-                .Include(i => i.InvoiceItems)
-                .ThenInclude(ii => ii.Product)
-                .ToListAsync();
-
-            decimal revenue = invoices.Sum(i => i.NetAmount);
-            decimal cogs = invoices.SelectMany(i => i.InvoiceItems)
-                .Sum(ii => ii.Quantity * (ii.Product?.PurchasePrice ?? 0));
-
-            decimal expenses = await _context.DailyExpenses
-                .Where(e => e.ExpenseDate >= start && e.ExpenseDate <= end)
-                .SumAsync(e => e.Amount);
-
-            return Ok(new
-            {
-                Revenue = revenue,
-                CostOfGoodsSold = cogs,
-                OperatingExpenses = expenses,
-                GrossProfit = revenue - cogs,
-                NetProfit = revenue - cogs - expenses,
-                MarginPercent = revenue > 0 ? ((revenue - cogs) / revenue) * 100 : 0
-            });
+            var result = await _financialService.GetProfitLossAsync(start, end);
+            return Ok(result);
         }
 
         [HttpGet("cash-flow")]
@@ -69,25 +53,8 @@ namespace DMS.API.Controllers
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
 
-            decimal cashIn = await _context.Payments
-                .Include(p => p.Invoice)
-                .Where(p => p.PaymentDate >= start && p.PaymentDate <= end && p.Invoice.PaymentStatus != "Cancelled")
-                .SumAsync(p => p.AmountPaid);
-
-            decimal dailyExp = await _context.DailyExpenses
-                .Where(e => e.ExpenseDate >= start && e.ExpenseDate <= end)
-                .SumAsync(e => e.Amount);
-
-            decimal supplierPayments = await _context.CompanyLedgers
-                .Where(cl => cl.Date >= start && cl.Date <= end && cl.TransactionType == TransactionType.Debit)
-                .SumAsync(cl => cl.Amount);
-
-            return Ok(new
-            {
-                CashInflow = cashIn,
-                CashOutflow = dailyExp + supplierPayments,
-                NetCashFlow = cashIn - (dailyExp + supplierPayments)
-            });
+            var result = await _financialService.GetCashFlowAsync(start, end);
+            return Ok(result);
         }
 
         [HttpGet("balance-sheet")]
@@ -95,41 +62,8 @@ namespace DMS.API.Controllers
         [RequirePermission("Accounting.View")]
         public async Task<IActionResult> GetBalanceSheet()
         {
-            // Asset Calculation
-            decimal totalCashIn = await _context.Payments.SumAsync(p => p.AmountPaid);
-            decimal totalDailyExp = await _context.DailyExpenses.SumAsync(e => e.Amount);
-            decimal totalSupplierPayments = await _context.CompanyLedgers
-                .Where(cl => cl.TransactionType == TransactionType.Debit)
-                .SumAsync(cl => cl.Amount);
-
-            decimal cashAsset = totalCashIn - totalDailyExp - totalSupplierPayments;
-
-            decimal inventoryValue = await _context.Products
-                .Include(p => p.Stock)
-                .SumAsync(p => (p.Stock != null ? p.Stock.Quantity : 0) * p.PurchasePrice);
-
-            // Liability Calculation
-            decimal totalLiabilityAmount = await _context.CompanyLedgers
-                .Where(cl => cl.TransactionType == TransactionType.Credit)
-                .SumAsync(cl => cl.Amount);
-
-            decimal accountsPayable = totalLiabilityAmount - totalSupplierPayments;
-
-            return Ok(new
-            {
-                Assets = new 
-                { 
-                    Cash = cashAsset, 
-                    Inventory = inventoryValue, 
-                    Total = cashAsset + inventoryValue 
-                },
-                Liabilities = new 
-                { 
-                    AccountsPayable = accountsPayable, 
-                    Total = accountsPayable 
-                },
-                Equity = (cashAsset + inventoryValue) - accountsPayable
-            });
+            var result = await _financialService.GetBalanceSheetAsync();
+            return Ok(result);
         }
 
         [HttpGet("customer-ledger/{customerId}")]

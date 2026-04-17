@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Calculator, ArrowDownCircle, ArrowUpCircle, TrendingUp, FileText, Filter, Download } from 'lucide-react';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
+import { formatCurrency } from '../utils/currencyUtils';
 
 const ProfitLossReport = () => {
     const [loading, setLoading] = useState(true);
@@ -34,7 +35,6 @@ const ProfitLossReport = () => {
         </div>
     );
 
-    const fmt = (v) => (v || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
     const isProfit = (data?.netProfit || 0) >= 0;
 
     return (
@@ -99,7 +99,7 @@ const ProfitLossReport = () => {
                                         <div className="p-1.5 bg-blue-50 text-blue-600 rounded border border-blue-100"><ArrowUpCircle size={15}/></div>
                                         <span className="text-sm font-bold text-slate-900">Gross Sales Revenue</span>
                                     </div>
-                                    <span className="font-bold text-blue-600 tabular-nums">Rs. {fmt(data?.revenue)}</span>
+                                    <span className="font-bold text-blue-600 tabular-nums">{formatCurrency(data?.revenue)}</span>
                                 </div>
                             </div>
 
@@ -114,11 +114,11 @@ const ProfitLossReport = () => {
                                         <div className="p-1.5 bg-amber-50 text-amber-600 rounded border border-amber-100"><TrendingUp size={15}/></div>
                                         <span className="text-sm font-bold text-slate-900">Cost of Goods Sold (COGS)</span>
                                     </div>
-                                    <span className="font-bold text-red-600 tabular-nums">-Rs. {fmt(data?.costOfGoodsSold)}</span>
+                                    <span className="font-bold text-red-600 tabular-nums">- {formatCurrency(data?.costOfGoodsSold)}</span>
                                 </div>
                                 <div className="flex justify-between items-center px-4 py-3 mt-2 bg-emerald-50 border border-emerald-200 rounded-md">
                                     <span className="text-sm font-bold text-slate-900">Gross Profit</span>
-                                    <span className="text-base font-bold text-emerald-600 tabular-nums">Rs. {fmt(data?.grossProfit)}</span>
+                                    <span className="text-base font-bold text-emerald-600 tabular-nums">{formatCurrency(data?.grossProfit)}</span>
                                 </div>
                             </div>
 
@@ -133,7 +133,7 @@ const ProfitLossReport = () => {
                                         <div className="p-1.5 bg-red-50 text-red-600 rounded border border-red-100"><ArrowDownCircle size={15}/></div>
                                         <span className="text-sm font-bold text-slate-900">General &amp; Admin Expenses</span>
                                     </div>
-                                    <span className="font-bold text-red-600 tabular-nums">-Rs. {fmt(data?.operatingExpenses)}</span>
+                                    <span className="font-bold text-red-600 tabular-nums">- {formatCurrency(data?.operatingExpenses)}</span>
                                 </div>
                             </div>
 
@@ -146,7 +146,7 @@ const ProfitLossReport = () => {
                                     </div>
                                     <div className="text-right">
                                         <h2 className={`text-3xl font-bold tabular-nums ${isProfit ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            Rs. {fmt(data?.netProfit)}
+                                            {formatCurrency(data?.netProfit)}
                                         </h2>
                                         <span className={`text-[10px] font-bold uppercase tracking-widest ${isProfit ? 'text-emerald-600' : 'text-red-600'}`}>
                                             {isProfit ? '✓ Surplus' : '⚠ Deficit'}

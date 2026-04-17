@@ -44,6 +44,13 @@ namespace DMS.Infrastructure.Repositories
                 .FirstOrDefaultAsync(c => c.CustomerId == id);
         }
 
+        public async Task<Customer?> GetByDetailsAsync(string name, string phone, string? area)
+        {
+            return await _context.Customers
+                .FirstOrDefaultAsync(c => c.Phone == phone 
+                                       || (c.CustomerName.ToLower() == name.ToLower() && c.Area == area));
+        }
+
         public async Task<IEnumerable<Customer>> SearchAsync(string query, int? routeId = null, int? salesmanId = null)
         {
             var q = query.ToLower();

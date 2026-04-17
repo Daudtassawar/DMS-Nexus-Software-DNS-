@@ -9,8 +9,7 @@ import AppTable from '../components/AppTable';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
 import { Search, Plus, User, DollarSign, AlertTriangle, CheckCircle, MoreHorizontal, History, Edit, Trash2, MapPin, Zap, UserCircle, ShieldAlert, FileText, Phone } from 'lucide-react';
-
-const rs = (v) => `Rs. ${(parseFloat(v) || 0).toLocaleString()}`;
+import { formatCurrency } from '../utils/currencyUtils';
 
 export default function Customers() {
     const navigate = useNavigate();
@@ -25,6 +24,12 @@ export default function Customers() {
     const [editTarget, setEditTarget] = useState(null);
     const [detailId, setDetailId] = useState(null);
     const [deleting, setDeleting] = useState(null);
+    const [status, setStatus] = useState({ type: '', message: '' });
+
+    const showStatus = (type, message) => {
+        setStatus({ type, message });
+        setTimeout(() => setStatus({ type: '', message: '' }), 4000);
+    };
 
     useEffect(() => {
         const t = setTimeout(() => {
@@ -51,13 +56,19 @@ export default function Customers() {
     useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
 
     const handleSave = async (formData) => {
-        if (modal === 'edit') {
-            await customerService.update(editTarget.customerId, formData);
-        } else {
-            await customerService.create(formData);
+        try {
+            if (modal === 'edit') {
+                await customerService.update(editTarget.customerId, formData);
+                showStatus('success', 'Customer profile updated successfully.');
+            } else {
+                const result = await customerService.create(formData);
+                showStatus('success', `Customer ${result.customerName} synchronized successfully.`);
+            }
+            setModal(null); setEditTarget(null);
+            fetchCustomers();
+        } catch (err) {
+            showStatus('error', err.response?.data?.message || 'Failed to save customer.');
         }
-        setModal(null); setEditTarget(null);
-        fetchCustomers();
     };
 
     const handleDelete = async (c) => {
@@ -79,6 +90,16 @@ export default function Customers() {
 
     return (
         <div className="space-y-6 max-w-[1700px] mx-auto  pb-20">
+            {/* Notifications */}
+            {status.message && (
+                <div className={`fixed top-6 right-6 z-[2000] p-4 rounded-xl shadow-2xl border flex items-center gap-3 animate-in slide-in-from-right duration-300 ${
+                    status.type === 'error' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                }`}>
+                    {status.type === 'error' ? <ShieldAlert size={20}/> : <CheckCircle size={20}/>}
+                    <span className="text-sm font-bold uppercase tracking-tight">{status.message}</span>
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-card)] p-6 rounded-lg border border-[var(--border)] shadow-sm">
                 <div>
@@ -195,13 +216,13 @@ export default function Customers() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="space-y-1.5">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credit Limit: {rs(c.creditLimit)}</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credit Limit: {formatCurrency(c.creditLimit)}</p>
                                         {isOverLimit && <AppBadge variant="danger" size="xs" className="rounded px-2">OVER LIMIT</AppBadge>}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <h4 className={`text-base font-bold tabular-nums ${c.balance > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                                        {rs(c.balance)}
+                                        {formatCurrency(c.balance)}
                                     </h4>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Outstanding Balance</p>
                                 </td>

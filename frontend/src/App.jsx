@@ -34,14 +34,24 @@ const SalesForecast = lazy(() => import('./pages/SalesForecast'));
 const BalanceSheet = lazy(() => import('./pages/BalanceSheet'));
 const RoutesPage = lazy(() => import('./pages/Routes'));
 const VehiclesPage = lazy(() => import('./pages/Vehicles'));
+const SystemSettings = lazy(() => import('./pages/SystemSettings'));
 
 // Loading Fallback Component
 const PageLoader = () => (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin shadow-sm"></div>
+    <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        <div className="relative">
+            <div className="w-16 h-16 border-4 border-[var(--border)] border-t-[var(--primary)] rounded-2xl animate-spin shadow-xl"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-2 h-2 bg-[var(--primary)] rounded-full animate-ping"></div>
+            </div>
+        </div>
         <div className="flex flex-col items-center">
-            <p className="text-sm font-bold text-slate-800 uppercase tracking-widest animate-pulse">DMS NEXUS</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Optimizing Resources...</p>
+            <h2 className="text-lg font-black text-[var(--text-main)] uppercase tracking-[0.3em] animate-pulse">DMS NEXUS</h2>
+            <div className="flex items-center gap-2 mt-2">
+                <span className="w-8 h-0.5 bg-[var(--primary)] rounded-full animate-pulse"></span>
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">Synchronizing Core Systems</p>
+                <span className="w-8 h-0.5 bg-[var(--primary)] rounded-full animate-pulse"></span>
+            </div>
         </div>
     </div>
 );
@@ -145,6 +155,7 @@ function App() {
                           {/* Routes & Vehicles */}
                           <Route path="/routes" element={<RequirePermission permission="Invoices.View"><RoutesPage /></RequirePermission>} />
                           <Route path="/vehicles" element={<RequirePermission permission="Invoices.View"><VehiclesPage /></RequirePermission>} />
+                          <Route path="/settings" element={<RequirePermission permission="Users.View"><SystemSettings /></RequirePermission>} />
                         </Routes>
                       </Suspense>
                   </main>

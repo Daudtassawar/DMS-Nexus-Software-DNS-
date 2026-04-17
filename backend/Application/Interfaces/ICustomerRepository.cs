@@ -9,6 +9,7 @@ namespace DMS.Application.Interfaces
         Task<IEnumerable<Customer>> GetAllAsync(int? routeId = null, int? salesmanId = null);
         Task<Customer?> GetByIdAsync(int id);
         Task<Customer?> GetByIdWithHistoryAsync(int id);      // includes invoices + payments
+        Task<Customer?> GetByDetailsAsync(string name, string phone, string? area);
         Task<IEnumerable<Customer>> SearchAsync(string query, int? routeId = null, int? salesmanId = null);
         Task<Customer> AddAsync(Customer customer);
         void Update(Customer customer);

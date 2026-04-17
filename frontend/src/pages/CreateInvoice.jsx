@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, Search, ArrowLeft, CheckCircle, User, ShoppingCart, Calculator, Hash, RotateCcw, Info, Package, DollarSign, Target, Zap, Activity, ShieldAlert, Layers, UserCircle } from 'lucide-react';
 import invoiceService from '../services/invoiceService';
+import authService from '../services/authService';
 import customerService from '../services/customerService';
 import productService from '../services/productService';
 import salesmanService from '../services/salesmanService';
@@ -12,6 +13,7 @@ import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
+import { formatCurrency, CURRENCY_SYMBOL } from '../utils/currencyUtils';
 
 export default function CreateInvoice() {
     const { id } = useParams();
@@ -50,6 +52,11 @@ export default function CreateInvoice() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
+    const currentUser = authService.getCurrentUser();
+    const isSalesman = currentUser?.user?.role === 'Salesman' || currentUser?.user?.Role === 'Salesman';
+    const profileSalesmanId = currentUser?.user?.salesmanId || currentUser?.user?.SalesmanId;
+    const profileRouteId = currentUser?.user?.routeId || currentUser?.user?.RouteId;
+
     useEffect(() => {
         const init = async () => {
             try {
@@ -65,6 +72,12 @@ export default function CreateInvoice() {
                 setSalesmen(s || []);
                 setRoutes(r || []);
                 setVehicles(v || []);
+
+                if (isSalesman) {
+                    if (profileSalesmanId) setSalesmanId(profileSalesmanId.toString());
+                    if (profileRouteId) setRouteId(profileRouteId.toString());
+                    setInvoiceType('Delivery');
+                }
 
                 if (isEdit) {
                     const inv = await invoiceService.getById(id);
@@ -248,9 +261,9 @@ export default function CreateInvoice() {
                 <div className="bg-[var(--primary)] px-6 py-4 rounded-lg flex items-center gap-6 shadow-sm border border-[var(--primary-hover)]">
                     <div>
                         <div className="text-[10px] font-bold text-white/80 uppercase tracking-wider mb-0.5">Net Total</div>
-                        <div className="text-2xl font-bold text-white tabular-nums">Rs.{netTotal.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-white tabular-nums">{formatCurrency(netTotal, false)}</div>
                     </div>
-                    <div className="p-2.5 bg-white/20 rounded-md text-white"><DollarSign size={20}/></div>
+                    <div className="p-2.5 bg-white/20 rounded-md text-white"><ShoppingCart size={20}/></div>
                 </div>
             </div>
 
@@ -273,7 +286,7 @@ export default function CreateInvoice() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
                                         <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Current Balance</p>
-                                        <h4 className="text-lg font-bold text-red-700 tabular-nums">Rs.{selectedCustomer.balance?.toLocaleString()}</h4>
+                                        <h4 className="text-lg font-bold text-red-700 tabular-nums">{formatCurrency(selectedCustomer.balance, false)}</h4>
                                     </div>
                                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
                                         <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Empty Crates</p>
@@ -286,14 +299,21 @@ export default function CreateInvoice() {
 
                     <AppCard p0 title="Order Details" className="border-t-4 border-t-[var(--primary)]">
                         <div className="p-6 space-y-6">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-semibold text-[var(--text-main)]">Assign Salesman</label>
-                                <select value={salesmanId} onChange={e => setSalesmanId(e.target.value)}
-                                    className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
-                                    <option value="">-- Select Salesman --</option>
-                                    {salesmen.map(s => <option key={s.salesmanId} value={s.salesmanId}>{s.name} [{s.area}]</option>)}
-                                </select>
-                            </div>
+                             {!isSalesman ? (
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold text-[var(--text-main)]">Assign Salesman</label>
+                                    <select value={salesmanId} onChange={e => setSalesmanId(e.target.value)}
+                                        className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                        <option value="">-- Select Salesman --</option>
+                                        {salesmen.map(s => <option key={s.salesmanId} value={s.salesmanId}>{s.name} [{s.area}]</option>)}
+                                    </select>
+                                </div>
+                             ) : (
+                                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-lg">
+                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Assigned Salesman</p>
+                                    <p className="text-sm font-bold text-blue-900">{currentUser?.user?.fullName || 'Self'}</p>
+                                </div>
+                             )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm font-semibold text-[var(--text-main)]">Invoice Type</label>
@@ -309,24 +329,26 @@ export default function CreateInvoice() {
                                         className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-semibold text-[var(--text-main)]">Route</label>
-                                    <select value={routeId} onChange={e => setRouteId(e.target.value)}
-                                        className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
-                                        <option value="">-- Select Route --</option>
-                                        {routes.map(r => <option key={r.routeId} value={r.routeId}>{r.routeName}</option>)}
-                                    </select>
+                            {!isSalesman && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-semibold text-[var(--text-main)]">Route</label>
+                                        <select value={routeId} onChange={e => setRouteId(e.target.value)}
+                                            className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                            <option value="">-- Select Route --</option>
+                                            {routes.map(r => <option key={r.routeId} value={r.routeId}>{r.routeName}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-semibold text-[var(--text-main)]">Vehicle</label>
+                                        <select value={vehicleId} onChange={e => setVehicleId(e.target.value)}
+                                            className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
+                                            <option value="">-- Select Vehicle --</option>
+                                            {vehicles.map(v => <option key={v.vehicleId} value={v.vehicleId}>{v.vehicleNumber}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-semibold text-[var(--text-main)]">Vehicle</label>
-                                    <select value={vehicleId} onChange={e => setVehicleId(e.target.value)}
-                                        className="w-full px-4 py-2 bg-[var(--bg-app)] border border-[var(--border)] rounded-md focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] transition-all text-sm outline-none cursor-pointer">
-                                        <option value="">-- Select Vehicle --</option>
-                                        {vehicles.map(v => <option key={v.vehicleId} value={v.vehicleId}>{v.vehicleNumber}</option>)}
-                                    </select>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </AppCard>
                 </div>
@@ -363,7 +385,7 @@ export default function CreateInvoice() {
                                                 </div>
                                               </div>
                                               <div className="text-right">
-                                                  <h4 className="text-[var(--primary)] font-bold text-base tabular-nums">Rs.{p.salePrice.toLocaleString()}</h4>
+                                                  <h4 className="text-[var(--primary)] font-bold text-base tabular-nums">{formatCurrency(p.salePrice, false)}</h4>
                                               </div>
                                           </div>
                                       ))}
@@ -396,7 +418,7 @@ export default function CreateInvoice() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="relative">
-                                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">Rs.</span>
+                                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs">{CURRENCY_SYMBOL}</span>
                                                   <input type="number" step="0.01" value={item.unitPrice} onChange={e => changePrice(i, e.target.value)}
                                                       className="w-full pl-10 pr-3 py-1.5 bg-[var(--bg-app)] border border-[var(--border)] rounded focus:ring-2 focus:ring-[var(--ring)] focus:border-[var(--primary)] outline-none text-right font-medium text-sm tabular-nums" />
                                                 </div>
@@ -410,7 +432,7 @@ export default function CreateInvoice() {
                                                     className="w-full px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 rounded focus:ring-2 focus:ring-red-200 outline-none text-center font-medium text-sm tabular-nums" />
                                             </td>
                                             <td className="px-6 py-4 text-right font-bold text-sm tabular-nums text-[var(--text-main)]">
-                                                Rs.{item.lineTotal.toLocaleString()}
+                                                {formatCurrency(item.lineTotal)}
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <button type="button" onClick={() => removeItem(i)} className="p-2 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 rounded transition-all">
@@ -441,20 +463,32 @@ export default function CreateInvoice() {
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center opacity-70">
                                         <span className="text-xs font-bold uppercase tracking-wider">Subtotal</span>
-                                        <span className="font-bold text-lg tabular-nums">Rs.{subtotal.toLocaleString()}</span>
+                                        <span className="font-bold text-lg tabular-nums">{formatCurrency(subtotal, false)}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider">Discount</span>
-                                        <div className="relative w-32">
-                                          <input type="number" step="0.01" placeholder="0.00" value={discount} onChange={e => setDiscount(e.target.value)}
-                                            className="w-full px-3 py-1.5 bg-[var(--bg-app)] border border-[var(--border)] rounded focus:ring-2 focus:ring-[var(--primary)] outline-none text-right font-bold text-sm text-[var(--primary)]" />
+                                        <div className="relative w-40">
+                                          <AppInput 
+                                            type="number" 
+                                            step="0.01" 
+                                            prefix={CURRENCY_SYMBOL}
+                                            value={discount} 
+                                            onChange={e => setDiscount(e.target.value)}
+                                            className="text-right font-bold text-[var(--primary)]"
+                                          />
                                         </div>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Paid Amount</span>
-                                        <div className="relative w-32">
-                                          <input type="number" step="0.01" placeholder="0.00" value={paidAmount} onChange={e => setPaidAmount(e.target.value)}
-                                            className="w-full px-3 py-1.5 bg-[var(--bg-app)] border border-[var(--border)] rounded focus:ring-2 focus:ring-emerald-500 outline-none text-right font-bold text-sm text-emerald-600" />
+                                        <div className="relative w-40">
+                                            <AppInput 
+                                              type="number" 
+                                              step="0.01" 
+                                              prefix={CURRENCY_SYMBOL}
+                                              value={paidAmount} 
+                                              onChange={e => setPaidAmount(e.target.value)}
+                                              className="text-right font-bold text-emerald-600"
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -462,11 +496,11 @@ export default function CreateInvoice() {
                                     <div className="flex justify-between items-end">
                                         <div>
                                             <h5 className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-[0.2em] mb-1">Net Payable</h5>
-                                            <h2 className="text-4xl font-bold tabular-nums">Rs.{netTotal.toLocaleString()}</h2>
+                                            <h2 className="text-4xl font-bold tabular-nums">{formatCurrency(netTotal, false)}</h2>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1">Balance</p>
-                                            <p className="text-xl font-bold tabular-nums text-[var(--text-muted)]">Rs.{remainingTotal.toLocaleString()}</p>
+                                            <p className="text-xl font-bold tabular-nums text-[var(--text-muted)]">{formatCurrency(remainingTotal, false)}</p>
                                         </div>
                                     </div>
                                     <button 

@@ -8,6 +8,7 @@ import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
+import { formatCurrency } from '../utils/currencyUtils';
 
 export default function Invoices() {
     const navigate = useNavigate();
@@ -267,11 +268,11 @@ export default function Invoices() {
                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">ID: {inv.customerId || '---'}</p>
                                   </td>
                                   <td className="px-6 py-4">
-                                      <h4 className="text-base font-bold text-emerald-600 tabular-nums">Rs. {(inv.netAmount || 0).toLocaleString()}</h4>
+                                      <h4 className="text-base font-bold text-emerald-600 tabular-nums">{formatCurrency(inv.netAmount)}</h4>
                                       <div className="flex flex-col text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                                        <span>Paid: Rs. {(inv.paidAmount || 0).toLocaleString()}</span>
+                                        <span>Paid: {formatCurrency(inv.paidAmount)}</span>
                                         {inv.remainingAmount > 0 && (
-                                          <span className="text-red-500">Due: Rs. {(inv.remainingAmount || 0).toLocaleString()}</span>
+                                          <span className="text-red-500">Due: {formatCurrency(inv.remainingAmount)}</span>
                                         )}
                                       </div>
                                   </td>

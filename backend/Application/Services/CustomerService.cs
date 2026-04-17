@@ -85,6 +85,15 @@ namespace DMS.Application.Services
 
         public async Task<Customer> CreateCustomerAsync(Customer customer)
         {
+            // PROACTIVE DUPLICATE CHECK
+            var existing = await _customerRepository.GetByDetailsAsync(customer.CustomerName, customer.Phone, customer.Area);
+            if (existing != null)
+            {
+                // Return existing customer instead of creating duplicate
+                Console.WriteLine($"[DUPLICATE PREVENTED] Customer '{customer.CustomerName}' with Phone '{customer.Phone}' already exists with ID: {existing.CustomerId}. Returning existing record.");
+                return existing;
+            }
+
             customer.Balance = 0; // always start at 0
             await _customerRepository.AddAsync(customer);
             await _customerRepository.SaveChangesAsync();

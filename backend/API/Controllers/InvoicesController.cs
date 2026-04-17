@@ -119,6 +119,32 @@ namespace DMS.API.Controllers
             return Ok(result);
         }
 
+        // GET /api/v1/invoices/customer/{customerId}/outstanding
+        [HttpGet("customer/{customerId}/outstanding")]
+        [RequirePermission("Invoices.View")]
+        public async Task<ActionResult<IEnumerable<InvoiceSummaryDTO>>> GetOutstandingInvoicesByCustomer(int customerId)
+        {
+            var invoices = await _dbContext.Invoices
+                .Where(i => i.CustomerId == customerId && i.RemainingAmount > 0)
+                .OrderBy(i => i.InvoiceDate)
+                .ToListAsync();
+
+            var result = invoices.Select(i => new InvoiceSummaryDTO
+            {
+                InvoiceId = i.InvoiceId,
+                InvoiceNumber = i.InvoiceNumber,
+                InvoiceDate = i.InvoiceDate,
+                CustomerId = i.CustomerId,
+                NetAmount = i.NetAmount,
+                PaidAmount = i.PaidAmount,
+                RemainingAmount = i.RemainingAmount,
+                PaymentStatus = i.PaymentStatus,
+                InvoiceType = i.InvoiceType
+            }).ToList();
+
+            return Ok(result);
+        }
+
         // GET /api/v1/invoices/cumulative?startDate=2026-03-01&endDate=2026-03-28&salesmanId=1
         [HttpGet("cumulative")]
         [RequirePermission("Invoices.View")]
@@ -330,8 +356,12 @@ namespace DMS.API.Controllers
                 if (User.IsInRole("Salesman"))
                 {
                     GetIsolationFilters(out int? forceRouteId, out int? forceSalesmanId);
+                    
+                    if (!forceSalesmanId.HasValue)
+                        return BadRequest(new { message = "Unauthorized: Salesman ID not found in security context." });
+
+                    invoice.SalesmanId = forceSalesmanId.Value;
                     if (forceRouteId.HasValue) invoice.RouteId = forceRouteId.Value;
-                    if (forceSalesmanId.HasValue) invoice.SalesmanId = forceSalesmanId.Value;
                     
                     // Mandatory: Salesman can ONLY create delivery invoices
                     invoice.InvoiceType = "Delivery";

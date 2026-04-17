@@ -65,5 +65,12 @@ namespace DMS.API.Controllers
             var data = await _reportService.GetInventoryReportsAsync();
             return Ok(data);
         }
+
+        [HttpGet("salesman-analysis")]
+        public async Task<IActionResult> GetSalesManAnalysis([FromQuery] string range = "daily")
+        {
+            var data = await _reportService.GetSalesManAnalysisAsync(range);
+            return Ok(data);
+        }
     }
 }

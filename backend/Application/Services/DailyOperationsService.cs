@@ -13,11 +13,13 @@ namespace DMS.Application.Services
     {
         private readonly IDailyOperationsRepository _repository;
         private readonly ApplicationDbContext _context;
+        private readonly IFinancialService _financialService;
 
-        public DailyOperationsService(IDailyOperationsRepository repository, ApplicationDbContext context)
+        public DailyOperationsService(IDailyOperationsRepository repository, ApplicationDbContext context, IFinancialService financialService)
         {
             _repository = repository;
             _context = context;
+            _financialService = financialService;
         }
 
         public async Task<DailyActivity> LogActivityAsync(string title, string description, string userName)
@@ -108,14 +110,17 @@ namespace DMS.Application.Services
             var today = DateTime.UtcNow.Date;
             
             var salesToday = await _context.Invoices
-                .Where(i => i.InvoiceDate.Date == today)
-                .SumAsync(i => i.TotalAmount);
+                .Where(i => i.InvoiceDate.Date == today && i.PaymentStatus != "Cancelled")
+                .SumAsync(i => i.NetAmount);
 
             var paymentsReceived = await _context.Payments
-                .Where(p => p.PaymentDate.Date == today)
+                .Include(p => p.Invoice)
+                .Where(p => p.PaymentDate.Date == today && p.Invoice.PaymentStatus != "Cancelled")
                 .SumAsync(p => p.AmountPaid);
 
-            var expensesToday = await _repository.GetTotalExpensesAsync(today);
+            var expensesToday = await _context.DailyExpenses
+                .Where(e => e.ExpenseDate.Date == today)
+                .SumAsync(e => e.Amount);
 
             return new
             {
@@ -134,11 +139,16 @@ namespace DMS.Application.Services
                 .Include(i => i.InvoiceItems)
                     .ThenInclude(ii => ii.Product)
                 .Include(i => i.Customer)
-                .Where(i => i.InvoiceDate.Date == today)
+                .Where(i => i.InvoiceDate.Date == today && i.PaymentStatus != "Cancelled")
                 .ToListAsync();
 
-            var salesToday = invoicesToday.Sum(i => i.TotalAmount);
-            var expensesToday = await _repository.GetTotalExpensesAsync(today);
+            var salesToday = invoicesToday.Sum(i => i.NetAmount);
+            var expensesToday = await _context.DailyExpenses
+                .Where(e => e.ExpenseDate.Date == today)
+                .SumAsync(e => e.Amount);
+
+            // Accurately calculate profit using the new service
+            var pl = await _financialService.GetProfitLossAsync(today, today.AddDays(1).AddSeconds(-1));
 
             // Top Product Today
             var topProduct = invoicesToday
@@ -151,7 +161,7 @@ namespace DMS.Application.Services
             // Top Customer Today
             var topCustomer = invoicesToday
                 .GroupBy(i => i.Customer?.CustomerName ?? "Unknown")
-                .OrderByDescending(g => g.Sum(i => i.TotalAmount))
+                .OrderByDescending(g => g.Sum(i => i.NetAmount))
                 .Select(g => g.Key)
                 .FirstOrDefault() ?? "N/A";
 
@@ -162,7 +172,7 @@ namespace DMS.Application.Services
                 ExpensesToday = expensesToday,
                 TopProduct = topProduct,
                 TopCustomer = topCustomer,
-                NetProfit = salesToday - expensesToday
+                NetProfit = pl.NetProfit
             };
         }
     }

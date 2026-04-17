@@ -3,8 +3,8 @@ import axios from 'axios';
 const BASE = '/api/audit-logs';
 
 const auditLogService = {
-    getLogs: async ({ userId, module, fromDate, toDate } = {}) => {
-        const params = {};
+    getLogs: async ({ userId, module, fromDate, toDate, pageNumber = 1, pageSize = 20 } = {}) => {
+        const params = { pageNumber, pageSize };
         if (userId) params.userId = userId;
         if (module) params.module = module;
         if (fromDate) params.fromDate = fromDate;

@@ -8,6 +8,7 @@ import AppInput from '../components/AppInput';
 import AppBadge from '../components/AppBadge';
 import RequirePermission from '../components/RequirePermission';
 import { Search, Plus, Package, Tag, AlertCircle, AlertTriangle, Edit3, Trash2, Download, Filter, RefreshCw, Box, Barcode } from 'lucide-react';
+import { formatCurrency } from '../utils/currencyUtils';
 
 const CATEGORIES = ['All', 'Soft Drink', 'Juice', 'Water', 'Energy Drink', 'Dairy', 'Snacks', 'Other'];
 
@@ -258,8 +259,8 @@ export default function Products() {
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Minimum Alert Level</p>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <h4 className="text-base font-bold text-blue-600 tabular-nums">Rs. {(p.salePrice || 0).toLocaleString()}</h4>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cost: {(p.purchasePrice || 0).toLocaleString()}</p>
+                                    <h4 className="text-base font-bold text-blue-600 tabular-nums">{formatCurrency(p.salePrice)}</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cost: {formatCurrency(p.purchasePrice)}</p>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2 justify-end">

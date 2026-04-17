@@ -1,7 +1,14 @@
 import React from 'react';
 
-export default function InvoicePrint({ invoice }) {
+export default function InvoicePrint({ invoice, companySettings }) {
     if (!invoice) return null;
+
+    const company = companySettings || {
+      companyName: "Hamdaan Traders",
+      address: "Sillanwali, Sargodha Road, Sargodha, Pakistan",
+      phone: "+92 300 8843939",
+      email: "contact@hamdaantraders.com"
+    };
 
     const isDelivery = !!invoice.deliveryDate;
     const invoiceType = isDelivery ? "Delivery" : "Spot";
@@ -22,12 +29,12 @@ export default function InvoicePrint({ invoice }) {
                     </div>
                 </div>
                 <div className="text-right">
-                    <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">Hamdaan Traders</h1>
+                    <h1 className="text-3xl font-bold uppercase text-black m-0 tracking-tight">{company.companyName}</h1>
                     <p className="text-sm text-gray-800 font-bold m-0 mt-1 uppercase tracking-wide">Distributors & General Order Suppliers</p>
                     <div className="mt-3">
-                        <p className="text-sm text-gray-800 m-0">123 Logistics Way, Suite A</p>
-                        <p className="text-sm text-gray-800 m-0">contact@hamdaantraders.com</p>
-                        <p className="text-sm text-gray-800 m-0 font-medium">+1 (555) 123-4567</p>
+                        <p className="text-sm text-gray-800 m-0">{company.address}</p>
+                        <p className="text-sm text-gray-800 m-0">{company.email}</p>
+                        <p className="text-sm text-gray-800 m-0 font-medium">{company.phone}</p>
                     </div>
                 </div>
             </div>
@@ -114,7 +121,7 @@ export default function InvoicePrint({ invoice }) {
                     <ul className="text-xs text-gray-800 m-0 pl-4 list-disc space-y-1 font-medium">
                         <li>Goods once sold will not be taken back.</li>
                         <li>All claims must be made within 3 days of delivery.</li>
-                        <li>Make all checks payable to Hamdaan Traders.</li>
+                        <li>Make all checks payable to {company.companyName}.</li>
                     </ul>
                     <p className="text-sm text-black font-bold italic mt-4">Thank you for your business!</p>
                 </div>

@@ -8,6 +8,7 @@ import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppBadge from '../components/AppBadge';
 import AppInput from '../components/AppInput';
+import { formatCurrency, CURRENCY_SYMBOL } from '../utils/currencyUtils';
 
 const CompanyLedger = () => {
   const { id } = useParams();
@@ -168,13 +169,13 @@ const CompanyLedger = () => {
         new Date(l.date).toLocaleDateString(),
         l.description,
         l.reference || '-',
-        isCredit(l.transactionType) ? `Rs. ${l.amount.toLocaleString()}` : '-',
-        isDebit(l.transactionType) ? `Rs. ${l.amount.toLocaleString()}` : '-',
-        `Rs. ${l.runningBalance.toLocaleString()}`
+        isCredit(l.transactionType) ? formatCurrency(l.amount) : '-',
+        isDebit(l.transactionType) ? formatCurrency(l.amount) : '-',
+        formatCurrency(l.runningBalance)
       ]);
     });
 
-    tableRows.push(['', '', 'TOTALS:', `Rs. ${totalCredit.toLocaleString()}`, `Rs. ${totalDebit.toLocaleString()}`, `Rs. ${(totalCredit - totalDebit).toLocaleString()}`]);
+    tableRows.push(['', '', 'TOTALS:', formatCurrency(totalCredit), formatCurrency(totalDebit), formatCurrency(totalCredit - totalDebit)]);
 
     doc.autoTable({
       head: [tableColumn],
@@ -247,19 +248,19 @@ const CompanyLedger = () => {
 
         <AppCard className="border-t-4 border-t-red-500 border-x-slate-200 border-b-slate-200">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2"><ArrowUpRight size={12} className="text-red-500"/> Total Liability</p>
-          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">Rs. {totalCredit.toLocaleString()}</h4>
+          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{formatCurrency(totalCredit, false)}</h4>
           <p className="text-[10px] font-bold text-red-500 uppercase mt-2">Purchase Volume (+)</p>
         </AppCard>
 
         <AppCard className="border-t-4 border-t-emerald-500 border-x-slate-200 border-b-slate-200">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2"><ArrowDownRight size={12} className="text-emerald-500"/> Total Settled</p>
-          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">Rs. {totalDebit.toLocaleString()}</h4>
+          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{formatCurrency(totalDebit, false)}</h4>
           <p className="text-[10px] font-bold text-emerald-500 uppercase mt-2">Payment Record (-)</p>
         </AppCard>
 
         <AppCard className={`border-t-4 border-x-slate-200 border-b-slate-200 ${(totalCredit - totalDebit) > 0 ? 'border-t-red-500' : 'border-t-emerald-500'}`}>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Outstanding Balance</p>
-          <h4 className={`text-2xl font-bold tabular-nums ${(totalCredit - totalDebit) > 0 ? 'text-red-600' : 'text-emerald-600'}`}>Rs. {(totalCredit - totalDebit).toLocaleString()}</h4>
+          <h4 className={`text-2xl font-bold tabular-nums ${(totalCredit - totalDebit) > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatCurrency(totalCredit - totalDebit, false)}</h4>
           <p className="text-[10px] font-bold text-slate-500 uppercase mt-2">{(totalCredit - totalDebit) > 0 ? 'Pending Settlement' : 'Account Balanced'}</p>
         </AppCard>
       </div>
@@ -327,16 +328,16 @@ const CompanyLedger = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {isCredit(l.transactionType) ? (
-                        <span className="text-sm font-bold text-red-600 tabular-nums">+ {l.amount.toLocaleString()}</span>
+                        <span className="text-sm font-bold text-red-600 tabular-nums">+ {formatCurrency(l.amount)}</span>
                       ) : <span className="text-slate-200">--</span>}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {isDebit(l.transactionType) ? (
-                        <span className="text-sm font-bold text-emerald-600 tabular-nums">- {l.amount.toLocaleString()}</span>
+                        <span className="text-sm font-bold text-emerald-600 tabular-nums">- {formatCurrency(l.amount)}</span>
                       ) : <span className="text-slate-200">--</span>}
                     </td>
                     <td className="px-6 py-4 text-right bg-[var(--secondary)]">
-                       <span className="text-sm font-bold text-[var(--text-main)] tabular-nums">Rs. {l.runningBalance.toLocaleString()}</span>
+                       <span className="text-sm font-bold text-[var(--text-main)] tabular-nums">{formatCurrency(l.runningBalance)}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
@@ -378,16 +379,15 @@ const CompanyLedger = () => {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Monetary Value (Rs.)</label>
-                  <div className="relative">
-                    <input 
-                      type="number" step="0.01" required min="0.01" 
-                      value={transaction.amount} 
-                      onChange={e => setTransaction({...transaction, amount: e.target.value})} 
-                      className="w-full h-11 bg-[var(--bg-app)] border border-[var(--border)] rounded-md px-4 text-sm font-bold focus:ring-2 focus:border-[var(--primary)] transition-all text-[var(--text-main)]" 
-                      placeholder="0.00"
-                    />
-                  </div>
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Monetary Value ({CURRENCY_SYMBOL})</label>
+                  <AppInput 
+                    type="number" step="0.01" required min="0.01" 
+                    prefix={CURRENCY_SYMBOL}
+                    value={transaction.amount} 
+                    onChange={e => setTransaction({...transaction, amount: e.target.value})} 
+                    className="text-sm font-bold" 
+                    placeholder="0.00"
+                  />
                 </div>
               </div>
 

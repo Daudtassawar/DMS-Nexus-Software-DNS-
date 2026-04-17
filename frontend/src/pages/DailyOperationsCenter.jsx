@@ -9,6 +9,7 @@ import DailyReportCard from '../components/DailyReportCard';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppBadge from '../components/AppBadge';
+import { formatCurrency, CURRENCY_SYMBOL } from '../utils/currencyUtils';
 
 export default function DailyOperationsCenter() {
     const [cashSummary, setCashSummary] = useState({});
@@ -228,7 +229,7 @@ export default function DailyOperationsCenter() {
                                         </div>
                                         <div className="text-right flex items-center gap-3">
                                             <div className="min-w-0">
-                                                <h4 className="font-bold text-red-600 text-base tabular-nums">-Rs.{e.amount.toLocaleString()}</h4>
+                                                <h4 className="font-bold text-red-600 text-base tabular-nums">- {formatCurrency(e.amount, false)}</h4>
                                                 <p className="text-[9px] text-[var(--text-muted)] font-bold uppercase mt-0.5">
                                                     {new Date(e.expenseDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
@@ -295,7 +296,7 @@ export default function DailyOperationsCenter() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Amount (Rs.)</label>
+                                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Amount ({CURRENCY_SYMBOL})</label>
                                     <input type="number" required value={editExpenseForm.amount} onChange={e => setEditExpenseForm({...editExpenseForm, amount: e.target.value})} className="w-full mt-1.5 p-3 bg-[var(--secondary)] border border-[var(--border)] rounded-md text-sm font-bold text-[var(--text-main)] focus:ring-2 focus:border-[var(--primary)] transition-all" />
                                 </div>
                             </div>
