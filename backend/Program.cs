@@ -131,13 +131,18 @@ app.MapGet("/health", async (ApplicationDbContext context) => {
         diagnostic["OutboundIP"] = await client.GetStringAsync("https://api.ipify.org");
     } catch { }
 
-    // 2. PostgreSQL Connection Test
+    // 2. Database Connection Test
     try {
+        var provider = context.Database.ProviderName;
         using var command = context.Database.GetDbConnection().CreateCommand();
         command.CommandText = "SELECT 1";
         await context.Database.OpenConnectionAsync();
         await command.ExecuteScalarAsync();
-        diagnostic["Database"] = "Connected (PostgreSQL)";
+        diagnostic["Database"] = $"Connected ({provider})";
+
+        // 3. Count Users to verify data
+        var userCount = await context.Users.CountAsync();
+        diagnostic["TotalUsers"] = userCount;
     } catch (Exception ex) {
         diagnostic["Database"] = "Disconnected";
         diagnostic["DB_Error"] = ex.Message;
