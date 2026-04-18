@@ -25,9 +25,20 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB Connection (Switching to SQLite for 100% Stability)
-var dbPath = Path.Combine(AppContext.BaseDirectory, "dms.db");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrEmpty(connectionString))
+{
+    // DB Connection (Production SQL Server for Persistent Storage)
+    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+    Console.WriteLine("Using SQL Server Database Connection.");
+}
+else
+{
+    // DB Connection (Fallback to Local SQLite for Development/Testing)
+    var dbPath = Path.Combine(AppContext.BaseDirectory, "dms.db");
+    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
+    Console.WriteLine($"Using SQLite Database at {dbPath}");
+}
 
 // Memory Cache support
 builder.Services.AddMemoryCache();
