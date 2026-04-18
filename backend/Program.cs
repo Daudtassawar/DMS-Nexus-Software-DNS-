@@ -28,9 +28,9 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (!string.IsNullOrEmpty(connectionString))
 {
-    // DB Connection (Production SQL Server for Persistent Storage)
-    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
-    Console.WriteLine("Using SQL Server Database Connection.");
+    // DB Connection (Production PostgreSQL via Neon for Persistent Storage)
+    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+    Console.WriteLine("Using PostgreSQL (Neon) Database Connection.");
 }
 else
 {

@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DMS.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260414205115_InitialSQLite")]
-    partial class InitialSQLite
+    [Migration("20260418174746_InitialPostgres")]
+    partial class InitialPostgres
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
