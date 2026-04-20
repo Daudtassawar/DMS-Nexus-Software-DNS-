@@ -55,7 +55,7 @@ namespace DMS.Infrastructure.Data
                 PhoneNumber = "+92 300 8843939",
                 Address = "Sillanwali, Sargodha Road, Sargodha, Pakistan",
                 Email = "contact@hamdaantraders.com",
-                LastUpdated = DateTime.Parse("2026-04-14")
+                LastUpdated = DateTime.SpecifyKind(DateTime.Parse("2026-04-14"), DateTimeKind.Utc)
             });
 
             // Rename Identity tables to be more user-friendly as requested

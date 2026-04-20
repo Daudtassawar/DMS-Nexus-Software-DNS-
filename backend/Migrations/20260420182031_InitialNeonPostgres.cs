@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace DMS.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialPostgres : Migration
+    public partial class InitialNeonPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,16 +16,16 @@ namespace DMS.API.Migrations
                 name: "AuditLogs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    UserId = table.Column<string>(type: "TEXT", nullable: false),
-                    UserName = table.Column<string>(type: "TEXT", nullable: false),
-                    Action = table.Column<string>(type: "TEXT", nullable: false),
-                    Module = table.Column<string>(type: "TEXT", nullable: false),
-                    RecordId = table.Column<string>(type: "TEXT", nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    IPAddress = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    UserName = table.Column<string>(type: "text", nullable: false),
+                    Action = table.Column<string>(type: "text", nullable: false),
+                    Module = table.Column<string>(type: "text", nullable: false),
+                    RecordId = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IPAddress = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -35,13 +36,13 @@ namespace DMS.API.Migrations
                 name: "Companies",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    ContactPerson = table.Column<string>(type: "TEXT", nullable: true),
-                    Phone = table.Column<string>(type: "TEXT", nullable: true),
-                    Address = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    ContactPerson = table.Column<string>(type: "text", nullable: true),
+                    Phone = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -52,12 +53,12 @@ namespace DMS.API.Migrations
                 name: "DailyActivities",
                 columns: table => new
                 {
-                    ActivityId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    ActivityDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedBy = table.Column<string>(type: "TEXT", nullable: false)
+                    ActivityId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    ActivityDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -68,13 +69,13 @@ namespace DMS.API.Migrations
                 name: "DailyExpenses",
                 columns: table => new
                 {
-                    ExpenseId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ExpenseTitle = table.Column<string>(type: "TEXT", nullable: false),
-                    Category = table.Column<string>(type: "TEXT", nullable: false),
-                    Amount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    ExpenseDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Notes = table.Column<string>(type: "TEXT", nullable: true)
+                    ExpenseId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ExpenseTitle = table.Column<string>(type: "text", nullable: false),
+                    Category = table.Column<string>(type: "text", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    ExpenseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Notes = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -85,11 +86,11 @@ namespace DMS.API.Migrations
                 name: "Distributors",
                 columns: table => new
                 {
-                    DistributorId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Region = table.Column<string>(type: "TEXT", nullable: true),
-                    Contact = table.Column<string>(type: "TEXT", nullable: true)
+                    DistributorId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Region = table.Column<string>(type: "text", nullable: true),
+                    Contact = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -100,10 +101,10 @@ namespace DMS.API.Migrations
                 name: "Permissions",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Module = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Module = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -114,11 +115,11 @@ namespace DMS.API.Migrations
                 name: "Roles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -129,12 +130,12 @@ namespace DMS.API.Migrations
                 name: "Routes",
                 columns: table => new
                 {
-                    RouteId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RouteName = table.Column<string>(type: "TEXT", nullable: false),
-                    Area = table.Column<string>(type: "TEXT", nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    RouteId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RouteName = table.Column<string>(type: "text", nullable: false),
+                    Area = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -145,14 +146,14 @@ namespace DMS.API.Migrations
                 name: "Salesmen",
                 columns: table => new
                 {
-                    SalesmanId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    EmployeeId = table.Column<string>(type: "TEXT", nullable: true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Phone = table.Column<string>(type: "TEXT", nullable: false),
-                    Area = table.Column<string>(type: "TEXT", nullable: true),
-                    CommissionRate = table.Column<decimal>(type: "TEXT", nullable: false),
-                    MonthlyTarget = table.Column<decimal>(type: "TEXT", nullable: false)
+                    SalesmanId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EmployeeId = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Phone = table.Column<string>(type: "text", nullable: false),
+                    Area = table.Column<string>(type: "text", nullable: true),
+                    CommissionRate = table.Column<decimal>(type: "numeric", nullable: false),
+                    MonthlyTarget = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -163,13 +164,13 @@ namespace DMS.API.Migrations
                 name: "Suppliers",
                 columns: table => new
                 {
-                    SupplierId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    ContactPerson = table.Column<string>(type: "TEXT", nullable: true),
-                    Phone = table.Column<string>(type: "TEXT", nullable: true),
-                    Email = table.Column<string>(type: "TEXT", nullable: true),
-                    Address = table.Column<string>(type: "TEXT", nullable: true)
+                    SupplierId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    ContactPerson = table.Column<string>(type: "text", nullable: true),
+                    Phone = table.Column<string>(type: "text", nullable: true),
+                    Email = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -180,15 +181,15 @@ namespace DMS.API.Migrations
                 name: "SystemSettings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CompanyName = table.Column<string>(type: "TEXT", nullable: false),
-                    Address = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    Email = table.Column<string>(type: "TEXT", nullable: true),
-                    Website = table.Column<string>(type: "TEXT", nullable: true),
-                    LogoPath = table.Column<string>(type: "TEXT", nullable: true),
-                    LastUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CompanyName = table.Column<string>(type: "text", nullable: false),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
+                    Email = table.Column<string>(type: "text", nullable: true),
+                    Website = table.Column<string>(type: "text", nullable: true),
+                    LogoPath = table.Column<string>(type: "text", nullable: true),
+                    LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -199,32 +200,32 @@ namespace DMS.API.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
-                    FullName = table.Column<string>(type: "TEXT", nullable: false),
-                    Role = table.Column<string>(type: "TEXT", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Status = table.Column<string>(type: "TEXT", nullable: false),
-                    ApprovedBy = table.Column<string>(type: "TEXT", nullable: true),
-                    InvitationToken = table.Column<string>(type: "TEXT", nullable: true),
-                    InvitationExpiry = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    EmployeeId = table.Column<string>(type: "TEXT", nullable: true),
-                    RouteId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SalesmanId = table.Column<int>(type: "INTEGER", nullable: true),
-                    UserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    PasswordHash = table.Column<string>(type: "TEXT", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "TEXT", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    FullName = table.Column<string>(type: "text", nullable: false),
+                    Role = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    InvitationToken = table.Column<string>(type: "text", nullable: true),
+                    InvitationExpiry = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    EmployeeId = table.Column<string>(type: "text", nullable: true),
+                    RouteId = table.Column<int>(type: "integer", nullable: true),
+                    SalesmanId = table.Column<int>(type: "integer", nullable: true),
+                    UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "text", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "text", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -235,13 +236,13 @@ namespace DMS.API.Migrations
                 name: "Vehicles",
                 columns: table => new
                 {
-                    VehicleId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    VehicleNumber = table.Column<string>(type: "TEXT", nullable: false),
-                    DriverName = table.Column<string>(type: "TEXT", nullable: true),
-                    DriverPhone = table.Column<string>(type: "TEXT", nullable: true),
-                    VehicleType = table.Column<string>(type: "TEXT", nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                    VehicleId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    VehicleNumber = table.Column<string>(type: "text", nullable: false),
+                    DriverName = table.Column<string>(type: "text", nullable: true),
+                    DriverPhone = table.Column<string>(type: "text", nullable: true),
+                    VehicleType = table.Column<string>(type: "text", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -252,11 +253,11 @@ namespace DMS.API.Migrations
                 name: "RoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RoleId = table.Column<string>(type: "TEXT", nullable: false),
-                    ClaimType = table.Column<string>(type: "TEXT", nullable: true),
-                    ClaimValue = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -273,8 +274,8 @@ namespace DMS.API.Migrations
                 name: "RolePermissions",
                 columns: table => new
                 {
-                    RoleId = table.Column<string>(type: "TEXT", nullable: false),
-                    PermissionId = table.Column<string>(type: "TEXT", nullable: false)
+                    RoleId = table.Column<string>(type: "text", nullable: false),
+                    PermissionId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -297,18 +298,18 @@ namespace DMS.API.Migrations
                 name: "Customers",
                 columns: table => new
                 {
-                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CustomerName = table.Column<string>(type: "TEXT", nullable: false),
-                    Phone = table.Column<string>(type: "TEXT", nullable: false),
-                    Address = table.Column<string>(type: "TEXT", nullable: true),
-                    Area = table.Column<string>(type: "TEXT", nullable: true),
-                    CreditLimit = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Balance = table.Column<decimal>(type: "TEXT", nullable: false),
-                    EmptyCratesBalance = table.Column<int>(type: "INTEGER", nullable: false),
-                    EmptyBottlesBalance = table.Column<int>(type: "INTEGER", nullable: false),
-                    SalesmanId = table.Column<int>(type: "INTEGER", nullable: true),
-                    RouteId = table.Column<int>(type: "INTEGER", nullable: true)
+                    CustomerId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CustomerName = table.Column<string>(type: "text", nullable: false),
+                    Phone = table.Column<string>(type: "text", nullable: false),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    Area = table.Column<string>(type: "text", nullable: true),
+                    CreditLimit = table.Column<decimal>(type: "numeric", nullable: false),
+                    Balance = table.Column<decimal>(type: "numeric", nullable: false),
+                    EmptyCratesBalance = table.Column<int>(type: "integer", nullable: false),
+                    EmptyBottlesBalance = table.Column<int>(type: "integer", nullable: false),
+                    SalesmanId = table.Column<int>(type: "integer", nullable: true),
+                    RouteId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -329,21 +330,21 @@ namespace DMS.API.Migrations
                 name: "Products",
                 columns: table => new
                 {
-                    ProductId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ProductName = table.Column<string>(type: "TEXT", nullable: false),
-                    Brand = table.Column<string>(type: "TEXT", nullable: true),
-                    Category = table.Column<string>(type: "TEXT", nullable: true),
-                    Barcode = table.Column<string>(type: "TEXT", nullable: true),
-                    PurchasePrice = table.Column<decimal>(type: "TEXT", nullable: false),
-                    SalePrice = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Unit = table.Column<string>(type: "TEXT", nullable: false),
-                    MinStockLevel = table.Column<int>(type: "INTEGER", nullable: false),
-                    ImagePath = table.Column<string>(type: "TEXT", nullable: true),
-                    ExpiryDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    DistributorId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SupplierId = table.Column<int>(type: "INTEGER", nullable: true)
+                    ProductId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ProductName = table.Column<string>(type: "text", nullable: false),
+                    Brand = table.Column<string>(type: "text", nullable: true),
+                    Category = table.Column<string>(type: "text", nullable: true),
+                    Barcode = table.Column<string>(type: "text", nullable: true),
+                    PurchasePrice = table.Column<decimal>(type: "numeric", nullable: false),
+                    SalePrice = table.Column<decimal>(type: "numeric", nullable: false),
+                    Unit = table.Column<string>(type: "text", nullable: false),
+                    MinStockLevel = table.Column<int>(type: "integer", nullable: false),
+                    ImagePath = table.Column<string>(type: "text", nullable: true),
+                    ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DistributorId = table.Column<int>(type: "integer", nullable: true),
+                    SupplierId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -364,16 +365,16 @@ namespace DMS.API.Migrations
                 name: "CompanyLedgers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CompanyId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TransactionType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Amount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    Reference = table.Column<string>(type: "TEXT", nullable: true),
-                    Date = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    RunningBalance = table.Column<decimal>(type: "TEXT", nullable: false),
-                    CreatedByUserId = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CompanyId = table.Column<int>(type: "integer", nullable: false),
+                    TransactionType = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Reference = table.Column<string>(type: "text", nullable: true),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    RunningBalance = table.Column<decimal>(type: "numeric", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -396,13 +397,13 @@ namespace DMS.API.Migrations
                 name: "UserActivityLogs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    UserId = table.Column<string>(type: "TEXT", nullable: false),
-                    LoginTime = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    IPAddress = table.Column<string>(type: "TEXT", nullable: false),
-                    Status = table.Column<string>(type: "TEXT", nullable: false),
-                    Details = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    LoginTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IPAddress = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    Details = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -419,11 +420,11 @@ namespace DMS.API.Migrations
                 name: "UserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    UserId = table.Column<string>(type: "TEXT", nullable: false),
-                    ClaimType = table.Column<string>(type: "TEXT", nullable: true),
-                    ClaimValue = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -440,10 +441,10 @@ namespace DMS.API.Migrations
                 name: "UserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
-                    ProviderKey = table.Column<string>(type: "TEXT", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "TEXT", nullable: true),
-                    UserId = table.Column<string>(type: "TEXT", nullable: false)
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    ProviderKey = table.Column<string>(type: "text", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -460,8 +461,8 @@ namespace DMS.API.Migrations
                 name: "UserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "TEXT", nullable: false),
-                    RoleId = table.Column<string>(type: "TEXT", nullable: false)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    RoleId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -484,10 +485,10 @@ namespace DMS.API.Migrations
                 name: "UserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "TEXT", nullable: false),
-                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Value = table.Column<string>(type: "TEXT", nullable: true)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    LoginProvider = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -504,16 +505,16 @@ namespace DMS.API.Migrations
                 name: "CustomerLedgers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TransactionType = table.Column<int>(type: "INTEGER", nullable: false),
-                    Amount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
-                    Reference = table.Column<string>(type: "TEXT", nullable: true),
-                    Date = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    RunningBalance = table.Column<decimal>(type: "TEXT", nullable: false),
-                    CreatedByUserId = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CustomerId = table.Column<int>(type: "integer", nullable: false),
+                    TransactionType = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    Reference = table.Column<string>(type: "text", nullable: true),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    RunningBalance = table.Column<decimal>(type: "numeric", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -536,22 +537,22 @@ namespace DMS.API.Migrations
                 name: "Invoices",
                 columns: table => new
                 {
-                    InvoiceId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    InvoiceNumber = table.Column<string>(type: "TEXT", nullable: false),
-                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
-                    SalesmanId = table.Column<int>(type: "INTEGER", nullable: true),
-                    InvoiceDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Discount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    NetAmount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    PaidAmount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    RemainingAmount = table.Column<decimal>(type: "TEXT", nullable: false),
-                    PaymentStatus = table.Column<string>(type: "TEXT", nullable: false),
-                    InvoiceType = table.Column<string>(type: "TEXT", nullable: false),
-                    DeliveryDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    RouteId = table.Column<int>(type: "INTEGER", nullable: true),
-                    VehicleId = table.Column<int>(type: "INTEGER", nullable: true)
+                    InvoiceId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    InvoiceNumber = table.Column<string>(type: "text", nullable: false),
+                    CustomerId = table.Column<int>(type: "integer", nullable: false),
+                    SalesmanId = table.Column<int>(type: "integer", nullable: true),
+                    InvoiceDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    Discount = table.Column<decimal>(type: "numeric", nullable: false),
+                    NetAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    PaidAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    RemainingAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    PaymentStatus = table.Column<string>(type: "text", nullable: false),
+                    InvoiceType = table.Column<string>(type: "text", nullable: false),
+                    DeliveryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RouteId = table.Column<int>(type: "integer", nullable: true),
+                    VehicleId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -583,14 +584,14 @@ namespace DMS.API.Migrations
                 name: "Stock",
                 columns: table => new
                 {
-                    StockId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    BatchNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    ExpiryDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    WarehouseLocation = table.Column<string>(type: "TEXT", nullable: true),
-                    LastUpdated = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    StockId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ProductId = table.Column<int>(type: "integer", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    BatchNumber = table.Column<string>(type: "text", nullable: true),
+                    ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    WarehouseLocation = table.Column<string>(type: "text", nullable: true),
+                    LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -607,14 +608,14 @@ namespace DMS.API.Migrations
                 name: "StockTransactions",
                 columns: table => new
                 {
-                    TransactionId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TransactionType = table.Column<string>(type: "TEXT", nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    Date = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Reference = table.Column<string>(type: "TEXT", nullable: true),
-                    ReferenceId = table.Column<int>(type: "INTEGER", nullable: true)
+                    TransactionId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ProductId = table.Column<int>(type: "integer", nullable: false),
+                    TransactionType = table.Column<string>(type: "text", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Reference = table.Column<string>(type: "text", nullable: true),
+                    ReferenceId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -631,14 +632,14 @@ namespace DMS.API.Migrations
                 name: "InvoiceItems",
                 columns: table => new
                 {
-                    InvoiceItemId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    InvoiceId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "TEXT", nullable: false),
-                    TotalPrice = table.Column<decimal>(type: "TEXT", nullable: false),
-                    ReturnedQuantity = table.Column<int>(type: "INTEGER", nullable: false)
+                    InvoiceItemId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    InvoiceId = table.Column<int>(type: "integer", nullable: false),
+                    ProductId = table.Column<int>(type: "integer", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "numeric", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "numeric", nullable: false),
+                    ReturnedQuantity = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -661,12 +662,12 @@ namespace DMS.API.Migrations
                 name: "Payments",
                 columns: table => new
                 {
-                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    InvoiceId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AmountPaid = table.Column<decimal>(type: "TEXT", nullable: false),
-                    PaymentDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    PaymentMethod = table.Column<string>(type: "TEXT", nullable: false)
+                    PaymentId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    InvoiceId = table.Column<int>(type: "integer", nullable: false),
+                    AmountPaid = table.Column<decimal>(type: "numeric", nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -682,7 +683,7 @@ namespace DMS.API.Migrations
             migrationBuilder.InsertData(
                 table: "SystemSettings",
                 columns: new[] { "Id", "Address", "CompanyName", "Email", "LastUpdated", "LogoPath", "PhoneNumber", "Website" },
-                values: new object[] { 1, "Sillanwali, Sargodha Road, Sargodha, Pakistan", "Hamdaan Traders", "contact@hamdaantraders.com", new DateTime(2026, 4, 14, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "+92 300 8843939", null });
+                values: new object[] { 1, "Sillanwali, Sargodha Road, Sargodha, Pakistan", "Hamdaan Traders", "contact@hamdaantraders.com", new DateTime(2026, 4, 14, 0, 0, 0, 0, DateTimeKind.Utc), null, "+92 300 8843939", null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_CompanyLedgers_CompanyId",

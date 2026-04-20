@@ -22,29 +22,91 @@ using Microsoft.AspNetCore.Authorization;
 using System.IO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (!string.IsNullOrEmpty(connectionString))
+// ============================================================
+// DATABASE CONNECTION
+// Priority: DATABASE_URL → DB_CONNECTION_STRING → appsettings → SQLite
+// ============================================================
+static string? BuildNeonConnectionString(IConfiguration config)
 {
-    // DB Connection (Production PostgreSQL via Neon for Persistent Storage)
-    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
-    Console.WriteLine("Using PostgreSQL (Neon) Database Connection.");
+    // 1. DATABASE_URL — recommended Render/Neon standard key
+    var rawUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
+              ?? config["DATABASE_URL"];
+
+    // 2. DB_CONNECTION_STRING — legacy/alternative Render key name
+    if (string.IsNullOrWhiteSpace(rawUrl))
+        rawUrl = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
+              ?? config["DB_CONNECTION_STRING"];
+
+    // 3. appsettings ConnectionStrings:DefaultConnection
+    if (string.IsNullOrWhiteSpace(rawUrl))
+        rawUrl = config.GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrWhiteSpace(rawUrl))
+        return null;
+
+    // Guard: ensure SSL is required (Npgsql keyword form AND URI form)
+    if (!rawUrl.Contains("sslmode=", StringComparison.OrdinalIgnoreCase) &&
+        !rawUrl.Contains("SSL Mode=", StringComparison.OrdinalIgnoreCase))
+    {
+        // URI style (postgresql://...)
+        if (rawUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+            rawUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+        {
+            rawUrl += rawUrl.Contains("?") ? "&sslmode=require" : "?sslmode=require";
+        }
+        else
+        {
+            // Npgsql keyword style (Host=...;Database=...;)
+            rawUrl = rawUrl.TrimEnd(';') + ";SSL Mode=Require;Trust Server Certificate=true;";
+        }
+    }
+
+    Console.WriteLine("[DMS] Connection string source resolved. SSL enforced.");
+    return rawUrl;
+}
+
+var connectionString = BuildNeonConnectionString(builder.Configuration);
+
+if (!string.IsNullOrWhiteSpace(connectionString))
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseNpgsql(connectionString, npgsqlOptions =>
+        {
+            // Resilience: retry transient failures up to 5 times
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorCodesToAdd: null
+            );
+            npgsqlOptions.CommandTimeout(60);
+        });
+    });
+    Console.WriteLine("[DMS] Database provider: PostgreSQL (Neon)");
 }
 else
 {
-    // DB Connection (Fallback to Local SQLite for Development/Testing)
+    // SQLite fallback for local dev without any env vars
     var dbPath = Path.Combine(AppContext.BaseDirectory, "dms.db");
-    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
-    Console.WriteLine($"Using SQLite Database at {dbPath}");
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite($"Data Source={dbPath}"));
+    Console.WriteLine($"[DMS] Database provider: SQLite (dev fallback) → {dbPath}");
 }
 
-// Memory Cache support
+// ============================================================
+// MEMORY CACHE
+// ============================================================
 builder.Services.AddMemoryCache();
 
-// Identity
-builder.Services.AddIdentity<AppUser, AppRole>(options => {
+// ============================================================
+// IDENTITY
+// ============================================================
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
+{
     options.Password.RequireDigit = false;
     options.Password.RequiredLength = 6;
     options.Password.RequireNonAlphanumeric = false;
@@ -53,27 +115,40 @@ builder.Services.AddIdentity<AppUser, AppRole>(options => {
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// JWT
-var jwtKey = "VerySecureSecretKey123!456@789#VeryLongSecret";
+// ============================================================
+// JWT — key is read from env var; NEVER hardcoded in production
+// ============================================================
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+          ?? builder.Configuration["JWT_SECRET_KEY"]
+          ?? "VerySecureSecretKey123!456@789#VeryLongSecret"; // dev-only default
+
+var jwtIssuer   = Environment.GetEnvironmentVariable("JWT_ISSUER")   ?? builder.Configuration["JWT_ISSUER"]   ?? "DMS_SYSTEM";
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")  ?? builder.Configuration["JWT_AUDIENCE"]  ?? "DMS_CLIENT";
+
 var key = Encoding.UTF8.GetBytes(jwtKey);
-builder.Services.AddAuthentication(x => {
+builder.Services.AddAuthentication(x =>
+{
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddJwtBearer(x => {
-    x.TokenValidationParameters = new TokenValidationParameters {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
+.AddJwtBearer(x =>
+{
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer           = true,
+        ValidateAudience         = true,
+        ValidateLifetime         = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = "DMS_SYSTEM",
-        ValidAudience = "DMS_CLIENT",
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ClockSkew = TimeSpan.Zero
+        ValidIssuer              = jwtIssuer,
+        ValidAudience            = jwtAudience,
+        IssuerSigningKey         = new SymmetricSecurityKey(key),
+        ClockSkew                = TimeSpan.Zero
     };
 });
 
-// Register ACTUAL Repositories & Services from your project
+// ============================================================
+// REPOSITORIES & SERVICES
+// ============================================================
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
@@ -91,7 +166,6 @@ builder.Services.AddScoped<ICustomerLedgerService, CustomerLedgerService>();
 builder.Services.AddScoped<ICompanyLedgerService, CompanyLedgerService>();
 builder.Services.AddScoped<DailyOperationsService>();
 
-// FIX: Register missing Email Service to prevent AuthController crash
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<StockService>();
@@ -100,67 +174,128 @@ builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<IFinancialService, FinancialService>();
 builder.Services.AddScoped<ReportService>();
 
-builder.Services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
+// ============================================================
+// MVC / CORS / SWAGGER
+// ============================================================
+builder.Services.AddControllers()
+    .AddJsonOptions(x =>
+        x.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors(options => options.AddPolicy("AllowAll", b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+builder.Services.AddCors(options =>
+    options.AddPolicy("AllowAll", b =>
+        b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
+// ============================================================
+// PORT BINDING — Render injects PORT; fallback to 5000
+// ============================================================
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
+// ============================================================
+// BUILD APP
+// ============================================================
 var app = builder.Build();
 
-// Background DB Init
-_ = Task.Run(async () => {
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    try {
-        // This will create all tables (Users, Roles, etc.) if they don't exist
-        await context.Database.MigrateAsync();
+// ============================================================
+// DB INITIALISATION WITH RETRY
+// ============================================================
+_ = Task.Run(async () =>
+{
+    const int maxAttempts = 5;
+    for (int attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // This will create the 'admin' user AND all default roles/permissions
-        await RoleSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider);
-
-        Console.WriteLine("DB Migration and Admin Seeding Completed Successfully.");
-    } catch (Exception ex) {
-        Console.WriteLine($"DB Initialization Error: {ex.Message}");
+            Console.WriteLine($"[DMS] DB connection attempt {attempt}/{maxAttempts}…");
+            await context.Database.MigrateAsync();
+            await RoleSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider);
+            Console.WriteLine("[DMS] Database connected successfully. Migration and seeding complete.");
+            return; // success — exit loop
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DMS] DB init attempt {attempt} failed: {ex.Message}");
+            if (attempt < maxAttempts)
+            {
+                var delay = TimeSpan.FromSeconds(5 * attempt); // back-off: 5s, 10s, 15s …
+                Console.WriteLine($"[DMS] Retrying in {delay.TotalSeconds}s…");
+                await Task.Delay(delay);
+            }
+            else
+            {
+                Console.WriteLine("[DMS] All DB connection attempts exhausted. App will continue — endpoints will return 503 until DB is reachable.");
+            }
+        }
     }
 });
 
+// ============================================================
+// MIDDLEWARE PIPELINE
+// ============================================================
 app.UseSwagger();
-app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1"); c.RoutePrefix = "swagger"; });
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "DMS v1");
+    c.RoutePrefix = "swagger";
+});
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-// Health Check (Deep Network Diagnostic V2.0 - PostgreSQL)
-app.MapGet("/health", async (ApplicationDbContext context) => {
-    var diagnostic = new Dictionary<string, object>();
-    diagnostic["Version"] = "2.0-Postgres";
-    diagnostic["Status"] = "Alive";
-    diagnostic["Timestamp"] = DateTime.UtcNow;
 
-    // 1. Outbound IP Detection
-    try {
-        using var client = new System.Net.Http.HttpClient();
-        diagnostic["OutboundIP"] = await client.GetStringAsync("https://api.ipify.org");
-    } catch { }
+// ============================================================
+// /api/health — database connectivity check
+// ============================================================
+app.MapGet("/api/health", async (ApplicationDbContext context) =>
+{
+    var response = new Dictionary<string, object>
+    {
+        ["status"]    = "ok",
+        ["timestamp"] = DateTime.UtcNow,
+        ["version"]   = "3.0-Neon"
+    };
 
-    // 2. Database Connection Test
-    try {
-        var provider = context.Database.ProviderName;
-        using var command = context.Database.GetDbConnection().CreateCommand();
-        command.CommandText = "SELECT 1";
+    try
+    {
+        // Open connection and execute lightweight query
         await context.Database.OpenConnectionAsync();
-        await command.ExecuteScalarAsync();
-        diagnostic["Database"] = $"Connected ({provider})";
+        using var cmd = context.Database.GetDbConnection().CreateCommand();
+        cmd.CommandText = "SELECT 1";
+        await cmd.ExecuteScalarAsync();
 
-        // 3. Count Users to verify data
-        var userCount = await context.Users.CountAsync();
-        diagnostic["TotalUsers"] = userCount;
-    } catch (Exception ex) {
-        diagnostic["Database"] = "Disconnected";
-        diagnostic["DB_Error"] = ex.Message;
+        response["database"] = "connected";
+        response["provider"]  = context.Database.ProviderName ?? "unknown";
+
+        // Bonus: user count to prove data is reachable
+        response["totalUsers"] = await context.Users.CountAsync();
+
+        return Results.Ok(response);
     }
-
-    return Results.Ok(diagnostic);
+    catch (Exception ex)
+    {
+        response["status"]   = "error";
+        response["database"] = "disconnected";
+        // Do NOT expose full connection string / credentials
+        response["error"]    = ex.GetType().Name + ": " + ex.Message.Split('\n')[0];
+        return Results.Json(response, statusCode: 503);
+    }
 });
+
+// Legacy health route — kept for backwards compat, redirects to /api/health
+app.MapGet("/health", () => Results.Redirect("/api/health"));
+
 app.MapControllers();
 
+Console.WriteLine($"[DMS] Application started on port {port}.");
 app.Run();
