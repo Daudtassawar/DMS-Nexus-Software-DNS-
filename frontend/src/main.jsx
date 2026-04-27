@@ -6,10 +6,30 @@ import './index.css'
 
 /**
  * CONFIGURATION:
- * Public Render URL for the backend API.
+ * Use local network IP for mobile (Capacitor) compatibility.
+ * Fallback to Render URL if env var is missing.
  */
-const API_BASE_URL = 'https://dms-nexus-software-dns.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://dms-nexus-software-dns-.onrender.com';
 axios.defaults.baseURL = API_BASE_URL;
+
+// Global API error logger
+axios.interceptors.response.use(
+    response => response,
+    error => {
+        const { response, config } = error;
+        const status = response ? response.status : 'NETWORK_ERROR';
+        const method = config?.method?.toUpperCase() || 'UNKNOWN';
+        const url = config?.url || 'UNKNOWN';
+        
+        console.error(`[API ERROR] ${method} ${url} | Status: ${status}`);
+        
+        if (!response) {
+            console.error("[DEBUG] Network error - check if backend is running at:", API_BASE_URL);
+        }
+        
+        return Promise.reject(error);
+    }
+);
 
 console.log(`[DEBUG] main.jsx: API Base URL set to ${axios.defaults.baseURL}`);
 
