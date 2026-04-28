@@ -10,6 +10,7 @@ import AppBadge from '../components/AppBadge';
 import AppInput from '../components/AppInput';
 import { formatCurrency, CURRENCY_SYMBOL } from '../utils/currencyUtils';
 import PaymentAllocationModal from '../components/PaymentAllocationModal';
+import { ExportService } from '../utils/ExportService';
 
 const CustomerLedger = () => {
   const { id } = useParams();
@@ -188,7 +189,7 @@ const CustomerLedger = () => {
       alternateRowStyles: { fillColor: [248, 250, 252] }
     });
     
-    doc.save(`${customer?.customerName.replace(/ /g, '_')}_Account.pdf`);
+    ExportService.savePdf(doc, `${customer?.customerName.replace(/ /g, '_')}_Account.pdf`);
   };
 
   const totalDebit = filteredLedger.filter(l => isDebit(l.transactionType)).reduce((sum, l) => sum + l.amount, 0);

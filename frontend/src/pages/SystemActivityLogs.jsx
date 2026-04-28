@@ -9,6 +9,7 @@ import { ShieldCheck, Search, Filter, RefreshCcw, User, Clock, Layers, FileText,
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { ExportService } from '../utils/ExportService';
 
 const MODULES = ['All', 'Auth', 'Products', 'Stock', 'Invoices', 'Distributors', 'Users', 'Operations', 'Finance', 'System'];
 
@@ -144,7 +145,7 @@ export default function SystemActivityLogs() {
             headStyles: { fillColor: [59, 130, 246] }, // Blue-500
         });
 
-        doc.save(`activity_log_${new Date().toISOString().split('T')[0]}.pdf`);
+        ExportService.savePdf(doc, `activity_log_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
     const handleExportExcel = () => {
@@ -159,7 +160,7 @@ export default function SystemActivityLogs() {
         })));
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Activity Logs");
-        XLSX.writeFile(workbook, `activity_log_${new Date().toISOString().split('T')[0]}.xlsx`);
+        ExportService.saveExcel(workbook, `activity_log_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     return (

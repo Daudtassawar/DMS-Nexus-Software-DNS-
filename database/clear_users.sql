@@ -14,3 +14,4 @@ DELETE FROM [AspNetUsers];
 GO
 
 -- We leave AspNetRoles intact.
+\

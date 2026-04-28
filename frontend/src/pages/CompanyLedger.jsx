@@ -9,6 +9,7 @@ import AppButton from '../components/AppButton';
 import AppBadge from '../components/AppBadge';
 import AppInput from '../components/AppInput';
 import { formatCurrency, CURRENCY_SYMBOL } from '../utils/currencyUtils';
+import { ExportService } from '../utils/ExportService';
 
 const CompanyLedger = () => {
   const { id } = useParams();
@@ -186,7 +187,7 @@ const CompanyLedger = () => {
       alternateRowStyles: { fillColor: [248, 250, 252] }
     });
     
-    doc.save(`${company?.name.replace(/ /g, '_')}_Statement.pdf`);
+    ExportService.savePdf(doc, `${company?.name.replace(/ /g, '_')}_Statement.pdf`);
   };
 
   const totalCredit = filteredLedger.filter(l => isCredit(l.transactionType)).reduce((sum, l) => sum + l.amount, 0);

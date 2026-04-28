@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { formatCurrency } from './currencyUtils';
+import { ExportService } from './ExportService';
 
 export const generateProfessionalInvoicePDF = (invoice, settings) => {
     if (!invoice) return;
@@ -154,6 +155,6 @@ export const generateProfessionalInvoicePDF = (invoice, settings) => {
     doc.setTextColor(148, 163, 184); // slate-400
     doc.text("Thank you for your business.", pageWidth / 2, pageHeight - 15, { align: "center" });
 
-    // Automatically download the PDF
-    doc.save(`Invoice_${invoice.invoiceNumber || invoice.invoiceId}.pdf`);
+    // Automatically download/share the PDF
+    ExportService.savePdf(doc, `Invoice_${invoice.invoiceNumber || invoice.invoiceId}.pdf`);
 };

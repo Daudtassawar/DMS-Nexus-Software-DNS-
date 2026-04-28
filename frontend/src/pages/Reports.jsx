@@ -10,6 +10,7 @@ import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppBadge from '../components/AppBadge';
 import { formatCurrency } from '../utils/currencyUtils';
+import { ExportService } from '../utils/ExportService';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -88,7 +89,7 @@ export default function Reports() {
             if (data.length > 0) {
                 const ws = xlsx.utils.json_to_sheet(data);
                 xlsx.utils.book_append_sheet(wb, ws, "Report");
-                xlsx.writeFile(wb, `${filename}.xlsx`);
+                ExportService.saveExcel(wb, `${filename}.xlsx`);
             }
         } else if (format === 'pdf') {
             const doc = new jsPDF();
@@ -123,7 +124,7 @@ export default function Reports() {
                     theme: 'grid',
                     headStyles: { fillColor: [37, 99, 235] }
                 });
-                doc.save(`${filename}.pdf`);
+                ExportService.savePdf(doc, `${filename}.pdf`);
             }
         }
     };
