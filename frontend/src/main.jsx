@@ -6,30 +6,11 @@ import './index.css'
 
 /**
  * CONFIGURATION:
- * Use local network IP for mobile (Capacitor) compatibility.
- * Fallback to Render URL if env var is missing.
+ * Using your computer's local IP (192.168.8.35) so your phone can talk to the backend.
+ * Make sure your phone is connected to the same Wi-Fi.
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://dms-nexus-software-dns-.onrender.com';
+const API_BASE_URL = 'http://192.168.8.35:5000';
 axios.defaults.baseURL = API_BASE_URL;
-
-// Global API error logger
-axios.interceptors.response.use(
-    response => response,
-    error => {
-        const { response, config } = error;
-        const status = response ? response.status : 'NETWORK_ERROR';
-        const method = config?.method?.toUpperCase() || 'UNKNOWN';
-        const url = config?.url || 'UNKNOWN';
-        
-        console.error(`[API ERROR] ${method} ${url} | Status: ${status}`);
-        
-        if (!response) {
-            console.error("[DEBUG] Network error - check if backend is running at:", API_BASE_URL);
-        }
-        
-        return Promise.reject(error);
-    }
-);
 
 console.log(`[DEBUG] main.jsx: API Base URL set to ${axios.defaults.baseURL}`);
 

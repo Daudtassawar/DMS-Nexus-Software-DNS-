@@ -1,102 +1,19 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { formatCurrency } from './currencyUtils';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-
-const saveAndShareFile = async (base64Data, filename) => {
-  if (Capacitor.isNativePlatform()) {
-    try {
-      const savedFile = await Filesystem.writeFile({
-        path: filename,
-        data: base64Data,
-        directory: Directory.Cache
-      });
-      await Share.share({
-        title: filename,
-        url: savedFile.uri,
-      });
-    } catch (e) {
-      console.error('Error saving/sharing file', e);
-      alert('Failed to save file: ' + e.message);
-    }
-  }
-};
 
 export const ExportService = {
-  /**
-   * Save and share a jsPDF document (handles native and web platforms)
-   * @param {Object} doc - jsPDF instance
-   * @param {string} filename - Output filename (with extension)
-   */
-  savePdf: async (doc, filename) => {
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const base64 = doc.output('datauristring').split(',')[1];
-        const savedFile = await Filesystem.writeFile({
-          path: filename,
-          data: base64,
-          directory: Directory.Cache
-        });
-        await Share.share({
-          title: filename,
-          url: savedFile.uri,
-        });
-      } catch (e) {
-        console.error('Error saving/sharing PDF file', e);
-        alert('Failed to save PDF file: ' + e.message);
-      }
-    } else {
-      doc.save(filename);
-    }
-  },
-
-  /**
-   * Save and share an Excel workbook (handles native and web platforms)
-   * @param {Object} wb - XLSX workbook instance
-   * @param {string} filename - Output filename (with extension)
-   */
-  saveExcel: async (wb, filename) => {
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-        const savedFile = await Filesystem.writeFile({
-          path: filename,
-          data: base64,
-          directory: Directory.Cache
-        });
-        await Share.share({
-          title: filename,
-          url: savedFile.uri,
-        });
-      } catch (e) {
-        console.error('Error saving/sharing Excel file', e);
-        alert('Failed to save Excel file: ' + e.message);
-      }
-    } else {
-      XLSX.writeFile(wb, filename);
-    }
-  },
-
   /**
    * Export JSON array to an Excel file
    * @param {Array} data - Array of objects to export
    * @param {string} filename - Output filename (without extension)
    */
-  exportToExcel: async (data, filename) => {
+  exportToExcel: (data, filename) => {
     if (!data || data.length === 0) return;
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Data");
-    
-    if (Capacitor.isNativePlatform()) {
-      const base64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-      await saveAndShareFile(base64, `${filename}.xlsx`);
-    } else {
-      XLSX.writeFile(wb, `${filename}.xlsx`);
-    }
+    XLSX.writeFile(wb, `${filename}.xlsx`);
   },
 
   /**
@@ -106,7 +23,7 @@ export const ExportService = {
    * @param {string} filename - Output filename (without extension)
    * @param {string} title - Title text rendered inside the PDF document
    */
-  exportToPDF: async (data, columns, filename, title) => {
+  exportToPDF: (data, columns, filename, title) => {
     if (!data || data.length === 0) return;
     const doc = new jsPDF();
     
@@ -123,7 +40,7 @@ export const ExportService = {
       body: data.map(row => columns.map(c => {
           let val = row[c.key];
           if (val === null || val === undefined) return '-';
-          if (typeof val === 'number' && c.isCurrency) return formatCurrency(val);
+          if (typeof val === 'number' && c.isCurrency) return `Rs. ${val.toLocaleString()}`;
           return val;
       })),
       theme: 'grid',
@@ -131,11 +48,6 @@ export const ExportService = {
       styles: { fontSize: 9 }
     });
 
-    if (Capacitor.isNativePlatform()) {
-      const base64 = doc.output('datauristring').split(',')[1];
-      await saveAndShareFile(base64, `${filename}.pdf`);
-    } else {
-      doc.save(`${filename}.pdf`);
-    }
+    doc.save(`${filename}.pdf`);
   }
 };

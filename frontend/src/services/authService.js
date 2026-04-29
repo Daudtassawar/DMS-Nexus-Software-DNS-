@@ -1,23 +1,17 @@
 import axios from 'axios';
 console.log("[DEBUG] authService.js: Module evaluation started");
 
-// API URL — uses axios.defaults.baseURL set globally in main.jsx
+// API URL Base
 const API_URL = '/api/v1/auth';
 
 const login = async (username, password) => {
     const response = await axios.post(`${API_URL}/login`, { username, password });
+    // Backend returns Token (capital T) and User (capital U) — normalize to lowercase for consistency
     const rawData = response.data;
-
-    // BACKEND NORMALIZE: Ensure we extract the token regardless of casing
     const token = rawData.token || rawData.Token;
     const user = rawData.user || rawData.User;
-
     if (token) {
-        // SAVE CONSISTENTLY: Always save as lowercase 'token' and 'user'
-        const normalized = {
-            token: token,
-            user: user
-        };
+        const normalized = { token, user };
         localStorage.setItem('dms_user', JSON.stringify(normalized));
         setupAxiosInterceptors(token);
     }
@@ -99,9 +93,7 @@ const deleteUser = async (username) => {
 
 const logout = () => {
     localStorage.removeItem('dms_user');
-    // On Android, window.location.href = '/login' can crash or fail.
-    // Use window.location.reload() to refresh the state and let React Router take over.
-    window.location.reload();
+    window.location.href = '/login';
 };
 
 const getCurrentUser = () => {

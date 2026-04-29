@@ -9,7 +9,6 @@ import { ShieldCheck, Search, Filter, RefreshCcw, User, Clock, Layers, FileText,
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { ExportService } from '../utils/ExportService';
 
 const MODULES = ['All', 'Auth', 'Products', 'Stock', 'Invoices', 'Distributors', 'Users', 'Operations', 'Finance', 'System'];
 
@@ -62,15 +61,9 @@ export default function SystemActivityLogs() {
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
 
-    // Pagination
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
-    const pageSize = 20;
+    useEffect(() => { fetchLogs(); }, []);
 
-    useEffect(() => { fetchLogs(currentPage); }, [currentPage]);
-
-    const fetchLogs = async (page = 1) => {
+    const fetchLogs = async () => {
         setLoading(true); setError('');
         try {
             const data = await auditLogService.getLogs({
@@ -78,13 +71,8 @@ export default function SystemActivityLogs() {
                 module: selectedModule !== 'All' ? selectedModule : undefined,
                 fromDate: fromDate || undefined,
                 toDate: toDate || undefined,
-                pageNumber: page,
-                pageSize: pageSize
             });
-            setLogs(data.items || []);
-            setTotalPages(data.totalPages || 1);
-            setTotalCount(data.totalCount || 0);
-            setCurrentPage(data.page || 1);
+            setLogs(data || []);
         } catch {
             setError('Failed to load activity logs.');
         } finally {
@@ -105,8 +93,7 @@ export default function SystemActivityLogs() {
 
     const handleSearch = (e) => {
         if (e) e.preventDefault();
-        setCurrentPage(1);
-        fetchLogs(1);
+        fetchLogs();
     };
 
     const formatDate = (ts) => {
@@ -145,7 +132,7 @@ export default function SystemActivityLogs() {
             headStyles: { fillColor: [59, 130, 246] }, // Blue-500
         });
 
-        ExportService.savePdf(doc, `activity_log_${new Date().toISOString().split('T')[0]}.pdf`);
+        doc.save(`activity_log_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
     const handleExportExcel = () => {
@@ -160,7 +147,7 @@ export default function SystemActivityLogs() {
         })));
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Activity Logs");
-        ExportService.saveExcel(workbook, `activity_log_${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(workbook, `activity_log_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     return (
@@ -255,11 +242,7 @@ export default function SystemActivityLogs() {
             <AppCard p0 className="overflow-hidden shadow-sm border border-[var(--border)]">
                 <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                        {totalCount > 0 ? (
-                            <>Showing {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, totalCount)} of {totalCount} logs</>
-                        ) : (
-                            <>No events found</>
-                        )}
+                        Found {filtered.length} matching events
                     </span>
                 </div>
                 <AppTable
@@ -308,59 +291,6 @@ export default function SystemActivityLogs() {
                         </>
                     )}
                 />
-
-                {/* Pagination Controls */}
-                <div className="p-4 bg-white border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <AppButton 
-                            variant="secondary" 
-                            size="sm" 
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1 || loading}
-                            className="rounded-md"
-                        >
-                            Previous
-                        </AppButton>
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                // Simple sliding window for numbers
-                                let pageNum = i + 1;
-                                if (totalPages > 5 && currentPage > 3) {
-                                    pageNum = currentPage - 2 + i;
-                                    if (pageNum > totalPages) pageNum = totalPages - (4 - i);
-                                }
-                                if (pageNum <= 0) return null;
-                                if (pageNum > totalPages) return null;
-
-                                return (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-8 h-8 rounded-md text-xs font-bold transition-colors ${
-                                            currentPage === pageNum 
-                                                ? 'bg-blue-600 text-white shadow-sm' 
-                                                : 'text-slate-500 hover:bg-slate-100'
-                                        }`}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        <AppButton 
-                            variant="secondary" 
-                            size="sm" 
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages || loading}
-                            className="rounded-md"
-                        >
-                            Next
-                        </AppButton>
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        Page {currentPage} of {totalPages}
-                    </span>
-                </div>
             </AppCard>
         </div>
     );

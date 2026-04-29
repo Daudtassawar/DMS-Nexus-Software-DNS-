@@ -8,7 +8,6 @@ import {
     TrendingUp, Calendar, Target, Zap, 
     ArrowUpRight, AlertCircle, Sparkles, BrainCircuit
 } from 'lucide-react';
-import { formatCurrency } from '../utils/currencyUtils';
 
 const SalesForecast = () => {
     const [loading, setLoading] = useState(true);
@@ -105,7 +104,7 @@ const SalesForecast = () => {
                                 <YAxis hide domain={['auto', 'auto']} />
                                 <Tooltip 
                                     contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                                    formatter={(val) => [formatCurrency(val, false), 'Amount']}
+                                    formatter={(val) => [`$${parseFloat(val).toLocaleString()}`, 'Amount']}
                                     labelStyle={{ fontWeight: 'black', textTransform: 'uppercase', fontSize: '10px', color: '#64748b' }}
                                 />
                                 <Area type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={4} fill="url(#actualGradient)" dot={{ r: 4, stroke: '#2563eb', fill: '#0f172a', strokeWidth: 2 }} activeDot={{ r: 6 }} />
@@ -128,7 +127,7 @@ const SalesForecast = () => {
                              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Projected Peak</p>
                                  <h2 className="text-2xl font-bold text-white italic tracking-tighter">
-                                     {formatCurrency(Math.max(...data.forecast.map(x => x.predictedAmount)), false)}
+                                     ${Math.max(...data.forecast.map(x => x.predictedAmount)).toLocaleString()}
                                  </h2>
                                  <p className="text-[9px] font-bold text-emerald-400 uppercase mt-1 italic tracking-widest flex items-center gap-1">
                                      <ArrowUpRight size={10}/> Expecting Growth

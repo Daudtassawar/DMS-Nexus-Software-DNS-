@@ -4,7 +4,6 @@ import authService from '../services/authService';
 import AppButton from '../components/AppButton';
 import AppInput from '../components/AppInput';
 import { KeyRound, ShieldCheck } from 'lucide-react';
-import systemSettingsService from '../services/systemSettingsService';
 
 export default function SetPassword() {
     const [searchParams] = useSearchParams();
@@ -16,14 +15,11 @@ export default function SetPassword() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [companyName, setCompanyName] = useState('Hamdaan Traders');
 
     useEffect(() => {
         if (!token) {
             setError('Invalid or missing invitation token.');
         }
-        // Fetch company name for branding
-        systemSettingsService.getSettings().then(s => setCompanyName(s.companyName)).catch(() => {});
     }, [token]);
 
     const handleSubmit = async (e) => {
@@ -105,7 +101,7 @@ export default function SetPassword() {
                 )}
             </div>
             <div className="fixed bottom-8 text-center w-full z-0 text-[10px] uppercase tracking-[0.5em] font-bold text-[var(--text-muted)] opacity-50 select-none">
-                {companyName} // Secured Authentication
+                Hamdaan Traders // Secured Authentication
             </div>
         </div>
     );

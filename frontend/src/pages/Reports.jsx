@@ -3,14 +3,10 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import * as xlsx from 'xlsx';
 import { Download, FileText, Calendar, TrendingUp, Package, DollarSign, AlertTriangle, Layers, PieChart as PieIcon, RefreshCcw, CheckCircle, Info, ChevronRight, FileSpreadsheet } from 'lucide-react';
 import reportService from '../services/reportService';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppTable from '../components/AppTable';
 import AppBadge from '../components/AppBadge';
-import { formatCurrency } from '../utils/currencyUtils';
-import { ExportService } from '../utils/ExportService';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -68,73 +64,17 @@ export default function Reports() {
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    const handleExport = (format) => {
+    const handleExport = (type) => {
         const d = new Date().toISOString().split('T')[0];
-        const filename = `${activeTab}_report_${d}`;
-
-        if (format === 'excel') {
-            const wb = xlsx.utils.book_new();
-            let data = [];
-            
-            if (activeTab === 'sales' && salesData) {
-                data = salesData.dailySales;
-            } else if (activeTab === 'products' && productData) {
-                data = productData.topSellingProducts;
-            } else if (activeTab === 'finance' && financeData) {
-                data = financeData.outstandingInvoices;
-            } else if (activeTab === 'inventory' && inventoryData) {
-                data = inventoryData.inventorySummary;
-            }
-
-            if (data.length > 0) {
-                const ws = xlsx.utils.json_to_sheet(data);
-                xlsx.utils.book_append_sheet(wb, ws, "Report");
-                ExportService.saveExcel(wb, `${filename}.xlsx`);
-            }
-        } else if (format === 'pdf') {
-            const doc = new jsPDF();
-            doc.setFontSize(20);
-            doc.text(`${activeTab.toUpperCase()} REPORT`, 14, 22);
-            doc.setFontSize(10);
-            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
-            doc.text(`Date Range: ${dateRange.start || 'Beginning'} to ${dateRange.end || 'Today'}`, 14, 35);
-
-            let tableData = [];
-            let headers = [];
-
-            if (activeTab === 'sales' && salesData) {
-                headers = [["Date", "Total Revenue"]];
-                tableData = salesData.dailySales.map(r => [r.date, formatCurrency(r.total)]);
-            } else if (activeTab === 'products' && productData) {
-                headers = [["Product Name", "Quantity Sold", "Revenue"]];
-                tableData = productData.topSellingProducts.map(r => [r.productName, r.quantitySold, formatCurrency(r.revenue)]);
-            } else if (activeTab === 'finance' && financeData) {
-                headers = [["Customer", "Invoice", "Balance"]];
-                tableData = financeData.outstandingInvoices.map(r => [r.customerName, r.invoiceNumber, formatCurrency(r.balance)]);
-            } else if (activeTab === 'inventory' && inventoryData) {
-                headers = [["Product", "Category", "Quantity", "Status"]];
-                tableData = inventoryData.inventorySummary.map(r => [r.productName, r.category, r.totalQuantity, r.status]);
-            }
-
-            if (tableData.length > 0) {
-                autoTable(doc, {
-                    head: headers,
-                    body: tableData,
-                    startY: 45,
-                    theme: 'grid',
-                    headStyles: { fillColor: [37, 99, 235] }
-                });
-                ExportService.savePdf(doc, `${filename}.pdf`);
+        if (activeTab === 'sales' && salesData) {
+            if (type === 'excel') {
+                const ws = xlsx.utils.json_to_sheet(salesData.dailySales);
+                const wb = xlsx.utils.book_new();
+                xlsx.utils.book_append_sheet(wb, ws, "Sales");
+                xlsx.writeFile(wb, `Sales_Report_${d}.xlsx`);
             }
         }
     };
-
-    const NoData = () => (
-        <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] space-y-2 opacity-60">
-            <Info size={40} strokeWidth={1}/>
-            <p className="text-[10px] font-bold uppercase tracking-widest">Insufficient activity records for this period</p>
-        </div>
-    );
 
     const ChartTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
@@ -144,7 +84,7 @@ export default function Reports() {
                         {payload[0].payload.date || payload[0].payload.month || payload[0].payload.productName}
                     </p>
                     <p className="text-sm font-bold text-[var(--text-main)]">
-                        Value: {formatCurrency(payload[0].value)}
+                        Value: Rs. {payload[0].value.toLocaleString()}
                     </p>
                 </div>
             );
@@ -185,7 +125,7 @@ export default function Reports() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard icon={DollarSign} label="Total Sales" value={formatCurrency(dashboard.totals?.todaySales || 0, false)} color="var(--primary)" trend="12.5" />
+                <MetricCard icon={DollarSign} label="Total Sales" value={`Rs.${(dashboard.totals?.todaySales || 0).toLocaleString()}`} color="var(--primary)" trend="12.5" />
                 <MetricCard icon={FileText} label="Invoice Volume" value={dashboard.totals?.todayInvoices || 0} color="#10b981" trend="4.2" />
                 <MetricCard icon={Package} label="Core Products" value={dashboard.totals?.totalProducts || 0} color="#8b5cf6" />
                 <MetricCard icon={AlertTriangle} label="Low Stock Items" value={dashboard.totals?.lowStock || 0} color="#ef4444" />
@@ -243,23 +183,22 @@ export default function Reports() {
                                             <div className="w-1 h-5 bg-[var(--primary)] rounded-full"></div>
                                             <h3 className="text-sm font-bold text-[var(--text-main)] uppercase tracking-wider">Revenue Over Time</h3>
                                         </div>
-                                        <div className="h-72 w-full relative">
+                                        <div className="h-96 w-full bg-[var(--secondary)] rounded-xl p-6 border border-[var(--border)]">
                                             <ResponsiveContainer>
                                                 <AreaChart data={salesData.dailySales}>
                                                     <defs>
                                                         <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.1}/>
-                                                            <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                                                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                                                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                                                         </linearGradient>
                                                     </defs>
                                                     <XAxis dataKey="date" hide />
                                                     <YAxis hide />
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                                                     <RechartsTooltip content={<ChartTooltip />} />
-                                                    <Area type="monotone" dataKey="total" stroke="var(--primary)" strokeWidth={3} fill="url(#colorSales)" />
+                                                    <Area type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={3} fill="url(#colorSales)" />
                                                 </AreaChart>
                                             </ResponsiveContainer>
-                                            {salesData.dailySales.length === 0 && <NoData />}
                                         </div>
                                     </div>
 
@@ -269,7 +208,7 @@ export default function Reports() {
                                                 <div className="w-1 h-5 bg-emerald-500 rounded-full"></div>
                                                 <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Monthly Performance</h3>
                                             </div>
-                                            <div className="h-64 px-4 bg-[var(--secondary)] border border-[var(--border)] rounded-xl flex items-center relative">
+                                            <div className="h-64 px-4 bg-[var(--secondary)] border border-[var(--border)] rounded-xl flex items-center">
                                                 <ResponsiveContainer>
                                                     <BarChart data={salesData.monthlySales}>
                                                         <XAxis dataKey="month" hide/>
@@ -278,7 +217,6 @@ export default function Reports() {
                                                         <Bar dataKey="total" fill="#10b981" radius={[4,4,0,0]} barSize={32}/>
                                                     </BarChart>
                                                 </ResponsiveContainer>
-                                                {salesData.monthlySales.length === 0 && <NoData />}
                                             </div>
                                         </div>
                                         <div className="space-y-6">
@@ -286,7 +224,7 @@ export default function Reports() {
                                                 <div className="w-1 h-5 bg-indigo-500 rounded-full"></div>
                                                 <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Sales Representative Yield</h3>
                                             </div>
-                                            <div className="h-64 px-4 bg-[var(--secondary)] border border-[var(--border)] rounded-xl flex items-center relative">
+                                            <div className="h-64 px-4 bg-[var(--secondary)] border border-[var(--border)] rounded-xl flex items-center">
                                                 <ResponsiveContainer>
                                                     <BarChart data={salesData.salesBySalesman} layout="vertical">
                                                         <XAxis type="number" hide/>
@@ -294,7 +232,6 @@ export default function Reports() {
                                                         <RechartsTooltip content={<ChartTooltip/>}/><Bar dataKey="totalSales" fill="#8b5cf6" radius={[0,4,4,0]} barSize={24}/>
                                                     </BarChart>
                                                 </ResponsiveContainer>
-                                                {salesData.salesBySalesman.length === 0 && <NoData />}
                                             </div>
                                         </div>
                                     </div>
@@ -308,7 +245,7 @@ export default function Reports() {
                                             <div className="w-1 h-6 bg-emerald-500 rounded-full"></div>
                                             <h3 className="text-base font-bold text-[var(--text-main)] uppercase tracking-wide">Top Selling Products</h3>
                                         </div>
-                                        <div className="h-80 px-6 bg-[var(--secondary)] border border-[var(--border)] rounded-xl pt-6 relative">
+                                        <div className="h-80 px-6 bg-[var(--secondary)] border border-[var(--border)] rounded-xl pt-6">
                                             <ResponsiveContainer>
                                                 <BarChart data={productData.topSellingProducts} layout="vertical">
                                                     <XAxis type="number" hide/>
@@ -316,7 +253,6 @@ export default function Reports() {
                                                     <RechartsTooltip content={<ChartTooltip/>}/><Bar dataKey="quantitySold" fill="#10b981" radius={[0,4,4,0]} barSize={16}/>
                                                 </BarChart>
                                             </ResponsiveContainer>
-                                            {productData.topSellingProducts.length === 0 && <NoData />}
                                         </div>
                                     </div>
                                     <div className="space-y-6">
@@ -324,7 +260,7 @@ export default function Reports() {
                                             <div className="w-1 h-6 bg-amber-500 rounded-full"></div>
                                             <h3 className="text-base font-bold text-[var(--text-main)] uppercase tracking-wide">Slow Moving Items</h3>
                                         </div>
-                                        <div className="h-80 px-6 bg-[var(--secondary)] border border-[var(--border)] rounded-xl pt-6 relative">
+                                        <div className="h-80 px-6 bg-[var(--secondary)] border border-[var(--border)] rounded-xl pt-6">
                                             <ResponsiveContainer>
                                                 <BarChart data={productData.slowMovingProducts} layout="vertical">
                                                     <XAxis type="number" hide/>
@@ -332,7 +268,6 @@ export default function Reports() {
                                                     <RechartsTooltip content={<ChartTooltip/>}/><Bar dataKey="quantitySold" fill="#f59e0b" radius={[0,4,4,0]} barSize={16}/>
                                                 </BarChart>
                                             </ResponsiveContainer>
-                                            {productData.slowMovingProducts.length === 0 && <NoData />}
                                         </div>
                                     </div>
                                 </div>
@@ -382,7 +317,7 @@ export default function Reports() {
                                                                <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase mt-1">Invoice: {i.invoiceNumber}</p>
                                                            </td>
                                                            <td className="px-6 py-4 text-right">
-                                                               <div className="text-base font-bold text-red-600 tabular-nums">{formatCurrency(i.balance)}</div>
+                                                               <div className="text-base font-bold text-red-600 tabular-nums">Rs.{i.balance.toLocaleString()}</div>
                                                            </td>
                                                        </>
                                                    )}

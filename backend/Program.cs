@@ -220,6 +220,21 @@ _ = Task.Run(async () =>
             Console.WriteLine($"[DMS] DB connection attempt {attempt}/{maxAttempts}…");
             await context.Database.MigrateAsync();
             await RoleSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider);
+
+            // SECURITY FIX: Ensure admin is always approved and has the correct password for recovery
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            var admin = await userManager.FindByNameAsync("admin");
+            if (admin != null)
+            {
+                admin.Status = "Approved";
+                admin.IsActive = true;
+                await userManager.UpdateAsync(admin);
+
+                // Reset password to ensure it matches what we expect
+                var token = await userManager.GeneratePasswordResetTokenAsync(admin);
+                await userManager.ResetPasswordAsync(admin, token, "Admin@123!");
+            }
+
             Console.WriteLine("[DMS] Database connected successfully. Migration and seeding complete.");
             return; // success — exit loop
         }

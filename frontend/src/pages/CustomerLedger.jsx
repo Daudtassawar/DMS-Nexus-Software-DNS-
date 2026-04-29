@@ -8,9 +8,6 @@ import AppCard from '../components/AppCard';
 import AppButton from '../components/AppButton';
 import AppBadge from '../components/AppBadge';
 import AppInput from '../components/AppInput';
-import { formatCurrency, CURRENCY_SYMBOL } from '../utils/currencyUtils';
-import PaymentAllocationModal from '../components/PaymentAllocationModal';
-import { ExportService } from '../utils/ExportService';
 
 const CustomerLedger = () => {
   const { id } = useParams();
@@ -25,9 +22,8 @@ const CustomerLedger = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Transaction Modal States
+  // Transaction Modal State
   const [showModal, setShowModal] = useState(false);
-  const [showAllocationModal, setShowAllocationModal] = useState(false);
   const [transaction, setTransaction] = useState({ id: null, transactionType: 'Debit', amount: '', description: '', reference: '', date: '' });
 
   // Undo Delete Queue Mechanics
@@ -172,13 +168,13 @@ const CustomerLedger = () => {
         new Date(l.date).toLocaleDateString(),
         l.description,
         l.reference || '-',
-        isDebit(l.transactionType) ? formatCurrency(l.amount) : '-',
-        isCredit(l.transactionType) ? formatCurrency(l.amount) : '-',
-        formatCurrency(l.runningBalance)
+        isDebit(l.transactionType) ? `Rs. ${l.amount.toLocaleString()}` : '-',
+        isCredit(l.transactionType) ? `Rs. ${l.amount.toLocaleString()}` : '-',
+        `Rs. ${l.runningBalance.toLocaleString()}`
       ]);
     });
 
-    tableRows.push(['', '', 'TOTALS:', formatCurrency(totalDebit), formatCurrency(totalCredit), formatCurrency(totalDebit - totalCredit)]);
+    tableRows.push(['', '', 'TOTALS:', `Rs. ${totalDebit.toLocaleString()}`, `Rs. ${totalCredit.toLocaleString()}`, `Rs. ${(totalDebit - totalCredit).toLocaleString()}`]);
 
     doc.autoTable({
       head: [tableColumn],
@@ -189,7 +185,7 @@ const CustomerLedger = () => {
       alternateRowStyles: { fillColor: [248, 250, 252] }
     });
     
-    ExportService.savePdf(doc, `${customer?.customerName.replace(/ /g, '_')}_Account.pdf`);
+    doc.save(`${customer?.customerName.replace(/ /g, '_')}_Account.pdf`);
   };
 
   const totalDebit = filteredLedger.filter(l => isDebit(l.transactionType)).reduce((sum, l) => sum + l.amount, 0);
@@ -228,11 +224,8 @@ const CustomerLedger = () => {
           <AppButton variant="secondary" onClick={exportPDF} className="rounded-md">
             <Download size={18} className="mr-2"/> Export Statement
           </AppButton>
-          <AppButton variant="secondary" onClick={() => { resetTransactionForm(); setShowModal(true); }} className="rounded-md">
-            <Edit2 size={18} className="mr-2"/> Manual Adjustment
-          </AppButton>
-          <AppButton onClick={() => setShowAllocationModal(true)} className="rounded-md bg-blue-600">
-            <Plus size={18} className="mr-2"/> Multi-Invoice Payment
+          <AppButton onClick={() => { resetTransactionForm(); setShowModal(true); }} className="rounded-md">
+            <Plus size={18} className="mr-2"/> Record Payment
           </AppButton>
         </div>
       </div>
@@ -254,19 +247,19 @@ const CustomerLedger = () => {
 
         <AppCard className="border-t-4 border-t-blue-500 border-x-slate-200 border-b-slate-200">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2"><ArrowUpRight size={12} className="text-blue-500"/> Total Billings</p>
-          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{formatCurrency(totalDebit, false)}</h4>
+          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">Rs. {totalDebit.toLocaleString()}</h4>
           <p className="text-[10px] font-bold text-blue-500 uppercase mt-2">Invoice Total (+)</p>
         </AppCard>
 
         <AppCard className="border-t-4 border-t-emerald-500 border-x-slate-200 border-b-slate-200">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-2"><ArrowDownRight size={12} className="text-emerald-500"/> Total Payments</p>
-          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">{formatCurrency(totalCredit, false)}</h4>
+          <h4 className="text-2xl font-bold text-slate-900 tabular-nums">Rs. {totalCredit.toLocaleString()}</h4>
           <p className="text-[10px] font-bold text-emerald-500 uppercase mt-2">Payment Total (-)</p>
         </AppCard>
 
         <AppCard className={`border-t-4 border-x-slate-200 border-b-slate-200 ${(totalDebit - totalCredit) > 0 ? 'border-t-red-500' : 'border-t-emerald-500'}`}>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Receivable Balance</p>
-          <h4 className={`text-2xl font-bold tabular-nums ${(totalDebit - totalCredit) > 0 ? 'text-red-600' : 'text-emerald-500'}`}>{formatCurrency(totalDebit - totalCredit, false)}</h4>
+          <h4 className={`text-2xl font-bold tabular-nums ${(totalDebit - totalCredit) > 0 ? 'text-red-600' : 'text-emerald-500'}`}>Rs. {(totalDebit - totalCredit).toLocaleString()}</h4>
           <p className="text-[10px] font-bold text-slate-500 uppercase mt-2">{(totalDebit - totalCredit) > 0 ? 'Outstanding Dues' : 'Account Balanced'}</p>
         </AppCard>
       </div>
@@ -334,16 +327,16 @@ const CustomerLedger = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {isDebit(l.transactionType) ? (
-                        <span className="text-sm font-bold text-blue-600 tabular-nums">+ {formatCurrency(l.amount)}</span>
+                        <span className="text-sm font-bold text-blue-600 tabular-nums">+ {l.amount.toLocaleString()}</span>
                       ) : <span className="text-slate-200">--</span>}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {isCredit(l.transactionType) ? (
-                        <span className="text-sm font-bold text-emerald-600 tabular-nums">- {formatCurrency(l.amount)}</span>
+                        <span className="text-sm font-bold text-emerald-600 tabular-nums">- {l.amount.toLocaleString()}</span>
                       ) : <span className="text-slate-200">--</span>}
                     </td>
                     <td className="px-6 py-4 text-right bg-[var(--secondary)]">
-                       <span className="text-sm font-bold text-[var(--text-main)] tabular-nums">{formatCurrency(l.runningBalance)}</span>
+                       <span className="text-sm font-bold text-[var(--text-main)] tabular-nums">Rs. {l.runningBalance.toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
@@ -385,15 +378,16 @@ const CustomerLedger = () => {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Entry Amount ({CURRENCY_SYMBOL})</label>
-                  <AppInput 
-                    type="number" step="0.01" required min="0.01" 
-                    prefix={CURRENCY_SYMBOL}
-                    value={transaction.amount} 
-                    onChange={e => setTransaction({...transaction, amount: e.target.value})} 
-                    className="text-sm font-bold" 
-                    placeholder="0.00"
-                  />
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Entry Amount (Rs.)</label>
+                  <div className="relative">
+                    <input 
+                      type="number" step="0.01" required min="0.01" 
+                      value={transaction.amount} 
+                      onChange={e => setTransaction({...transaction, amount: e.target.value})} 
+                      className="w-full h-11 bg-[var(--bg-app)] border border-[var(--border)] rounded-md px-4 text-sm font-bold focus:ring-2 focus:border-[var(--primary)] transition-all text-[var(--text-main)]" 
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -438,19 +432,6 @@ const CustomerLedger = () => {
             </form>
           </AppCard>
         </div>
-      )}
-
-      {/* Smart Payment Allocation Modal */}
-      {showAllocationModal && (
-        <PaymentAllocationModal 
-          customer={customer} 
-          onClose={() => setShowAllocationModal(false)}
-          onSave={() => {
-            setShowAllocationModal(false);
-            showStatus('success', 'Bulk payment processed and allocated correctly.');
-            fetchData();
-          }}
-        />
       )}
     </div>
   );
